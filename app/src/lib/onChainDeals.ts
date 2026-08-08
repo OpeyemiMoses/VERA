@@ -159,7 +159,7 @@ export async function fetchDealsForWallet(
         onChainState: d.state,
         onChainStateLabel: ESCROW_STATE_MAP[d.state] ?? 'UNKNOWN',
         role: isClient ? 'CLIENT' : 'FREELANCER',
-        createdAt: Date.now(),
+        createdAt: 1000,
         tags: ['On-Chain', isCatkn ? 'cATKN' : 'MON', ESCROW_STATE_MAP[d.state] ?? ''],
       };
     });

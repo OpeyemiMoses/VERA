@@ -138,7 +138,7 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
 
     if (resetTimestamp) {
-      pool = pool.filter((d) => !d.createdAt || d.createdAt > resetTimestamp);
+      pool = pool.filter((d) => typeof d.createdAt === 'number' && d.createdAt > resetTimestamp);
     }
 
     return pool;
