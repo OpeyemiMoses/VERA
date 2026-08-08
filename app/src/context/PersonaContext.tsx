@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAccount, useChainId, useSwitchChain, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { ethers } from 'ethers';
 import { CATKN_ADDRESS, CATKN_ABI, CATKN_DECIMALS } from '../lib/contracts';
@@ -227,11 +227,11 @@ export const PersonaProvider: React.FC<{ children: React.ReactNode }> = ({ child
     abi: CATKN_ABI,
     functionName: 'balanceOf',
     args: [wagmiAddress as `0x${string}`],
-    query: { enabled: appMode === 'production' && !!wagmiAddress, refetchInterval: 8000 },
+    query: { enabled: appMode === 'production' && !!wagmiAddress, refetchInterval: 4000 },
   });
-  const onChainCatknBalance = onChainCatknRaw
+  const onChainCatknBalance = onChainCatknRaw !== undefined
     ? Math.floor(Number(onChainCatknRaw as bigint) / 10 ** CATKN_DECIMALS)
-    : 0;
+    : null;
 
   // ── On-chain faucet write (Production Mode) ────────────────────────────
   const { writeContractAsync: writeFaucetAsync, data: faucetTxHash } = useWriteContract();
@@ -252,6 +252,30 @@ export const PersonaProvider: React.FC<{ children: React.ReactNode }> = ({ child
       showError('Faucet Transaction Failed: ' + (faucetError?.message || 'Transaction reverted on-chain.'));
     }
   }, [faucetFailed, faucetError]);
+
+  // Fetch real on-chain native MON balance from Monad Testnet RPC (Production Mode only)
+  const fetchMonBalances = useCallback(async () => {
+    const targetAddr = prodWalletAddress || wagmiAddress;
+    if (appMode !== 'production' || !targetAddr) return;
+    try {
+      const provider = new ethers.JsonRpcProvider('https://testnet-rpc.monad.xyz');
+      const rawBal = await provider.getBalance(targetAddr);
+      const formatted = Number(ethers.formatEther(rawBal)).toFixed(4);
+      setRealMonBalances((prev) => ({
+        ...prev,
+        'prod-wallet': formatted,
+        [targetAddr.toLowerCase()]: formatted,
+      }));
+    } catch (e) {
+      // Fallback gracefully if RPC rate-limited
+    }
+  }, [appMode, prodWalletAddress, wagmiAddress]);
+
+  useEffect(() => {
+    fetchMonBalances();
+    const interval = setInterval(fetchMonBalances, 4000);
+    return () => clearInterval(interval);
+  }, [fetchMonBalances, balanceNonce]);
 
   // Normalize any input (persona key, wallet address, name) → lowercase wallet address key
   const toWalletKey = (personaWalletOrKey?: string): string => {
@@ -663,15 +687,15 @@ export const PersonaProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // In Production Mode: immediately show 0 balances if wallet is disconnected
   const isWalletDisconnected = appMode === 'production' && !wagmiAddress;
   const activeBalance = {
-    // Production Mode: live on-chain cATKN balance (0 when disconnected) | Demo Mode: localStorage
+    // Production Mode: live on-chain cATKN balance (fallback to local state if indexing) | Demo Mode: localStorage
     catkn: isWalletDisconnected
       ? 0
       : appMode === 'production'
-        ? onChainCatknBalance
+        ? (onChainCatknBalance !== null ? onChainCatknBalance : (catknBalances['prod-wallet'] ?? catknBalances[activeWalletKey] ?? 0))
         : (catknBalances[activeWalletKey] ?? catknBalances[activePersonaId] ?? DEFAULT_CATKN[activeWalletKey] ?? 0),
     mon: isWalletDisconnected
       ? '0.0000'
-      : (realMonBalances[activeWalletKey] ?? realMonBalances[activePersonaId] ?? DEFAULT_MON[activeWalletKey] ?? '0.0000'),
+      : (realMonBalances['prod-wallet'] ?? realMonBalances[activeWalletKey] ?? realMonBalances[activePersonaId] ?? DEFAULT_MON[activeWalletKey] ?? '0.0000'),
     _version: balanceNonce,
   };
 
