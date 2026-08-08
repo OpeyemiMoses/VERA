@@ -694,8 +694,8 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
           </div>
         </div>
 
-        {/* Payment link & 2x2 Share Actions Card */}
-        {isInitiator && (
+        {/* Payment link & 2x2 Share Actions Card (Only for Private 1-on-1 Escrow Deals) */}
+        {isInitiator && isDirectDeal && (
           <div className="neu-card p-5 rounded-3xl border border-slate-300/50 dark:border-slate-800/80 space-y-4 shadow-md bg-[#e4ebf5]/60 dark:bg-[#0d111a]/60">
             {/* Header */}
             <div className="flex items-center gap-2">

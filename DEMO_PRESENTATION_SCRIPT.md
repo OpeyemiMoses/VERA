@@ -80,6 +80,7 @@
 3. Click **Submit & Deploy Escrow**.
 4. Show the newly created Deal Detail Page.
    - Point out that this deal is **unlisted from the public marketplace** (strictly private between buyer and seller).
+   - Point out that **public marketplace service listings do NOT have a share card** — the payment link share suite is exclusively built for private 1-on-1 deals!
 5. Walk through the **Payment Link Share Card** (2x2 Grid):
    - Click `[ Copy Link ]` (toast confirms link copied).
    - Click `[ Show QR ]` (QR code modal opens with download button).
