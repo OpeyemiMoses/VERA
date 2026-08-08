@@ -479,8 +479,8 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
             </span>
             {(() => {
               const total = deal.totalSlots ?? (deal.quantity !== undefined ? deal.quantity : 1);
-              const accepted = deal.acceptedCount ?? (deal.status !== 'OPEN' ? 1 : 0);
-              const openSlots = deal.quantity !== undefined ? deal.quantity : Math.max(0, total - accepted);
+              const accepted = deal.acceptedCount ?? ((deal.status !== 'OPEN' && deal.status !== 'FUNDED') ? 1 : 0);
+              const openSlots = Math.max(0, total - accepted);
 
               return (
                 <span className="text-xs font-mono font-bold text-slate-700 dark:text-slate-200 neu-inset px-3 py-1.5">

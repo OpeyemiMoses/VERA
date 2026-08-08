@@ -167,7 +167,7 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
 
     const total = parentDeal.totalSlots || parentDeal.quantity || 1;
-    const currentAccepted = parentDeal.acceptedCount !== undefined ? parentDeal.acceptedCount : (parentDeal.status !== 'OPEN' ? 1 : 0);
+    const currentAccepted = parentDeal.acceptedCount !== undefined ? parentDeal.acceptedCount : ((parentDeal.status !== 'OPEN' && parentDeal.status !== 'FUNDED') ? 1 : 0);
     const newAccepted = currentAccepted + 1;
     const newQty = Math.max(0, total - newAccepted);
     const updatedWallets = Array.from(new Set([...(parentDeal.participantWallets || []), buyerWallet]));
@@ -230,7 +230,7 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
 
     const total = parentJob.totalSlots || parentJob.quantity || 1;
-    const currentAccepted = parentJob.acceptedCount !== undefined ? parentJob.acceptedCount : (parentJob.status !== 'OPEN' ? 1 : 0);
+    const currentAccepted = parentJob.acceptedCount !== undefined ? parentJob.acceptedCount : ((parentJob.status !== 'OPEN' && parentJob.status !== 'FUNDED') ? 1 : 0);
     const newAccepted = currentAccepted + 1;
     const newQty = Math.max(0, total - newAccepted);
     const updatedWallets = Array.from(new Set([...(parentJob.participantWallets || []), freelancerWallet]));
