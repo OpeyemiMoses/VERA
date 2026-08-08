@@ -11,6 +11,7 @@ import {
   FileText,
   Lock,
   User,
+  Users,
   ArrowRight,
   AlertCircle,
   Package,
@@ -520,24 +521,32 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
             <span className="text-xs font-bold px-3 py-1.5 rounded-xl neu-inset text-indigo-600 dark:text-indigo-400 font-mono">
               {deal.type === 'DIRECT_DEAL' ? '1-ON-1 ESCROW DEAL' : 'PUBLIC SERVICE LISTING'}
             </span>
+            {deal.type === 'SERVICE_LISTING' && (
+              <span className="text-xs font-bold px-3 py-1.5 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30 flex items-center gap-1 font-mono">
+                <Users className="h-3.5 w-3.5 text-indigo-500" />
+                {Math.max(0, (deal.serviceCapacity || deal.totalSlots || 1) - (deal.purchasedCount ?? slotSubOrders.length))} of {deal.serviceCapacity || deal.totalSlots || 1} Available
+              </span>
+            )}
             <span className="text-xs font-bold px-3 py-1.5 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-300 border border-purple-500/30 flex items-center gap-1 font-mono">
               <ShieldCheck className="h-3.5 w-3.5 text-purple-500" />
               Min Tier {deal.minTier}
             </span>
-            <button
-              type="button"
-              onClick={() => {
-                const link = typeof window !== 'undefined' ? `${window.location.origin}/?deal=${currentDeal.id}` : '';
-                if (link) {
-                  navigator.clipboard.writeText(link);
-                  showNotice('Shareable Escrow Link copied to clipboard! Send to your counterparty.');
-                }
-              }}
-              className="neu-btn-secondary px-3 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 hover:scale-105 transition-all shadow-sm cursor-pointer"
-            >
-              <Share2 className="h-3.5 w-3.5" />
-              <span>Copy Escrow Link</span>
-            </button>
+            {isInitiator && (
+              <button
+                type="button"
+                onClick={() => {
+                  const link = typeof window !== 'undefined' ? `${window.location.origin}/?deal=${currentDeal.id}` : '';
+                  if (link) {
+                    navigator.clipboard.writeText(link);
+                    showNotice('Shareable Escrow Link copied to clipboard! Send to your counterparty.');
+                  }
+                }}
+                className="neu-btn-secondary px-3 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 hover:scale-105 transition-all shadow-sm cursor-pointer"
+              >
+                <Share2 className="h-3.5 w-3.5" />
+                <span>Copy Escrow Link</span>
+              </button>
+            )}
             <span className="text-xs font-mono font-bold text-slate-700 dark:text-slate-200 neu-inset px-3 py-1.5 flex items-center gap-1">
               <Lock className="h-3.5 w-3.5 text-purple-500" />
               <span>1-on-1 Escrow Vault</span>
@@ -1389,8 +1398,8 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
             </div>
           )}
 
-          {/* Case 6: Freelancer / Seller accepts & verifies attestation */}
-          {!isInitiator && meetsTier && currentDeal.status !== 'DELIVERED' && currentDeal.status !== 'RELEASED' && !currentDeal.attestationTxHash && (
+          {/* Case 6: 1-on-1 Custom Deal counterparty accepts & verifies attestation */}
+          {!isInitiator && currentDeal.type === 'DIRECT_DEAL' && meetsTier && currentDeal.status !== 'DELIVERED' && currentDeal.status !== 'RELEASED' && !currentDeal.attestationTxHash && (
             <button
               onClick={handleAcceptJob}
               disabled={hasAlreadyFundedOrPurchased || (currentDeal.status !== 'OPEN' && currentDeal.status !== 'FUNDED') || openSlots <= 0 || isProcessing || isChecking || escrowLoading}
@@ -1405,12 +1414,10 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
               <ShieldCheck className="h-5 w-5 text-cyan-400" />
               <span>
                 {hasAlreadyFundedOrPurchased
-                  ? 'Accept Job (Already Claimed & Escrow Secured)'
-                  : (openSlots <= 0 && currentDeal.status !== 'OPEN' && currentDeal.status !== 'FUNDED')
-                  ? 'Job Slot Claimed'
+                  ? 'Accept Deal (Already Claimed & Escrow Secured)'
                   : isProcessing
                   ? 'Verifying A-Pass...'
-                  : 'Accept Job & Verify Cleanverse Attestation'}
+                  : 'Accept Deal & Verify Cleanverse Attestation'}
               </span>
             </button>
           )}
