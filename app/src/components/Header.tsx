@@ -168,6 +168,11 @@ export const Header: React.FC<HeaderProps> = ({
               <Coins className="h-4 w-4 text-indigo-500" />
               <span>{activeBalance.catkn.toLocaleString()} cATKN</span>
             </div>
+            <span className="text-slate-300 dark:text-slate-700">|</span>
+            <div className="flex items-center gap-1.5 font-bold text-purple-600 dark:text-purple-400" title="Monad Native Token (MON) Balance">
+              <Zap className="h-4 w-4 text-purple-500" />
+              <span>{activeBalance.mon} MON</span>
+            </div>
             <div className="flex items-center gap-1 ml-auto sm:ml-2">
               <button
                 onClick={handleClaimFaucet}

@@ -389,6 +389,11 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                       <span className="text-[10px] text-slate-600 dark:text-slate-300 font-bold uppercase block">cATKN BALANCE</span>
                       <span className="text-base font-extrabold text-indigo-600 dark:text-indigo-400">{activeBalance.catkn.toLocaleString()} cATKN</span>
                     </div>
+                    <div className="h-8 w-px bg-slate-300/60 dark:bg-slate-800" />
+                    <div>
+                      <span className="text-[10px] text-slate-600 dark:text-slate-300 font-bold uppercase block">MON BALANCE</span>
+                      <span className="text-base font-extrabold text-purple-600 dark:text-purple-400">{activeBalance.mon} MON</span>
+                    </div>
                   </div>
 
                   <button
