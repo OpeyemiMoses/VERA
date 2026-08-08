@@ -93,7 +93,6 @@ export const Header: React.FC<HeaderProps> = ({
     try {
       setFaucetLoading(true);
       await claimFaucet();
-      showSuccess('Faucet Drop Confirmed! +10,000 cATKN credited on-chain to your wallet balance.');
     } catch (err: any) {
       if (err?.message) {
         showError(err.message);

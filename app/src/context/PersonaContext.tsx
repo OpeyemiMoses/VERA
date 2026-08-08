@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAccount, useChainId, useSwitchChain, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { ethers } from 'ethers';
 import { CATKN_ADDRESS, CATKN_ABI, CATKN_DECIMALS } from '../lib/contracts';
+import { useToast } from './ToastContext';
 
 import { calculateTrustScore, TrustScoreDetails } from '../utils/trustEngine';
 
@@ -142,6 +143,7 @@ export const PersonaProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const { address: wagmiAddress, isConnected: wagmiIsConnected } = useAccount();
   const chainId = useChainId();
   const { switchChain } = useSwitchChain();
+  const { showSuccess, showError, showInfo } = useToast();
 
   const [appMode, setAppMode] = useState<AppMode>('demo');
   const [activePersonaKey, setActivePersonaKey] = useState<string>('alice');
@@ -231,16 +233,24 @@ export const PersonaProvider: React.FC<{ children: React.ReactNode }> = ({ child
     : 0;
 
   // ── On-chain faucet write (Production Mode) ────────────────────────────
-  const { writeContract: writeFaucet, data: faucetTxHash } = useWriteContract();
-  const { isSuccess: faucetConfirmed } = useWaitForTransactionReceipt({
+  const { writeContractAsync: writeFaucetAsync, data: faucetTxHash } = useWriteContract();
+  const { isSuccess: faucetConfirmed, isError: faucetFailed, error: faucetError } = useWaitForTransactionReceipt({
     hash: faucetTxHash,
   });
-  // Refresh balance after faucet tx confirms
+
+  // Toast & balance refresh after faucet tx confirms on-chain
   useEffect(() => {
     if (faucetConfirmed) {
       refetchOnChainBalance();
+      showSuccess('Faucet Drop Confirmed! +10,000 cATKN credited on-chain to your wallet balance.');
     }
   }, [faucetConfirmed]);
+
+  useEffect(() => {
+    if (faucetFailed && faucetError) {
+      showError('Faucet Transaction Failed: ' + (faucetError?.message || 'Transaction reverted on-chain.'));
+    }
+  }, [faucetFailed, faucetError]);
 
   // Normalize any input (persona key, wallet address, name) → lowercase wallet address key
   const toWalletKey = (personaWalletOrKey?: string): string => {
@@ -329,16 +339,24 @@ export const PersonaProvider: React.FC<{ children: React.ReactNode }> = ({ child
     // ── PRODUCTION MODE: real on-chain faucet call ─────────────────────
     if (appMode === 'production') {
       if (!wagmiAddress) throw new Error('Connect a Web3 wallet before claiming the faucet.');
-      writeFaucet({
-        address: CATKN_ADDRESS,
-        abi: CATKN_ABI,
-        functionName: 'faucet',
-      });
-      // Balance refresh happens in the useEffect above when faucetConfirmed fires
+      try {
+        const tx = await writeFaucetAsync({
+          address: CATKN_ADDRESS,
+          abi: CATKN_ABI,
+          functionName: 'faucet',
+        });
+        showInfo(`Faucet Transaction Submitted (${tx.slice(0, 10)}...). Confirming on Monad Testnet...`);
+      } catch (err: any) {
+        if (err?.message?.includes('User rejected') || err?.message?.includes('user rejected')) {
+          showError('Faucet transaction rejected in wallet.');
+        } else {
+          showError('Faucet request failed: ' + (err?.message || 'Transaction error'));
+        }
+      }
       return;
     }
 
-    // ── DEMO MODE: localStorage simulation (unchanged) ────────────────
+    // ── DEMO MODE: localStorage simulation ────────────────────────────
     const wKey = toWalletKey(personaKey);
     setCatknBalances((prev) => {
       const current = prev[wKey] ?? DEFAULT_CATKN[wKey] ?? 0;
@@ -347,6 +365,7 @@ export const PersonaProvider: React.FC<{ children: React.ReactNode }> = ({ child
       return updated;
     });
     setBalanceNonce((v) => v + 1);
+    showSuccess('Faucet Drop Confirmed! +10,000 cATKN credited to your balance.');
   };
 
   const deductBalance = (amount: number, currency?: string, personaWalletOrKey?: string) => {
