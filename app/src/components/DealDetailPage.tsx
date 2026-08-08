@@ -130,7 +130,8 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
     !isImageOrDesign;
 
   const baseId = deal.id.split('-slot-')[0].split('-order-')[0].split('-accepted-')[0];
-  const slotSubOrders = deal.type === 'SERVICE_LISTING' ? deals.filter((d) => d.id.startsWith(`${baseId}-slot-`)) : [];
+  const isDirectDeal = currentDeal.type === 'DIRECT_DEAL' || deal.type === 'DIRECT_DEAL';
+  const slotSubOrders = isDirectDeal ? [] : deals.filter((d) => d.id.startsWith(`${baseId}-slot-`));
 
   // Derive role
   const isInitiator =
@@ -1035,7 +1036,7 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
         </div>
 
         {/* Multi-Slot Sub-Order Directory Matrix for Service Listings */}
-        {currentDeal.type === 'SERVICE_LISTING' && slotSubOrders.length > 0 && isInitiator && (
+        {!isDirectDeal && currentDeal.type === 'SERVICE_LISTING' && slotSubOrders.length > 0 && isInitiator && (
           <div className="neu-card p-5 space-y-4 border-2 border-purple-500/30">
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-extrabold uppercase text-slate-900 dark:text-white tracking-wider flex items-center gap-1.5">

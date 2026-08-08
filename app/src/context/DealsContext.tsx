@@ -17,7 +17,7 @@ interface DealsContextType {
   isFetchingOnChain: boolean;
 }
 
-const STORAGE_KEY = 'vera_deals_v11';
+const STORAGE_KEY = 'vera_deals_v15';
 
 const DealsContext = createContext<DealsContextType | undefined>(undefined);
 
@@ -27,16 +27,9 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [deals, setDeals] = useState<Deal[]>(() => {
     if (typeof window !== 'undefined') {
       try {
-        localStorage.removeItem('vera_deals_v1');
-        localStorage.removeItem('vera_deals_v2');
-        localStorage.removeItem('vera_deals_v3');
-        localStorage.removeItem('vera_deals_v4');
-        localStorage.removeItem('vera_deals_v5');
-        localStorage.removeItem('vera_deals_v6');
-        localStorage.removeItem('vera_deals_v7');
-        localStorage.removeItem('vera_deals_v8');
-        localStorage.removeItem('vera_deals_v9');
-        localStorage.removeItem('vera_deals_v10');
+        for (let i = 1; i <= 14; i++) {
+          localStorage.removeItem(`vera_deals_v${i}`);
+        }
 
         const stored = localStorage.getItem(STORAGE_KEY);
         if (stored) {
