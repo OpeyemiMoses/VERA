@@ -28,7 +28,7 @@ export const ShareEscrowModal: React.FC<ShareEscrowModalProps> = ({
   if (!isOpen) return null;
 
   const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/?deal=${dealId}` : '';
-  const shareText = `🔒 Secure Escrow Deal: ${title}\nPrice: ${price} ${currency}\nVerify Tier ${minTier}+ & Lock Escrow via VERA Protocol:`;
+  const shareText = `Private Escrow Deal: ${title}\nPrice: ${price} ${currency}\nVerify Tier ${minTier}+ & Lock Escrow via VERA Protocol:`;
 
   const handleCopy = () => {
     if (shareUrl) {

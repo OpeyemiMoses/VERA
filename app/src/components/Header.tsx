@@ -213,7 +213,7 @@ export const Header: React.FC<HeaderProps> = ({
                 title="Issue Cleanverse CVI A-Pass Credential via generate_apass API"
               >
                 <Sparkles className="h-3.5 w-3.5 text-amber-300" />
-                <span>⚡ Issue A-Pass CVI</span>
+                <span>Issue A-Pass CVI</span>
               </button>
             </div>
           )}

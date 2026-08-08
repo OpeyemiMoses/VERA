@@ -5,32 +5,32 @@
 
 ---
 
-## 🌐 Live Production Deployments & Monad Testnet Contracts
+## Live Production Deployments & Monad Testnet Contracts
 
 | Resource / Contract | Live Endpoint / Address | Description / Explorer Link |
 |---|---|---|
-| 🚀 **Live Production dApp** | [`https://vera-escrow.vercel.app`](https://vera-escrow.vercel.app) | **Live Vercel Production Web3 dApp** |
-| 🏗️ **EscrowFactory.sol** | `0xC06815e09263bc1E4E0d073a58F4c6ff7Eee9334` | [View on Monad Explorer](https://testnet.monadexplorer.com/address/0xC06815e09263bc1E4E0d073a58F4c6ff7Eee9334) |
-| 🪙 **cATKN Token (MockAToken)** | `0x505B3F7C275Ee093aB5Aa46FCe3E14467a91Ce03` | [View on Monad Explorer](https://testnet.monadexplorer.com/address/0x505B3F7C275Ee093aB5Aa46FCe3E14467a91Ce03) |
-| 🔑 **Attestor / Relayer** | `0x4070E534B84cC01e62a685c96d165dEedaC39f58` | EIP-712 ECDSA Backend Signer |
+| **Live Production dApp** | [`https://vera-escrow.vercel.app`](https://vera-escrow.vercel.app) | **Live Vercel Production Web3 dApp** |
+| **EscrowFactory.sol** | `0xC06815e09263bc1E4E0d073a58F4c6ff7Eee9334` | [View on Monad Explorer](https://testnet.monadexplorer.com/address/0xC06815e09263bc1E4E0d073a58F4c6ff7Eee9334) |
+| **cATKN Token (MockAToken)** | `0x505B3F7C275Ee093aB5Aa46FCe3E14467a91Ce03` | [View on Monad Explorer](https://testnet.monadexplorer.com/address/0x505B3F7C275Ee093aB5Aa46FCe3E14467a91Ce03) |
+| **Attestor / Relayer** | `0x4070E534B84cC01e62a685c96d165dEedaC39f58` | EIP-712 ECDSA Backend Signer |
 
 > **Local Dev Server:** `http://localhost:3005` (Next.js 14 App Router)
 
 ---
 
-## 💡 Key Platform Capabilities
+## Key Platform Capabilities
 
-### 1. 💼 Public Service Marketplace across 6 Web3 Categories
+### 1. Public Service Marketplace across 6 Web3 Categories
 - Verified creators list fixed-price Web3 services across 6 domain categories:
-  * 🛡️ `Smart Contract Audits`
-  * 💻 `Full-Stack Web3 & Frontend`
-  * 🪙 `DeFi & Yield Protocols`
-  * 🔐 `ZKP & Identity Security`
-  * 📊 `Tokenomics & Governance`
-  * ✨ `Web3 Design & Branding`
+  * `Smart Contract Audits`
+  * `Full-Stack Web3 & Frontend`
+  * `DeFi & Yield Protocols`
+  * `ZKP & Identity Security`
+  * `Tokenomics & Governance`
+  * `Web3 Design & Branding`
 - **Service Capacity Limits**: Creators set total service capacity (e.g. 5 audit slots max). Claiming a slot deploys an isolated escrow contract while tracking remaining slot availability.
 
-### 2. 🔒 Private 1-on-1 Escrow Deals & 2x2 Social Share Suite
+### 2. Private 1-on-1 Escrow Deals & 2x2 Social Share Suite
 - **Unlisted Bilateral Agreements**: Custom 1-on-1 deals are strictly hidden from the public marketplace to protect commercial confidentiality.
 - **2x2 Social Share Suite**:
   - Full-width read-only link input bar (`?deal=deal-xxx`).
@@ -39,12 +39,12 @@
   - **WhatsApp Direct**: Direct share button (`#25D366`) opening pre-filled WhatsApp chat.
   - **Telegram Direct**: Direct share button (`#229ED9`) opening pre-filled Telegram chat.
 
-### 3. 🛡️ Cleanverse A-Pass Identity Gating & Sanctions Screening
+### 3. Cleanverse A-Pass Identity Gating & Sanctions Screening
 - **Automated A-Pass Verification**: Enforces minimum identity risk tiers (e.g. Tier 20+) before accepting or funding deals.
 - **OFAC Regional Sanctions**: Automatically blocks wallets flagged in restricted countries (e.g. `RU - Russia`).
 - **EIP-712 ECDSA Attestations**: Backend relayer issues cryptographically signed attestations submitted directly to `Escrow.sol`.
 
-### 4. 💎 Dynamic Trust-Adjusted Platform Fee Engine
+### 4. Dynamic Trust-Adjusted Platform Fee Engine
 - **Dynamic Fee Rates**: Evaluates recipient's Trust Score (0–100) to apply dynamic platform fees:
   - **Low Tier (0-29)**: `3.0% fee`
   - **Mid Tier (30-69)**: `1.5% fee`
@@ -52,13 +52,13 @@
   - **Elite Tier (90-100)**: `0.25% fee`
 - **On-Chain Payout Split**: Executed on-chain inside `Escrow.sol`. Upon release, net payout is credited to seller's wallet balance while protocol fee is transferred directly to the `EscrowFactory.sol` treasury address.
 
-### 5. 📄 FATF Travel Rule PDF Reports & EVM Audit Ledger
+### 5. FATF Travel Rule PDF Reports & EVM Audit Ledger
 - **Wallet-Scoped Audit Ledger**: Live record of EVM transaction hashes (`0x...`) with direct Monad Explorer links.
 - **FATF Travel Rule PDF Generation**: Auto-generates cryptographic Travel Rule compliance PDF reports containing sender, beneficiary, validator pool IDs, and state proofs.
 
 ---
 
-## 🏛️ Architecture & Core Components
+## Architecture & Core Components
 
 ```
                        +------------------------------------------+
@@ -89,7 +89,7 @@
 
 ---
 
-## ⚙️ Environment Variables Setup
+## Environment Variables Setup
 
 Configure the environment variables in your deployment platform (Vercel / Railway / Local `.env.local`):
 
@@ -116,7 +116,7 @@ ATTESTOR_PRIVATE_KEY=YOUR_ATTESTOR_PRIVATE_KEY
 
 ---
 
-## 🧪 Quick Start & Local Development
+## Quick Start & Local Development
 
 ```bash
 git clone https://github.com/OpeyemiMoses/VERA.git
@@ -131,7 +131,7 @@ npm run dev
 
 ---
 
-## 📊 Alignment with Hackathon Judging Criteria (100 Pts Total)
+## Alignment with Hackathon Judging Criteria (100 Pts Total)
 
 | Criteria | Weight | How Vera Protocol Achieves It |
 |---|:---:|---|
@@ -143,7 +143,7 @@ npm run dev
 
 ---
 
-## 📜 Community & Open Source Governance
+## Community & Open Source Governance
 
 - [**Code of Conduct**](CODE_OF_CONDUCT.md): Contributor Covenant v2.1 standards.
 - [**Contributing Guidelines**](CONTRIBUTING.md): Code style, commit conventions, and PR process.

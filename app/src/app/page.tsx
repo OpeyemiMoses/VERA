@@ -776,7 +776,7 @@ export default function Home() {
                                   }}
                                   className="font-bold text-indigo-500 dark:text-indigo-400 hover:underline flex items-center gap-1 cursor-pointer"
                                 >
-                                  <span>{hasCounterpartyAssigned ? 'Assigned & Locked' : 'Copy Share Link 🔗'}</span>
+                                  <span>{hasCounterpartyAssigned ? 'Assigned & Locked' : 'Copy Share Link'}</span>
                                 </button>
                               </div>
                             )}

@@ -622,7 +622,7 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
                 <p className="text-xs font-extrabold text-slate-900 dark:text-white">{deal.initiatorName}</p>
                 <div className="flex items-center gap-1 text-[10px] text-slate-600 dark:text-slate-300 font-mono">
                   <span>{deal.initiatorAddress.slice(0, 6)}...{deal.initiatorAddress.slice(-4)}</span>
-                  <span className="text-indigo-500 font-bold">✔ Verified</span>
+                  <span className="text-indigo-500 font-bold flex items-center gap-0.5"><ShieldCheck className="h-3 w-3" /> Verified</span>
                 </div>
               </div>
             </div>
@@ -748,7 +748,7 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
                 type="button"
                 onClick={() => {
                   const link = typeof window !== 'undefined' ? `${window.location.origin}/?deal=${currentDeal.id}` : '';
-                  const text = `🔒 Private Escrow Deal: ${currentDeal.title} (${currentDeal.price} ${currentDeal.currency})\nLock Escrow via VERA Protocol:\n${link}`;
+                  const text = `Private Escrow Deal: ${currentDeal.title} (${currentDeal.price} ${currentDeal.currency})\nLock Escrow via VERA Protocol:\n${link}`;
                   window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
                 }}
                 className="w-full neu-card hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold py-3 px-4 rounded-2xl text-xs flex items-center justify-center gap-2 border border-emerald-500/30 transition-all cursor-pointer shadow-sm active:scale-98"
@@ -764,7 +764,7 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
                 type="button"
                 onClick={() => {
                   const link = typeof window !== 'undefined' ? `${window.location.origin}/?deal=${currentDeal.id}` : '';
-                  const text = `🔒 Private Escrow Deal: ${currentDeal.title} (${currentDeal.price} ${currentDeal.currency})`;
+                  const text = `Private Escrow Deal: ${currentDeal.title} (${currentDeal.price} ${currentDeal.currency})`;
                   window.open(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`, '_blank');
                 }}
                 className="w-full neu-card hover:bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 font-bold py-3 px-4 rounded-2xl text-xs flex items-center justify-center gap-2 border border-cyan-500/30 transition-all cursor-pointer shadow-sm active:scale-98"

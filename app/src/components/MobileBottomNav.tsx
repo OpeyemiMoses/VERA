@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Home, Briefcase, PlusCircle, ShoppingBag, User, Layers } from 'lucide-react';
+import { Home, PlusCircle, ShoppingBag, User, FolderCheck } from 'lucide-react';
 import { usePersona } from '../context/PersonaContext';
 
 interface MobileBottomNavProps {
@@ -36,17 +36,17 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         <span className="text-[10px] font-bold">Home</span>
       </button>
 
-      {/* Jobs / Escrows Tab */}
+      {/* My Deals Tab */}
       <button
-        onClick={() => setActiveTab('browse-jobs')}
+        onClick={() => setActiveTab('my-created')}
         className={`flex flex-col items-center gap-1 px-3 py-1 rounded-2xl transition-all ${
-          activeTab === 'browse-jobs'
+          activeTab === 'my-created'
             ? 'text-indigo-600 dark:text-indigo-400 font-extrabold'
             : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
         }`}
       >
-        <Briefcase className={`h-5 w-5 ${activeTab === 'browse-jobs' ? 'text-indigo-600 dark:text-indigo-400' : ''}`} />
-        <span className="text-[10px] font-bold">1-on-1 Deals</span>
+        <FolderCheck className={`h-5 w-5 ${activeTab === 'my-created' ? 'text-indigo-600 dark:text-indigo-400' : ''}`} />
+        <span className="text-[10px] font-bold">My Deals</span>
       </button>
 
       {/* Deploy Escrow Button (Center Prominent CTA) */}

@@ -355,7 +355,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                       className="neu-btn-primary px-4 py-2.5 text-xs font-extrabold flex items-center gap-1.5 shadow-md flex-shrink-0"
                     >
                       <Sparkles className="h-4 w-4 text-amber-300" />
-                      <span>⚡ Self-Issue Cleanverse A-Pass Tier 30</span>
+                      <span>Self-Issue Cleanverse A-Pass Tier 30</span>
                     </button>
                   </div>
                 )}
