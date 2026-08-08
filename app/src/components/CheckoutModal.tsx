@@ -85,6 +85,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
         setTxHash(fundTx);
         setStep('funded');
+        deductBalance(deal.price, deal.currency);
         onPaymentComplete(deal.id);
       } catch (err: any) {
         setStep('review');

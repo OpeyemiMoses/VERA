@@ -78,6 +78,10 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
   const [isTxModalOpen, setIsTxModalOpen] = useState(false);
 
   const handleOpenTxModal = (hash: string, type: 'deployment' | 'deposit' | 'attestation' | 'release') => {
+    if (appMode === 'production') {
+      window.open(`https://testnet.monadexplorer.com/tx/${hash}`, '_blank');
+      return;
+    }
     setSelectedTxHash(hash);
     setSelectedTxType(type);
     setIsTxModalOpen(true);

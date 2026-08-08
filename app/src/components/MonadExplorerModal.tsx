@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, CheckCircle2, Copy, ExternalLink, ShieldCheck, Cpu, Layers, ArrowUpRight, Lock, Clock, Zap } from 'lucide-react';
+import { usePersona } from '../context/PersonaContext';
 
 interface MonadExplorerModalProps {
   isOpen: boolean;
@@ -24,9 +25,17 @@ export const MonadExplorerModal: React.FC<MonadExplorerModalProps> = ({
   initiatorName = 'Bob (Verified Freelancer)',
   counterpartyName = 'Alice (Client)',
 }) => {
+  const { appMode } = usePersona();
   const [copied, setCopied] = useState(false);
 
-  if (!isOpen || !txHash) return null;
+  React.useEffect(() => {
+    if (isOpen && txHash && appMode === 'production') {
+      window.open(`https://testnet.monadexplorer.com/tx/${txHash}`, '_blank');
+      onClose();
+    }
+  }, [isOpen, txHash, appMode, onClose]);
+
+  if (!isOpen || !txHash || appMode === 'production') return null;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(txHash);
