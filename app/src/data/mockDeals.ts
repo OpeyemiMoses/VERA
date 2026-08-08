@@ -13,6 +13,7 @@ export const INITIAL_DEALS: Deal[] = [
     price: 1500,
     currency: 'cATKN',
     minTier: 30,
+    prohibitedCountries: ['RU', 'CN'],
     deliveryTerms: 'PDF Security Audit Report signed by lead auditor + GitHub Pull Request with security patches',
     refundTerms: 'Full refund within 24h if audit report fails core EVM vulnerability coverage',
     deliveryDeadlineHrs: 48,

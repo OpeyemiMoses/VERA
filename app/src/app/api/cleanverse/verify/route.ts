@@ -14,7 +14,7 @@ const attestor = new ComplianceAttestorService(
 
 export async function POST(req: NextRequest) {
   try {
-    const { userAddress, escrowAddress, poolAddress, chain, minTier } = await req.json();
+    const { userAddress, escrowAddress, poolAddress, chain, minTier, prohibitedCountries } = await req.json();
 
     if (!userAddress) {
       return NextResponse.json({ error: 'userAddress is required' }, { status: 400 });
@@ -41,6 +41,19 @@ export async function POST(req: NextRequest) {
         allowed: false,
         reason: `A-Pass Tier (${verifyResult.tier}) is below required minimum (${minTier})`,
       });
+    }
+
+    // Optional prohibited countries enforcement
+    if (prohibitedCountries && Array.isArray(prohibitedCountries) && verifyResult.country) {
+      const isProhibited = prohibitedCountries.some(
+        (c: string) => c.trim().toUpperCase() === verifyResult.country?.toUpperCase()
+      );
+      if (isProhibited) {
+        return NextResponse.json({
+          allowed: false,
+          reason: `Sanctions Blocked: Country ${verifyResult.country} is on the prohibited region list for this deal.`,
+        });
+      }
     }
 
     // 2. Issue real ECDSA compliance attestation if escrow address provided

@@ -33,7 +33,8 @@ export function useCleanverse() {
     escrowAddress: string,
     poolAddress: string,
     chain: string,
-    minTier?: number
+    minTier?: number,
+    prohibitedCountries?: string[]
   ): Promise<ComplianceResult> => {
     setIsChecking(true);
     try {
@@ -46,6 +47,7 @@ export function useCleanverse() {
           poolAddress,
           chain,
           minTier,
+          prohibitedCountries,
         }),
       });
 

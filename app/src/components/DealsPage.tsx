@@ -42,6 +42,8 @@ export const DealsPage: React.FC<DealsPageProps> = ({ onBackToHome, onDealCreate
   const [price, setPrice] = useState('500');
   const [currency, setCurrency] = useState<'cATKN' | 'MON'>('cATKN');
   const [minTier, setMinTier] = useState<number>(20);
+  const [prohibitedCountries, setProhibitedCountries] = useState<string[]>(['RU']);
+  const [customCountryInput, setCustomCountryInput] = useState('');
   const [quantity, setQuantity] = useState<string>('1');
   const [category, setCategory] = useState('DeFi Protocols');
   const [expectedDeliverableFormat, setExpectedDeliverableFormat] = useState<DeliverableFormat>('FILE');
@@ -51,6 +53,20 @@ export const DealsPage: React.FC<DealsPageProps> = ({ onBackToHome, onDealCreate
   const [confirmationWindowHrs, setConfirmationWindowHrs] = useState('24');
   const [agreedTerms, setAgreedTerms] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const toggleProhibitedCountry = (code: string) => {
+    setProhibitedCountries((prev) =>
+      prev.includes(code) ? prev.filter((c) => c !== code) : [...prev, code]
+    );
+  };
+
+  const handleAddCustomCountry = () => {
+    const clean = customCountryInput.trim().toUpperCase();
+    if (clean && clean.length === 2 && !prohibitedCountries.includes(clean)) {
+      setProhibitedCountries((prev) => [...prev, clean]);
+      setCustomCountryInput('');
+    }
+  };
 
   const categories = [
     { id: 'DeFi Protocols', label: 'DeFi Protocols', icon: Coins },
@@ -91,6 +107,7 @@ export const DealsPage: React.FC<DealsPageProps> = ({ onBackToHome, onDealCreate
         price: priceNum,
         currency,
         minTier,
+        prohibitedCountries,
         quantity: slotsNum,
         totalSlots: slotsNum,
         deliveryTerms,
@@ -355,16 +372,17 @@ export const DealsPage: React.FC<DealsPageProps> = ({ onBackToHome, onDealCreate
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase text-slate-800 dark:text-slate-200 tracking-wider mb-1.5">MIN TIER *</label>
+              <label className="block text-xs font-bold uppercase text-slate-800 dark:text-slate-200 tracking-wider mb-1.5">CLEANVERSE MIN TIER *</label>
               <select
                 value={minTier}
                 onChange={(e) => setMinTier(parseInt(e.target.value))}
                 className="w-full px-4 py-3 neu-inset text-xs font-bold text-indigo-600 dark:text-indigo-400 focus:outline-none font-mono"
               >
-                <option value={0}>Tier 0 (Any Verified)</option>
-                <option value={15}>Tier 15 (Standard)</option>
-                <option value={20}>Tier 20 (Mid-Level)</option>
-                <option value={60}>Tier 60 (High-Tier)</option>
+                <option value={10}>Tier 10 — Basic Identity Verified (Email / Phone)</option>
+                <option value={20}>Tier 20 — Standard A-Pass Verified (Gov ID & Face Match)</option>
+                <option value={30}>Tier 30 — Advanced Verified (Proof of Address & Clean OFAC)</option>
+                <option value={40}>Tier 40 — Enterprise & DAO Treasury (Institutional Verification)</option>
+                <option value={50}>Tier 50 — Institutional Validator Pool (Maximum Trust)</option>
               </select>
             </div>
 
@@ -379,6 +397,97 @@ export const DealsPage: React.FC<DealsPageProps> = ({ onBackToHome, onDealCreate
                 className="w-full px-4 py-3 neu-inset text-xs font-bold text-slate-900 dark:text-white focus:outline-none"
               />
             </div>
+          </div>
+        </div>
+
+        {/* Section 2: Validator Pool Compliance & Regional Restrictions */}
+        <div className="neu-card p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-extrabold uppercase text-slate-800 dark:text-slate-200 tracking-wider flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-indigo-500" />
+              VALIDATOR POOL REGIONAL SANCTIONS & COMPLIANCE RULES
+            </h3>
+            <span className="text-[10px] font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded border border-indigo-400/30 font-mono">
+              VALIDATOR GATING
+            </span>
+          </div>
+
+          <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+            Select high-risk jurisdictions or add custom ISO 2-letter country codes to prohibit participating wallets from accepting or funding this escrow contract instance.
+          </p>
+
+          {/* Quick-toggle preset country chips */}
+          <div className="space-y-2">
+            <label className="block text-[11px] font-bold uppercase text-slate-500 tracking-wider">
+              QUICK SANCTIONS TOGGLE (CLICK TO EXCLUDE)
+            </label>
+            <div className="flex flex-wrap items-center gap-2">
+              {[
+                { code: 'RU', name: 'Russia (OFAC Sanctions)' },
+                { code: 'CN', name: 'China (Crypto Restricted)' },
+                { code: 'US', name: 'United States (SEC Restricted)' },
+                { code: 'IR', name: 'Iran (OFAC High Risk)' },
+                { code: 'KP', name: 'North Korea (FATF Blacklisted)' },
+              ].map((c) => {
+                const isExcluded = prohibitedCountries.includes(c.code);
+                return (
+                  <button
+                    key={c.code}
+                    type="button"
+                    onClick={() => toggleProhibitedCountry(c.code)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                      isExcluded
+                        ? 'bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/40 font-extrabold shadow-sm'
+                        : 'neu-btn-secondary opacity-70 hover:opacity-100'
+                    }`}
+                  >
+                    <span>{isExcluded ? 'PROHIBITED' : '+ Exclude'} {c.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Custom ISO Country Input & Active List */}
+          <div className="pt-2 border-t border-slate-300/40 dark:border-slate-800/60 space-y-3">
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                maxLength={2}
+                placeholder="Custom 2-Letter ISO Code (e.g. GB, DE, SG)..."
+                value={customCountryInput}
+                onChange={(e) => setCustomCountryInput(e.target.value)}
+                className="flex-1 px-3.5 py-2.5 neu-inset text-xs font-mono text-slate-900 dark:text-white uppercase focus:outline-none"
+              />
+              <button
+                type="button"
+                onClick={handleAddCustomCountry}
+                className="neu-btn-secondary px-4 py-2.5 text-xs font-bold flex-shrink-0"
+              >
+                + Add Prohibited Code
+              </button>
+            </div>
+
+            {/* Currently Active Prohibited List */}
+            {prohibitedCountries.length > 0 && (
+              <div className="neu-inset p-3 rounded-xl flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                  Active Prohibited Country List ({prohibitedCountries.length}):
+                </span>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {prohibitedCountries.map((code) => (
+                    <span
+                      key={code}
+                      onClick={() => toggleProhibitedCountry(code)}
+                      className="px-2.5 py-1 rounded-lg bg-rose-500 text-white text-[10px] font-extrabold cursor-pointer hover:bg-rose-600 transition-colors flex items-center gap-1 font-mono"
+                      title="Click to remove from prohibited list"
+                    >
+                      {code} ×
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

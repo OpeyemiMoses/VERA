@@ -20,7 +20,23 @@ export const PostJobModal: React.FC<PostJobModalProps> = ({ isOpen, onClose, onJ
   const [currency, setCurrency] = useState<'cATKN' | 'MON'>('cATKN');
   const [deliveryHours, setDeliveryHours] = useState('48');
   const [minTier, setMinTier] = useState('20');
+  const [prohibitedCountries, setProhibitedCountries] = useState<string[]>(['RU']);
+  const [customCountryInput, setCustomCountryInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const toggleProhibitedCountry = (code: string) => {
+    setProhibitedCountries((prev) =>
+      prev.includes(code) ? prev.filter((c) => c !== code) : [...prev, code]
+    );
+  };
+
+  const handleAddCustomCountry = () => {
+    const clean = customCountryInput.trim().toUpperCase();
+    if (clean && clean.length === 2 && !prohibitedCountries.includes(clean)) {
+      setProhibitedCountries((prev) => [...prev, clean]);
+      setCustomCountryInput('');
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -55,7 +71,8 @@ export const PostJobModal: React.FC<PostJobModalProps> = ({ isOpen, onClose, onJ
         category,
         price: numPrice,
         currency,
-        minTier: parseInt(minTier) || 0,
+        minTier: parseInt(minTier) || 10,
+        prohibitedCountries,
         deliveryTerms: `Deliver full asset according to specification within ${deliveryHours} hours.`,
         refundTerms: 'Full refund to client if deliverable is not submitted within deadline.',
         deliveryDeadlineHrs: parseInt(deliveryHours) || 48,
@@ -248,22 +265,101 @@ export const PostJobModal: React.FC<PostJobModalProps> = ({ isOpen, onClose, onJ
 
             <div>
               <label className="block text-[11px] font-bold text-slate-800 dark:text-slate-200 mb-1">
-                Min Tier
+                Cleanverse Min Tier *
               </label>
-              <div className="relative">
-                <input
-                  type="number"
-                  required
-                  min="0"
-                  max="100"
-                  disabled={!activePersona.isVerified}
-                  value={minTier}
-                  onChange={(e) => setMinTier(e.target.value)}
-                  className="w-full pl-8 pr-2 py-2.5 neu-inset text-xs font-bold text-indigo-600 dark:text-indigo-400 disabled:opacity-50"
-                />
-                <ShieldCheck className="h-3.5 w-3.5 text-indigo-400 absolute left-2.5 top-3" />
-              </div>
+              <select
+                disabled={!activePersona.isVerified}
+                value={minTier}
+                onChange={(e) => setMinTier(e.target.value)}
+                className="w-full px-3 py-2.5 neu-inset text-xs font-bold text-indigo-600 dark:text-indigo-400 disabled:opacity-50 focus:outline-none"
+              >
+                <option value="10">Tier 10 — Basic Identity Verified (Email / Phone)</option>
+                <option value="20">Tier 20 — Standard A-Pass Verified (Gov ID & Face Match)</option>
+                <option value="30">Tier 30 — Advanced Verified (Proof of Address & Clean OFAC)</option>
+                <option value="40">Tier 40 — Enterprise & DAO Treasury (Institutional Verification)</option>
+                <option value="50">Tier 50 — Institutional Validator Pool (Maximum Trust)</option>
+              </select>
             </div>
+          </div>
+
+          {/* Regional Sanctions & Country Prohibitions Manager */}
+          <div className="neu-inset p-4 rounded-2xl space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5 uppercase tracking-wider">
+                <ShieldAlert className="h-3.5 w-3.5 text-rose-500" />
+                Prohibited Regional Sanctions
+              </span>
+              <span className="text-[9px] bg-rose-500/20 text-rose-600 dark:text-rose-400 font-bold px-1.5 py-0.5 rounded border border-rose-400/30">
+                VALIDATOR GATED
+              </span>
+            </div>
+
+            <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-snug">
+              Exclude specific high-risk jurisdictions or add custom 2-letter ISO country codes to prevent wallets from participating in this escrow.
+            </p>
+
+            {/* Preset Exclusion Chips */}
+            <div className="flex flex-wrap items-center gap-1.5">
+              {[
+                { code: 'RU', name: 'Russia (OFAC)' },
+                { code: 'CN', name: 'China' },
+                { code: 'US', name: 'United States' },
+                { code: 'IR', name: 'Iran' },
+                { code: 'KP', name: 'North Korea' },
+              ].map((c) => {
+                const isExcluded = prohibitedCountries.includes(c.code);
+                return (
+                  <button
+                    key={c.code}
+                    type="button"
+                    onClick={() => toggleProhibitedCountry(c.code)}
+                    className={`px-2.5 py-1 rounded-xl text-[11px] font-bold transition-all ${
+                      isExcluded
+                        ? 'bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/40 font-extrabold'
+                        : 'neu-btn-secondary opacity-70 hover:opacity-100'
+                    }`}
+                  >
+                    {isExcluded ? 'PROHIBITED' : '+ Exclude'} {c.name}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Custom ISO Code Input */}
+            <div className="flex items-center gap-2 pt-1">
+              <input
+                type="text"
+                maxLength={2}
+                placeholder="ISO Code (e.g. GB, DE)..."
+                value={customCountryInput}
+                onChange={(e) => setCustomCountryInput(e.target.value)}
+                className="flex-1 px-3 py-1.5 neu-inset text-xs font-mono uppercase text-slate-900 dark:text-white focus:outline-none"
+              />
+              <button
+                type="button"
+                onClick={handleAddCustomCountry}
+                className="neu-btn-secondary px-3 py-1.5 text-xs font-bold"
+              >
+                + Add Code
+              </button>
+            </div>
+
+            {/* Active Prohibited List */}
+            {prohibitedCountries.length > 0 && (
+              <div className="flex items-center gap-1.5 flex-wrap pt-1">
+                <span className="text-[10px] font-bold text-slate-500">Excluded:</span>
+                {prohibitedCountries.map((code) => (
+                  <span
+                    key={code}
+                    onClick={() => toggleProhibitedCountry(code)}
+                    className="px-2 py-0.5 rounded bg-rose-500 text-white text-[10px] font-extrabold cursor-pointer hover:bg-rose-600 transition-colors font-mono"
+                    title="Click to remove"
+                  >
+                    {code} ×
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Upfront Escrow Deposit Summary Card */}

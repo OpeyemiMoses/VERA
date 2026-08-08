@@ -214,7 +214,8 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
       currentDeal.escrowAddress,
       process.env.NEXT_PUBLIC_FACTORY_ADDRESS || '',
       'monad-testnet',
-      currentDeal.minTier
+      currentDeal.minTier,
+      currentDeal.prohibitedCountries
     );
 
     if (!compliance.allowed) {

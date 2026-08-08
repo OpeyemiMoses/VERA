@@ -31,6 +31,8 @@ export interface Deal {
   price: number;
   currency: 'cATKN' | 'MON';
   minTier: number;
+  prohibitedCountries?: string[]; // Array of excluded ISO country codes (e.g. ['RU', 'CN', 'US'])
+  allowedRegions?: string[];      // Array of allowed whitelisted country codes
   deliveryTerms: string;        // What counts as delivery
   refundTerms: string;          // When refunds apply
   deliveryDeadlineHrs: number;
