@@ -201,20 +201,18 @@ export const Header: React.FC<HeaderProps> = ({
                 <Droplets className="h-3 w-3 text-cyan-400" />
                 <span>{faucetLoading ? '...' : '+10k'}</span>
               </button>
-              {appMode === 'demo' && (
-                <button
-                  onClick={() => {
-                    resetPersonaBalances();
-                    resetDeals();
-                    showSuccess('Demo Matrix State & Balances Reset to Fresh Defaults!');
-                  }}
-                  className="neu-btn-secondary px-2 py-1 text-[10px] font-extrabold flex items-center gap-1 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-slate-300 dark:border-slate-800 rounded-lg transition-all"
-                  title="Reset Balances"
-                >
-                  <RotateCcw className="h-3 w-3 text-indigo-500" />
-                  <span>Reset</span>
-                </button>
-              )}
+              <button
+                onClick={() => {
+                  resetPersonaBalances();
+                  resetDeals();
+                  showSuccess(appMode === 'production' ? 'Production Mode cATKN Balance Reset to 0!' : 'Demo Matrix State & Balances Reset to Fresh Defaults!');
+                }}
+                className="neu-btn-secondary px-2 py-1 text-[10px] font-extrabold flex items-center gap-1 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-slate-300 dark:border-slate-800 rounded-lg transition-all"
+                title="Reset Balances to 0"
+              >
+                <RotateCcw className="h-3 w-3 text-indigo-500" />
+                <span>Reset</span>
+              </button>
             </div>
           </div>
 

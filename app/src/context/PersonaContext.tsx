@@ -204,17 +204,17 @@ export const PersonaProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const [catknBalances, setCatknBalances] = useState<Record<string, number>>(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('vera_catkn_v5');
+      const saved = localStorage.getItem('vera_catkn_v7');
       if (saved) {
         try { return JSON.parse(saved); } catch (e) {}
       }
     }
-    return { ...DEFAULT_CATKN };
+    return { ...DEFAULT_CATKN, 'prod-wallet': 0 };
   });
 
   const [realMonBalances, setRealMonBalances] = useState<Record<string, string>>(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('vera_mon_v5');
+      const saved = localStorage.getItem('vera_mon_v7');
       if (saved) {
         try { return JSON.parse(saved); } catch (e) {}
       }
@@ -455,11 +455,9 @@ export const PersonaProvider: React.FC<{ children: React.ReactNode }> = ({ child
       localStorage.removeItem('vera_catkn_v3');
       localStorage.removeItem('vera_catkn_v4');
       localStorage.removeItem('vera_catkn_v5');
-      localStorage.removeItem('vera_mon_v3');
-      localStorage.removeItem('vera_mon_v4');
       localStorage.removeItem('vera_mon_v5');
-      localStorage.setItem('vera_catkn_v5', JSON.stringify(freshCatkn));
-      localStorage.setItem('vera_mon_v5', JSON.stringify(freshMon));
+      localStorage.setItem('vera_catkn_v7', JSON.stringify(freshCatkn));
+      localStorage.setItem('vera_mon_v7', JSON.stringify(freshMon));
     }
     refetchOnChainBalance();
     fetchMonBalances();
