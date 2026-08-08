@@ -1,22 +1,17 @@
-# 🛡️ Vera Protocol — Compliant Escrow Engine
+# Vera Protocol — Compliant Escrow Engine
 
 > **"Stripe Connect meets compliant on-chain escrow for Web3."**
 > A reusable, identity-gated escrow primitive (Smart Contracts + SDK + Frontend) deployed on **Monad Testnet** — the first escrow protocol where every payout and settlement is compliance-enforced by Cleanverse A-Pass identity, Validator Pool rules, and FATF Travel Rule audit exports.
 
-[![Monad Testnet](https://img.shields.io/badge/Network-Monad%20Testnet%20%2810143%29-8A2BE2.svg)](https://testnet.monadexplorer.com)
-[![Cleanverse Compliant](https://img.shields.io/badge/Cleanverse-A--Pass%20Verified-00D2FF.svg)](https://cleanverse.com)
-[![Solidity 0.8.24](https://img.shields.io/badge/Solidity-0.8.24-363636.svg)](https://soliditylang.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-
 ---
 
-## 📍 Repository About & Description
+## Repository About & Description
 
 **Short Description:** Vera Protocol is a compliant, identity-gated on-chain escrow engine built on Monad Testnet and powered by Cleanverse CVI/CVA. It enables trust-adjusted freelancing, OTC token trades, and institutional settlements with automated FATF Travel Rule PDF reporting and ECDSA compliance attestations.
 
 ---
 
-## 🔗 Live Monad Testnet Contracts (Chain ID: 10143)
+## Live Monad Testnet Contracts (Chain ID: 10143)
 
 | Contract | Address | Explorer Link |
 |---|---|---|
@@ -28,33 +23,33 @@
 
 ---
 
-## 🏗️ Architecture & Core Components
+## Architecture & Core Components
 
 ```
-                      +------------------------------------------+
-                      |         Vera Protocol dApp UI            |
-                      |  (Production Web3 + Persona Sandbox)     |
-                      +--------------------+---------------------+
-                                           |
-                                           v
-                      +--------------------+---------------------+
-                      |      Cleanverse SDK & Attestor API       |
-                      |  (AES-128-CBC + EIP-712 ECDSA Attestor) |
-                      +--------------------+---------------------+
-                                           |
-                   +-----------------------+-----------------------+
-                   |                                               |
-                   v                                               v
-+------------------+-------------------+       +-------------------+-------------------+
-|      EscrowFactory.sol (Monad)       |       |       Cleanverse REST API Engine      |
-| Deploy & index compliant escrows     |       | A-Pass Verification & Travel Rule  |
-+------------------+-------------------+       +---------------------------------------+
-                   |
-                   v
-+------------------+-------------------+
-|          Escrow.sol (Monad)          |
-|  Identity-Gated On-Chain Escrow Pool |
-+--------------------------------------+
+                       +------------------------------------------+
+                       |         Vera Protocol dApp UI            |
+                       |  (Production Web3 + Persona Sandbox)     |
+                       +--------------------+---------------------+
+                                            |
+                                            v
+                       +--------------------+---------------------+
+                       |      Cleanverse SDK & Attestor API       |
+                       |  (AES-128-CBC + EIP-712 ECDSA Attestor) |
+                       +--------------------+---------------------+
+                                            |
+                    +-----------------------+-----------------------+
+                    |                                               |
+                    v                                               v
+ +------------------+-------------------+       +-------------------+-------------------+
+ |      EscrowFactory.sol (Monad)       |       |       Cleanverse REST API Engine      |
+ | Deploy & index compliant escrows     |       | A-Pass Verification & Travel Rule  |
+ +------------------+-------------------+       +---------------------------------------+
+                    |
+                    v
+ +------------------+-------------------+
+ |          Escrow.sol (Monad)          |
+ |  Identity-Gated On-Chain Escrow Pool |
+ +--------------------------------------+
 ```
 
 ### 1. Smart Contracts (`/contracts`)
@@ -77,7 +72,7 @@
 
 ---
 
-## 🎯 Depth of Cleanverse CVI & CVA Integration
+## Depth of Cleanverse CVI & CVA Integration
 
 | Cleanverse Feature | Integration Details in Vera Protocol |
 |---|---|
@@ -89,7 +84,7 @@
 
 ---
 
-## ⚡ Quick Start & Development Setup
+## Quick Start & Development Setup
 
 ### 1. Prerequisites
 - **Node.js**: `v18.0.0` or higher
@@ -132,7 +127,7 @@ CLEANVERSE_API_URL=https://api.cleanverse.com
 ```bash
 cd contracts
 npx hardhat test
-# ✓ All 7 unit tests passing
+# All 7 unit tests passing
 ```
 
 ### 5. Running the Frontend dApp
@@ -145,7 +140,7 @@ npm run dev
 
 ---
 
-## 🏆 Alignment with Hackathon Judging Criteria (100 Pts Total)
+## Alignment with Hackathon Judging Criteria (100 Pts Total)
 
 | Criteria | Weight | How Vera Protocol Achieves It |
 |---|:---:|---|
@@ -157,7 +152,7 @@ npm run dev
 
 ---
 
-## 📁 Repository Directory Structure
+## Repository Directory Structure
 
 ```
 compliant-escrow-protocol/
@@ -186,16 +181,16 @@ compliant-escrow-protocol/
 
 ---
 
-## 📜 Community & Open Source Governance
+## Community & Open Source Governance
 
 To ensure high standards of collaboration, security, and contribution, this repository includes:
-- 📖 [**Code of Conduct**](CODE_OF_CONDUCT.md): Contributor Covenant v2.1 standards.
-- 🤝 [**Contributing Guidelines**](CONTRIBUTING.md): Code style, commit conventions, and PR process.
-- 🔒 [**Security Policy**](SECURITY.md): Responsible disclosure policy for reporting vulnerabilities.
-- 📄 [**License**](LICENSE): Released under the permissive **MIT License**.
+- [**Code of Conduct**](CODE_OF_CONDUCT.md): Contributor Covenant v2.1 standards.
+- [**Contributing Guidelines**](CONTRIBUTING.md): Code style, commit conventions, and PR process.
+- [**Security Policy**](SECURITY.md): Responsible disclosure policy for reporting vulnerabilities.
+- [**License**](LICENSE): Released under the permissive **MIT License**.
 
 ---
 
-## 📬 Contact & Support
+## Contact & Support
 
 For inquiries regarding Vera Protocol or Cleanverse integration details, please open an issue in this repository.
