@@ -299,8 +299,9 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
       return;
     }
 
-    // Deduct freelancer collateral if required
-    if (collateralAmount > 0) {
+    // Deduct freelancer good-faith collateral — sandbox/local only.
+    // In production mode the smart contract handles all funds on-chain; local balance is read from chain.
+    if (collateralAmount > 0 && appMode !== 'production') {
       deductBalance(collateralAmount, currentDeal.currency, activePersona.walletAddress);
       console.log('[COLLATERAL] Deducted', collateralAmount, currentDeal.currency, 'from freelancer', activePersona.walletAddress);
     }
@@ -374,15 +375,7 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
     console.log('[ESCROW RELEASE] Trust Score:', recipientTrust.score, '→ Fee:', feePct + '%', '=', feeAmount, currentDeal.currency);
     console.log('[ESCROW RELEASE] Net Payout:', netPayout, currentDeal.currency);
 
-    // Credit NET payout (gross minus platform fee) to recipient
-    if (recipientWallet && netPayout > 0) {
-      addBalance(netPayout, currentDeal.currency, recipientWallet);
-      console.log('[ESCROW RELEASE] addBalance called for:', recipientWallet, '+', netPayout, '(after', feePct + '% fee)');
-    } else {
-      console.error('[ESCROW RELEASE] NO RECIPIENT WALLET FOUND - cannot credit balance!');
-    }
-
-    showNotice(`Releasing ${netPayout} ${currentDeal.currency} to seller (${feePct}% protocol fee applied)...`);
+    showNotice(`Releasing ${netPayout} ${currentDeal.currency} to provider (${feePct}% protocol fee applied)...`);
 
     // ── PRODUCTION MODE: Real On-Chain release Transaction ────────────────────
     if (appMode === 'production') {
@@ -396,7 +389,8 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
 
         currentDeal.releaseTxHash = txHash;
         onUpdateDealStatus(currentDeal.id, 'RELEASED', undefined, undefined, txHash);
-        showNotice(`Payout Released On-Chain (${txHash.slice(0, 10)}...): ${netPayout} ${currentDeal.currency} to seller · ${feeAmount} ${currentDeal.currency} protocol fee.`);
+        showNotice(`Payout Released On-Chain (${txHash.slice(0, 10)}...): ${netPayout} ${currentDeal.currency} to provider · ${feeAmount} ${currentDeal.currency} protocol fee.`);
+        // In production the on-chain release() transfers funds directly — live balance updates from chain
       } catch (err: any) {
         showNotice(`On-chain payout release failed: ${err?.shortMessage || err?.message}`);
       } finally {
@@ -405,11 +399,20 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
       return;
     }
 
+    // ── SANDBOX / LOCAL MODE: Simulate balance credit ─────────────────────────
     const privKey = PERSONA_KEYS[activePersonaKey] || '0xb553cb10a16d0ce4a890cf2611922db0b572fd91ea4b11a56735f179b4b53516';
     confirmDelivery(privKey, currentDeal.escrowAddress).catch(() => {});
 
+    // Credit NET payout to recipient in sandbox mode
+    if (recipientWallet && netPayout > 0) {
+      addBalance(netPayout, currentDeal.currency, recipientWallet);
+      console.log('[ESCROW RELEASE] addBalance called for:', recipientWallet, '+', netPayout, '(after', feePct + '% fee)');
+    } else {
+      console.error('[ESCROW RELEASE] NO RECIPIENT WALLET FOUND - cannot credit balance!');
+    }
+
     onUpdateDealStatus(currentDeal.id, 'RELEASED');
-    showNotice(`Payout Released: ${netPayout} ${currentDeal.currency} to seller · ${feeAmount} ${currentDeal.currency} protocol fee (Trust Score ${recipientTrust.score}/100 → ${feePct}% rate)`);
+    showNotice(`Payout Released: ${netPayout} ${currentDeal.currency} to provider · ${feeAmount} ${currentDeal.currency} protocol fee (Trust Score ${recipientTrust.score}/100 → ${feePct}% rate)`);
     setIsProcessing(false);
   };
 
