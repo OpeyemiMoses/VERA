@@ -45,18 +45,20 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const isMon = deal.currency === 'MON';
   const rawCollateral = (deal.price * sellerTrust.collateralPct) / 100;
   const collateralAmount = isMon ? parseFloat(rawCollateral.toFixed(4)) : Math.round(rawCollateral);
-  const sellerHasSufficientCollateral = collateralAmount === 0 || hasSufficientBalance(collateralAmount, deal.currency, deal.initiatorAddress);
+  const sellerHasSufficientCollateral = appMode === 'production' || collateralAmount === 0 || hasSufficientBalance(collateralAmount, deal.currency, deal.initiatorAddress);
 
   const handleFundEscrow = async () => {
     if (!sufficient) return;
 
-    // Deduct buyer's full deal price
-    deductBalance(deal.price, deal.currency, activePersona.walletAddress);
+    // Deduct buyer's full deal price in local state (sandbox mode only)
+    if (appMode !== 'production') {
+      deductBalance(deal.price, deal.currency, activePersona.walletAddress);
 
-    // Deduct seller's good-faith collateral (locked alongside buyer funds in escrow)
-    if (collateralAmount > 0) {
-      deductBalance(collateralAmount, deal.currency, deal.initiatorAddress);
-      console.log('[COLLATERAL] Deducted', collateralAmount, deal.currency, 'from seller', deal.initiatorAddress, `(Trust Score ${sellerTrust.score}/100 → ${sellerTrust.collateralPct}% collateral)`);
+      // Deduct seller's good-faith collateral (sandbox mode only)
+      if (collateralAmount > 0) {
+        deductBalance(collateralAmount, deal.currency, deal.initiatorAddress);
+        console.log('[COLLATERAL] Deducted', collateralAmount, deal.currency, 'from seller', deal.initiatorAddress, `(Trust Score ${sellerTrust.score}/100 → ${sellerTrust.collateralPct}% collateral)`);
+      }
     }
 
     setStep('verifying');
@@ -85,7 +87,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
         setTxHash(fundTx);
         setStep('funded');
-        deductBalance(deal.price, deal.currency);
         onPaymentComplete(deal.id, fundTx);
       } catch (err: any) {
         setStep('review');
