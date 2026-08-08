@@ -6,6 +6,7 @@ import { ethers } from 'ethers';
 import { CATKN_ADDRESS, CATKN_ABI, CATKN_DECIMALS } from '../lib/contracts';
 import { useToast } from './ToastContext';
 
+import { formatUnits } from 'viem';
 import { calculateTrustScore, TrustScoreDetails } from '../utils/trustEngine';
 
 export interface Persona {
@@ -20,30 +21,57 @@ export interface Persona {
   avatarBg: string;
 }
 
+export interface PersonaContextType {
+  appMode: AppMode;
+  setAppMode: (mode: AppMode) => void;
+  toggleAppMode: () => void;
+  activePersonaKey: string;
+  activePersona: Persona;
+  setActivePersonaKey: (key: string) => void;
+  selectedChain: string;
+  setSelectedChain: (chain: 'monad') => void;
+  isConnected: boolean;
+  setIsConnected: (connected: boolean) => void;
+  prodWalletAddress: string | null;
+  setProdWalletAddress: (addr: string | null) => void;
+  connectBrowserWallet: () => Promise<void>;
+  isVerifyingProdWallet: boolean;
+  recheckProdWallet: (addr?: string) => Promise<void>;
+  activeBalance: { catkn: number; mon: string };
+  claimFaucet: (personaKey?: string) => void;
+  selfIssueAPass: (country?: string, tier?: number) => Promise<void>;
+  deductBalance: (amount: number, currency: 'cATKN' | 'MON', personaWalletOrKey?: string) => void;
+  addBalance: (amount: number, currency: 'cATKN' | 'MON', personaWalletOrKey?: string) => void;
+  hasSufficientBalance: (amount: number, currency: 'cATKN' | 'MON', personaWalletOrKey?: string) => boolean;
+  getPersonaBalance: (personaWalletOrKey?: string) => { catkn: number; mon: string };
+  getPersonaTrustScore: (personaWalletOrKey?: string) => TrustScoreDetails;
+  resetPersonaBalances: () => void;
+}
+
 export type AppMode = 'demo' | 'production';
 
 export const MOCK_PERSONAS: Record<string, Persona> = {
   alice: {
     id: 'alice',
-    name: 'Alice (Client)',
-    role: 'Escrow Buyer / Client',
+    name: 'Alice (Enterprise Buyer)',
+    role: 'DeFi Protocol Lead · Verified Buyer',
     country: 'SG',
     tier: 25,
-    walletAddress: '0x0b7E601E0c41B7Ac3Ce5177cb5c37A37B84a4d16',
+    walletAddress: '0x0b7e601e0c41b7ac3ce5177cb5c37a37b84a4d16',
     isVerified: true,
-    statusText: 'Connected · Verified Tier 25 (Singapore)',
-    avatarBg: 'bg-cyan-500',
+    statusText: 'Connected · Cleanverse Verified (Singapore)',
+    avatarBg: 'bg-indigo-500',
   },
   bob: {
     id: 'bob',
     name: 'Bob (Verified Freelancer)',
-    role: 'Web3 Senior Dev',
+    role: 'Full-Stack Web3 & Security Engineer',
     country: 'US',
     tier: 30,
-    walletAddress: '0x76A470f543373b596af06a52240EC779da5AEDb6',
+    walletAddress: '0x76a470f543373b596af06a52240ec779da5aedb6',
     isVerified: true,
-    statusText: 'Connected · Verified Tier 30 (United States)',
-    avatarBg: 'bg-purple-600',
+    statusText: 'Connected · Cleanverse Verified (United States)',
+    avatarBg: 'bg-purple-500',
   },
   charlie: {
     id: 'charlie',
@@ -111,33 +139,6 @@ export const getPersonaKeyByWallet = (walletAddress?: string): string => {
   return 'prod-wallet';
 };
 
-interface PersonaContextType {
-  appMode: AppMode;
-  setAppMode: (mode: AppMode) => void;
-  toggleAppMode: () => void;
-  activePersonaKey: string;
-  activePersona: Persona;
-  setActivePersonaKey: (key: string) => void;
-  selectedChain: string;
-  setSelectedChain: (chain: 'monad') => void;
-  isConnected: boolean;
-  setIsConnected: (connected: boolean) => void;
-  prodWalletAddress: string | null;
-  setProdWalletAddress: (addr: string | null) => void;
-  connectBrowserWallet: () => Promise<void>;
-  isVerifyingProdWallet: boolean;
-  recheckProdWallet: (addr?: string) => Promise<void>;
-  activeBalance: { catkn: number; mon: string };
-  claimFaucet: (personaKey?: string) => void;
-  selfIssueAPass: (country?: string, tier?: number) => Promise<void>;
-  deductBalance: (amount: number, currency: 'cATKN' | 'MON', personaWalletOrKey?: string) => void;
-  addBalance: (amount: number, currency: 'cATKN' | 'MON', personaWalletOrKey?: string) => void;
-  hasSufficientBalance: (amount: number, currency: 'cATKN' | 'MON', personaWalletOrKey?: string) => boolean;
-  getPersonaBalance: (personaWalletOrKey?: string) => { catkn: number; mon: string };
-  getPersonaTrustScore: (personaWalletOrKey?: string) => TrustScoreDetails;
-  resetPersonaBalances: () => void;
-}
-
 const PersonaContext = createContext<PersonaContextType | undefined>(undefined);
 
 export const PersonaProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -180,7 +181,7 @@ export const PersonaProvider: React.FC<{ children: React.ReactNode }> = ({ child
     [DIANA_WALLET]:   45000,
     [MARCUS_WALLET]:  22000,
     [ZARA_WALLET]:    55000,
-    'prod-wallet':    5000,
+    'prod-wallet':    0,
   };
 
   const DEFAULT_MON: Record<string, string> = {
@@ -230,7 +231,7 @@ export const PersonaProvider: React.FC<{ children: React.ReactNode }> = ({ child
     query: { enabled: appMode === 'production' && !!wagmiAddress, refetchInterval: 4000 },
   });
   const onChainCatknBalance = onChainCatknRaw !== undefined
-    ? Math.floor(Number(onChainCatknRaw as bigint) / 10 ** CATKN_DECIMALS)
+    ? Math.floor(parseFloat(formatUnits(onChainCatknRaw as bigint, CATKN_DECIMALS)))
     : null;
 
   // ── On-chain faucet write (Production Mode) ────────────────────────────
@@ -442,20 +443,26 @@ export const PersonaProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const resetPersonaBalances = () => {
-    const freshCatkn = { ...DEFAULT_CATKN };
-    const freshMon = { ...DEFAULT_MON };
+    const freshCatkn: Record<string, number> = { ...DEFAULT_CATKN, 'prod-wallet': 0 };
+    const freshMon: Record<string, string> = { ...DEFAULT_MON, 'prod-wallet': '0.0000' };
+    if (wagmiAddress) {
+      freshCatkn[wagmiAddress.toLowerCase()] = 0;
+      freshMon[wagmiAddress.toLowerCase()] = '0.0000';
+    }
     setCatknBalances(freshCatkn);
     setRealMonBalances(freshMon);
     if (typeof window !== 'undefined') {
       localStorage.removeItem('vera_catkn_v3');
       localStorage.removeItem('vera_catkn_v4');
+      localStorage.removeItem('vera_catkn_v5');
       localStorage.removeItem('vera_mon_v3');
       localStorage.removeItem('vera_mon_v4');
-      localStorage.removeItem('vera_catkn_v4');
-      localStorage.removeItem('vera_mon_v4');
+      localStorage.removeItem('vera_mon_v5');
       localStorage.setItem('vera_catkn_v5', JSON.stringify(freshCatkn));
       localStorage.setItem('vera_mon_v5', JSON.stringify(freshMon));
     }
+    refetchOnChainBalance();
+    fetchMonBalances();
     setBalanceNonce((v) => v + 1);
   };
 
