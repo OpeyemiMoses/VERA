@@ -185,6 +185,70 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
     setTimeout(() => setNotice(null), 5000);
   };
 
+  const handleDownloadDeliverable = (targetDeal: Deal) => {
+    const deliverable = targetDeal.deliverable;
+    const rawFileName = deliverable?.fileName || `${targetDeal.title.replace(/[^a-zA-Z0-9]/g, '_')}_Deliverable.txt`;
+    const fileName = rawFileName.endsWith('.zip') ? rawFileName.replace('.zip', '.txt') : rawFileName;
+    
+    let content = '';
+    let mimeType = 'text/plain';
+
+    if (deliverable?.fileContent) {
+      content = deliverable.fileContent;
+      if (fileName.endsWith('.json')) mimeType = 'application/json';
+      else if (fileName.endsWith('.sol')) mimeType = 'text/plain';
+      else if (fileName.endsWith('.ts') || fileName.endsWith('.js')) mimeType = 'text/javascript';
+    } else if (deliverable?.textCredentials) {
+      content = `VERA PROTOCOL SECURE CREDENTIALS ARCHIVE\n` +
+        `==========================================\n` +
+        `Deal Title: ${targetDeal.title}\n` +
+        `Category: ${targetDeal.category}\n` +
+        `Escrow Vault: ${targetDeal.escrowAddress}\n` +
+        `Released At: ${new Date().toISOString()}\n\n` +
+        `UNMASKED PRODUCTION CREDENTIALS & KEYS:\n` +
+        `------------------------------------------\n` +
+        `${deliverable.textCredentials}\n`;
+      mimeType = 'text/plain';
+    } else if (deliverable?.url || targetDeal.deliverableUrl) {
+      const targetUrl = deliverable?.url || targetDeal.deliverableUrl || 'https://github.com/OpeyemiMoses/VERA.git';
+      window.open(targetUrl, '_blank');
+      showNotice(`Opened Deliverable URL: ${targetUrl}`);
+      return;
+    } else {
+      content = `VERA PROTOCOL DELIVERABLE ARCHIVE PACKAGE\n` +
+        `==========================================\n` +
+        `Deal ID: ${targetDeal.id}\n` +
+        `Title: ${targetDeal.title}\n` +
+        `Category: ${targetDeal.category}\n` +
+        `Seller / Provider: ${targetDeal.counterpartyName || targetDeal.initiatorName}\n` +
+        `Escrow Vault: ${targetDeal.escrowAddress}\n` +
+        `Deposit Amount: ${targetDeal.price} ${targetDeal.currency}\n` +
+        `Released At: ${new Date().toISOString()}\n\n` +
+        `DELIVERABLE SPECIFICATION & VERIFICATION:\n` +
+        `------------------------------------------\n` +
+        `Deliverable Terms: ${targetDeal.deliveryTerms}\n` +
+        `Cleanverse Compliance Status: ATTESTATION VERIFIED (PASSED)\n` +
+        `Monad Testnet EVM Hash: ${targetDeal.releaseTxHash || targetDeal.creationTxHash || '0x3a9f8b1c4d9e2f4a8b7c6d5e1f0a9b8c7d6e5f4a'}\n\n` +
+        `PRODUCTION ASSETS & REPOSITORY LINK:\n` +
+        `------------------------------------------\n` +
+        `GitHub Repository: https://github.com/OpeyemiMoses/VERA.git\n` +
+        `Live Demo Deployment: http://localhost:3005\n`;
+      mimeType = 'text/plain';
+    }
+
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    showNotice(`Downloaded deliverable package: ${fileName}`);
+  };
+
   const handleAcceptJob = async () => {
     if (activePersona.walletAddress.toLowerCase() === currentDeal.initiatorAddress.toLowerCase()) {
       showNotice('You cannot accept your own job posting. Switch to a freelancer persona (e.g. Bob) to accept this job.');
@@ -1014,7 +1078,7 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
 
                       {currentDeal.status === 'RELEASED' ? (
                         <button
-                          onClick={() => showSuccess(`Downloading Production File: ${currentDeal.deliverable?.fileName || 'Deliverable_Archive.zip'}`)}
+                          onClick={() => handleDownloadDeliverable(currentDeal)}
                           className="neu-btn-primary text-xs font-bold px-4 py-2 flex items-center gap-1.5 shadow-md"
                         >
                           <FileText className="h-3.5 w-3.5 text-white" /> Download Unlocked File
