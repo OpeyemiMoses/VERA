@@ -1,0 +1,20 @@
+{
+  "name": "compliant-escrow-contracts",
+  "version": "1.0.0",
+  "description": "Smart contracts for Compliant Escrow Protocol",
+  "main": "index.js",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy:base": "hardhat run scripts/deploy.js --network baseSepolia",
+    "deploy:monad": "hardhat run scripts/deploy.js --network monadTestnet"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.0.1"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "dotenv": "^16.4.5",
+    "hardhat": "^2.22.0"
+  }
+}
