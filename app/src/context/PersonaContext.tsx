@@ -637,9 +637,18 @@ export const PersonaProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
-  const hasSufficientBalance = (amount: number, currency: 'cATKN' | 'MON', personaWalletOrKey?: string): boolean => {
+  const hasSufficientBalance = (amount: number, currency: string, personaWalletOrKey?: string): boolean => {
+    if (appMode === 'production' && (!personaWalletOrKey || personaWalletOrKey === 'prod-wallet' || personaWalletOrKey.toLowerCase() === wagmiAddress?.toLowerCase())) {
+      const isCatkn = !currency || currency.toLowerCase().includes('catkn');
+      if (isCatkn) {
+        return activeBalance.catkn >= amount;
+      } else {
+        return parseFloat(activeBalance.mon) >= amount;
+      }
+    }
     const { wKey, pKey } = resolveKeys(personaWalletOrKey);
-    if (currency === 'cATKN') {
+    const isCatkn = !currency || currency.toLowerCase().includes('catkn');
+    if (isCatkn) {
       const current = catknBalances[wKey] ?? catknBalances[pKey] ?? DEFAULT_CATKN[wKey] ?? 0;
       return current >= amount;
     } else {

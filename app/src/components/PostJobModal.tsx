@@ -393,7 +393,7 @@ export const PostJobModal: React.FC<PostJobModalProps> = ({ isOpen, onClose, onJ
                 <span>Insufficient Balance to Fund All {numSlots} Slots</span>
               </div>
               <p className="text-xs text-slate-700 dark:text-slate-200">
-                You currently have <strong className="text-rose-500 dark:text-rose-400 font-mono">{currency === 'cATKN' ? `${activeBalance.catkn} cATKN` : `${activeBalance.mon} MON`}</strong>, but this job requires <strong className="text-slate-900 dark:text-white font-mono">{totalUpfrontDeposit} {currency}</strong> to fund {numSlots} freelancer position(s).
+                You currently have <strong className="text-rose-500 dark:text-rose-400 font-mono">{currency === 'cATKN' ? `${activeBalance.catkn.toLocaleString()} cATKN` : `${activeBalance.mon} MON`}</strong>, but this job requires <strong className="text-slate-900 dark:text-white font-mono">{totalUpfrontDeposit.toLocaleString()} {currency}</strong> to fund {numSlots} freelancer position(s).
               </p>
               {currency === 'cATKN' && (
                 <button
