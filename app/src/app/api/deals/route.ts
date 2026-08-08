@@ -42,9 +42,13 @@ export async function POST(req: NextRequest) {
     } else {
       globalDealsRegistry.unshift(dealData);
     }
-
     return NextResponse.json({ success: true, count: globalDealsRegistry.length });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
+}
+
+export async function DELETE() {
+  globalDealsRegistry.length = 0;
+  return NextResponse.json({ success: true, message: 'All global deals cleared.' });
 }

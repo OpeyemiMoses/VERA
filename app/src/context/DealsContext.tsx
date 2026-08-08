@@ -17,7 +17,7 @@ interface DealsContextType {
   isFetchingOnChain: boolean;
 }
 
-const STORAGE_KEY = 'vera_deals_v15';
+const STORAGE_KEY = 'vera_deals_v50';
 
 const DealsContext = createContext<DealsContextType | undefined>(undefined);
 
@@ -27,19 +27,16 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [deals, setDeals] = useState<Deal[]>(() => {
     if (typeof window !== 'undefined') {
       try {
-        for (let i = 1; i <= 14; i++) {
+        for (let i = 1; i <= 50; i++) {
           localStorage.removeItem(`vera_deals_v${i}`);
         }
-
-        const stored = localStorage.getItem(STORAGE_KEY);
-        if (stored) {
-          return JSON.parse(stored);
-        }
+        localStorage.removeItem(STORAGE_KEY);
+        fetch('/api/deals', { method: 'DELETE' }).catch(() => {});
       } catch (e) {
-        console.error('Failed to load deals from localStorage:', e);
+        console.error('Failed to clear deals from localStorage:', e);
       }
     }
-    return INITIAL_DEALS;
+    return [];
   });
 
   // On-chain & Shared API deals for Production Mode
@@ -361,9 +358,17 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   };
 
   const resetDeals = () => {
-    setDeals(INITIAL_DEALS);
+    setDeals([]);
+    setOnChainDeals([]);
+    setSharedApiDeals([]);
     if (typeof window !== 'undefined') {
-      localStorage.removeItem(STORAGE_KEY);
+      try {
+        for (let i = 1; i <= 50; i++) {
+          localStorage.removeItem(`vera_deals_v${i}`);
+        }
+        localStorage.removeItem(STORAGE_KEY);
+      } catch (e) {}
+      fetch('/api/deals', { method: 'DELETE' }).catch(() => {});
     }
   };
 
