@@ -438,14 +438,10 @@ export const DealsPage: React.FC<DealsPageProps> = ({ onBackToHome, onDealCreate
 
             <div>
               <label className="block text-xs font-bold uppercase text-slate-800 dark:text-slate-200 tracking-wider mb-1.5">CURRENCY</label>
-              <select
-                value={currency}
-                onChange={(e) => setCurrency(e.target.value as any)}
-                className="w-full px-4 py-3 neu-inset text-xs font-bold text-slate-900 dark:text-white focus:outline-none"
-              >
-                <option value="cATKN">cATKN (Cleanverse Token)</option>
-                <option value="MON">MON (Monad Native Token)</option>
-              </select>
+              <div className="px-4 py-3 neu-inset text-xs font-extrabold text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center gap-1.5">
+                <Coins className="h-4 w-4 text-indigo-500" />
+                <span>cATKN (Cleanverse Token)</span>
+              </div>
             </div>
 
             <div>

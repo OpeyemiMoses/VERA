@@ -274,27 +274,9 @@ export const PostJobModal: React.FC<PostJobModalProps> = ({ isOpen, onClose, onJ
           {/* Currency Selection */}
           <div>
             <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">Escrow Token Currency</label>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => setCurrency('cATKN')}
-                className={`py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
-                  currency === 'cATKN' ? 'neu-btn-primary' : 'neu-btn-secondary'
-                }`}
-              >
-                <Coins className="h-4 w-4 text-cyan-400" />
-                <span>cATKN (Compliant Token)</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setCurrency('MON')}
-                className={`py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
-                  currency === 'MON' ? 'neu-btn-primary' : 'neu-btn-secondary'
-                }`}
-              >
-                <DollarSign className="h-4 w-4 text-purple-400" />
-                <span>MON (Native Monad)</span>
-              </button>
+            <div className="py-2.5 px-4 neu-inset text-xs font-extrabold text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center gap-2">
+              <Coins className="h-4 w-4 text-indigo-500" />
+              <span>cATKN (Cleanverse Compliant Token)</span>
             </div>
           </div>
 

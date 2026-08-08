@@ -153,10 +153,7 @@ export const MonadExplorerModal: React.FC<MonadExplorerModalProps> = ({
               <span className="text-slate-400 font-bold">TRANSACTION VALUE:</span>
               <span className="font-extrabold text-slate-900 dark:text-white text-sm">{amount}</span>
             </div>
-            <div className="flex justify-between items-center text-xs border-t border-slate-300/40 dark:border-slate-800/60 pt-2">
-              <span className="text-slate-400 font-bold">NETWORK GAS FEE:</span>
-              <span className="font-extrabold text-purple-600 dark:text-purple-400">45,120 Gas (~0.00045 MON)</span>
-            </div>
+
             <div className="flex justify-between items-center text-xs border-t border-slate-300/40 dark:border-slate-800/60 pt-2">
               <span className="text-slate-400 font-bold">TRAVEL RULE ATTESTATION:</span>
               <span className="font-extrabold text-emerald-500 flex items-center gap-1">

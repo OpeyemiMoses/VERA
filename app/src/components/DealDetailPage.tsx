@@ -964,14 +964,7 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center justify-between neu-inset p-3 text-[11px] font-mono">
-            <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300 font-bold">
-              <Zap className="h-3.5 w-3.5 text-purple-500" /> Monad Network Gas Paid:
-            </span>
-            <span className="text-purple-600 dark:text-purple-400 font-extrabold">
-              ~0.00045 MON (~$0.0012 EVM Gas)
-            </span>
-          </div>
+
 
           {/* Real EVM Transaction Hashes for Escrow Verification */}
           <div className="border-t border-slate-300/40 dark:border-slate-800/60 pt-3 space-y-2 text-xs font-mono">

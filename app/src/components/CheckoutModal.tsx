@@ -191,14 +191,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                     {deal.currency === 'cATKN' ? `${activeBalance.catkn.toLocaleString()} cATKN` : `${activeBalance.mon} MON`}
                   </span>
                 </div>
-                <div className="flex justify-between items-center text-xs border-t border-slate-300/40 dark:border-slate-800/60 pt-2">
-                  <span className="text-slate-600 dark:text-slate-300 font-medium flex items-center gap-1">
-                    <Zap className="h-3.5 w-3.5 text-purple-500" /> Monad Network Gas Fee:
-                  </span>
-                  <span className="font-bold font-mono text-purple-600 dark:text-purple-400">
-                    ~0.00045 MON
-                  </span>
-                </div>
+
               </div>
 
               {/* Trust-Adjusted Terms Engine Box */}
