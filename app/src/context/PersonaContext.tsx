@@ -129,6 +129,7 @@ interface PersonaContextType {
   recheckProdWallet: (addr?: string) => Promise<void>;
   activeBalance: { catkn: number; mon: string };
   claimFaucet: (personaKey?: string) => void;
+  selfIssueAPass: (country?: string, tier?: number) => Promise<void>;
   deductBalance: (amount: number, currency: 'cATKN' | 'MON', personaWalletOrKey?: string) => void;
   addBalance: (amount: number, currency: 'cATKN' | 'MON', personaWalletOrKey?: string) => void;
   hasSufficientBalance: (amount: number, currency: 'cATKN' | 'MON', personaWalletOrKey?: string) => boolean;
@@ -528,6 +529,40 @@ export const PersonaProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
+  // Self-issue Cleanverse CVI A-Pass Credential for connected Web3 wallet (or active persona)
+  const selfIssueAPass = async (country: string = 'US', tier: number = 30) => {
+    const targetAddress = appMode === 'production' ? prodWalletAddress || wagmiAddress : activePersona.walletAddress;
+    if (!targetAddress) {
+      showError('Please connect a Web3 wallet or select an active persona first.');
+      return;
+    }
+
+    setIsVerifyingProdWallet(true);
+    try {
+      const res = await fetch('/api/cleanverse/apass', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ address: targetAddress, country, tier }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setProdApass({
+          isVerified: true,
+          tier: tier,
+          country: country,
+        });
+        showSuccess(`Cleanverse CVI A-Pass Issued! Wallet ${targetAddress.slice(0, 6)}...${targetAddress.slice(-4)} registered at Tier ${tier} (${country}).`);
+        await verifyProdWallet(targetAddress);
+      } else {
+        showError(data.error || 'Failed to issue Cleanverse A-Pass.');
+      }
+    } catch (err: any) {
+      showError(`A-Pass issuance error: ${err.message}`);
+    } finally {
+      setIsVerifyingProdWallet(false);
+    }
+  };
+
   // Compute Active Persona based on Mode
   let activePersona: Persona;
   if (appMode === 'production') {
@@ -660,6 +695,7 @@ export const PersonaProvider: React.FC<{ children: React.ReactNode }> = ({ child
         recheckProdWallet,
         activeBalance,
         claimFaucet,
+        selfIssueAPass,
         deductBalance,
         addBalance,
         hasSufficientBalance,

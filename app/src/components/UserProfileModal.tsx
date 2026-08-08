@@ -40,7 +40,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   onSelectDeal,
   openDisputeAudit,
 }) => {
-  const { activePersona, activePersonaKey, setActivePersonaKey, activeBalance, claimFaucet, appMode } = usePersona();
+  const { activePersona, activePersonaKey, setActivePersonaKey, activeBalance, claimFaucet, selfIssueAPass, appMode } = usePersona();
   const { deals, resetDeals } = useDeals();
   const { showSuccess } = useToast();
 
@@ -342,6 +342,24 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                     )}
                   </div>
                 </div>
+
+                {!activePersona.isVerified && (
+                  <div className="bg-rose-500/10 border border-rose-500/30 p-4 rounded-2xl flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <h4 className="text-xs font-extrabold text-rose-600 dark:text-rose-400 uppercase tracking-wider">Cleanverse CVI A-Pass Credential Required</h4>
+                      <p className="text-[11px] text-slate-600 dark:text-slate-300">
+                        Your wallet (<code className="font-mono font-bold text-slate-900 dark:text-white">{activePersona.walletAddress.slice(0, 8)}...{activePersona.walletAddress.slice(-6)}</code>) is not yet registered in Cleanverse's A-Pass Registry. Click below to self-grant an official A-Pass credential via <code className="font-mono text-purple-600 dark:text-purple-400">/generate_apass</code>.
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => selfIssueAPass('US', 30)}
+                      className="neu-btn-primary px-4 py-2.5 text-xs font-extrabold flex items-center gap-1.5 shadow-md flex-shrink-0"
+                    >
+                      <Sparkles className="h-4 w-4 text-amber-300" />
+                      <span>⚡ Self-Issue Cleanverse A-Pass Tier 30</span>
+                    </button>
+                  </div>
+                )}
 
                 {/* Stats Grid */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-mono">

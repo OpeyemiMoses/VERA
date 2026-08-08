@@ -57,6 +57,7 @@ export const Header: React.FC<HeaderProps> = ({
     setSelectedChain,
     activeBalance,
     claimFaucet,
+    selfIssueAPass,
     getPersonaTrustScore,
     resetPersonaBalances,
   } = usePersona();
@@ -238,6 +239,14 @@ export const Header: React.FC<HeaderProps> = ({
                 <ShieldAlert className="h-4 w-4 text-rose-500" />
                 <span>Identity Blocked</span>
               </div>
+              <button
+                onClick={() => selfIssueAPass('US', 30)}
+                className="neu-btn-primary px-3 py-2 text-xs font-extrabold flex items-center gap-1.5 shadow-md"
+                title="Issue Cleanverse CVI A-Pass Credential via generate_apass API"
+              >
+                <Sparkles className="h-3.5 w-3.5 text-amber-300" />
+                <span>⚡ Issue A-Pass CVI</span>
+              </button>
             </div>
           )}
         </div>
