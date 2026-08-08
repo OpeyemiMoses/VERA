@@ -39,6 +39,17 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     return [];
   });
 
+  const [resetTimestamp, setResetTimestamp] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('vera_reset_timestamp_v1');
+      if (stored) return Number(stored);
+      const now = Date.now();
+      localStorage.setItem('vera_reset_timestamp_v1', String(now));
+      return now;
+    }
+    return Date.now();
+  });
+
   // On-chain & Shared API deals for Production Mode
   const [onChainDeals, setOnChainDeals] = useState<Deal[]>([]);
   const [sharedApiDeals, setSharedApiDeals] = useState<Deal[]>([]);
@@ -76,54 +87,62 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   // In Production Mode, merge: local deals + shared API registry deals + on-chain Monad escrows
   const activeDealList = useMemo(() => {
-    if (appMode !== 'production') return deals;
+    let pool: Deal[] = [];
 
-    const combinedPoolMap = new Map<string, Deal>();
+    if (appMode !== 'production') {
+      pool = deals;
+    } else {
+      const combinedPoolMap = new Map<string, Deal>();
+      const w = prodWalletAddress?.toLowerCase() ?? '';
 
-    const w = prodWalletAddress?.toLowerCase() ?? '';
+      // 1. Add shared API deals
+      sharedApiDeals
+        .filter((d) => {
+          const isInitiator = d.initiatorAddress?.toLowerCase() === w;
+          const isCounterparty = d.counterpartyAddress?.toLowerCase() === w;
+          const isParticipant = d.participantWallets?.some((pw: string) => pw.toLowerCase() === w);
+          const isOpenDeal = (d.type === 'DIRECT_DEAL' || d.type === 'SERVICE_LISTING') && d.status === 'OPEN' && !d.counterpartyAddress;
+          return isInitiator || isCounterparty || isParticipant || isOpenDeal;
+        })
+        .forEach((d) => combinedPoolMap.set(d.id, d));
 
-    // 1. Add shared API deals — only those where the wallet is a participant, OR open/funded job postings with no freelancer yet
-    sharedApiDeals
-      .filter((d) => {
-        const isInitiator = d.initiatorAddress?.toLowerCase() === w;
-        const isCounterparty = d.counterpartyAddress?.toLowerCase() === w;
-        const isParticipant = d.participantWallets?.some((pw: string) => pw.toLowerCase() === w);
-        const isOpenDeal = (d.type === 'DIRECT_DEAL' || d.type === 'SERVICE_LISTING') && d.status === 'OPEN' && !d.counterpartyAddress;
-        return isInitiator || isCounterparty || isParticipant || isOpenDeal;
-      })
-      .forEach((d) => combinedPoolMap.set(d.id, d));
-    // 2. Add local deals (overrides if local is fresher)
-    deals.forEach((d) => combinedPoolMap.set(d.id, d));
-    // 3. Add raw on-chain deals if not already in pool
-    onChainDeals.forEach((oc) => {
-      const existingKey = Array.from(combinedPoolMap.keys()).find((k) => {
-        const item = combinedPoolMap.get(k);
-        return item?.escrowAddress && oc.escrowAddress && item.escrowAddress.toLowerCase() === oc.escrowAddress.toLowerCase();
+      // 2. Add local deals
+      deals.forEach((d) => combinedPoolMap.set(d.id, d));
+
+      // 3. Add raw on-chain deals
+      onChainDeals.forEach((oc) => {
+        const existingKey = Array.from(combinedPoolMap.keys()).find((k) => {
+          const item = combinedPoolMap.get(k);
+          return item?.escrowAddress && oc.escrowAddress && item.escrowAddress.toLowerCase() === oc.escrowAddress.toLowerCase();
+        });
+        if (!existingKey) {
+          combinedPoolMap.set(oc.id, oc);
+        }
       });
-      if (!existingKey) {
-        combinedPoolMap.set(oc.id, oc);
-      }
-    });
 
-    const pool = Array.from(combinedPoolMap.values());
+      pool = Array.from(combinedPoolMap.values()).map((deal) => {
+        if (!deal.escrowAddress) return deal;
+        const onChainMatch = onChainDeals.find(
+          (oc) => oc.escrowAddress && oc.escrowAddress.toLowerCase() === deal.escrowAddress.toLowerCase()
+        );
+        if (!onChainMatch) return deal;
+        return {
+          ...deal,
+          status: onChainMatch.status,
+          statusLabel: onChainMatch.statusLabel,
+          counterpartyAddress: onChainMatch.counterpartyAddress || deal.counterpartyAddress,
+          counterpartyName: onChainMatch.counterpartyName || deal.counterpartyName,
+          acceptedCount: onChainMatch.acceptedCount ?? deal.acceptedCount,
+        };
+      });
+    }
 
-    // Merge real on-chain statuses from Monad Testnet into all pool deals
-    return pool.map((deal) => {
-      if (!deal.escrowAddress) return deal;
-      const onChainMatch = onChainDeals.find(
-        (oc) => oc.escrowAddress && oc.escrowAddress.toLowerCase() === deal.escrowAddress.toLowerCase()
-      );
-      if (!onChainMatch) return deal;
-      return {
-        ...deal,
-        status: onChainMatch.status,
-        statusLabel: onChainMatch.statusLabel,
-        counterpartyAddress: onChainMatch.counterpartyAddress || deal.counterpartyAddress,
-        counterpartyName: onChainMatch.counterpartyName || deal.counterpartyName,
-        acceptedCount: onChainMatch.acceptedCount ?? deal.acceptedCount,
-      };
-    });
-  }, [deals, sharedApiDeals, onChainDeals, appMode]);
+    if (resetTimestamp) {
+      pool = pool.filter((d) => !d.createdAt || d.createdAt > resetTimestamp);
+    }
+
+    return pool;
+  }, [deals, sharedApiDeals, onChainDeals, appMode, prodWalletAddress, resetTimestamp]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -358,11 +377,14 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   };
 
   const resetDeals = () => {
+    const now = Date.now();
+    setResetTimestamp(now);
     setDeals([]);
     setOnChainDeals([]);
     setSharedApiDeals([]);
     if (typeof window !== 'undefined') {
       try {
+        localStorage.setItem('vera_reset_timestamp_v1', String(now));
         for (let i = 1; i <= 50; i++) {
           localStorage.removeItem(`vera_deals_v${i}`);
         }
