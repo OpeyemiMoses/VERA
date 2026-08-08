@@ -131,22 +131,22 @@ export default function Home() {
     showNotice(`Deliverable (${deliverable.format}) sent to buyer! Ready for review & release.`);
   };
 
-  const handlePurchaseService = (originalDealId: string) => {
-    purchaseServiceContext(originalDealId, activePersona.walletAddress, activePersona.name);
+  const handlePurchaseService = (originalDealId: string, customDepositTxHash?: string) => {
+    purchaseServiceContext(originalDealId, activePersona.walletAddress, activePersona.name, customDepositTxHash);
     const baseId = originalDealId.split('-order-')[0].split('-accepted-')[0];
     const parent = deals.find((d) => d.id === baseId || d.id === originalDealId);
     if (selectedDetailDeal && parent && (selectedDetailDeal.id === parent.id || selectedDetailDeal.id === originalDealId)) {
       const currentQty = parent.quantity !== undefined ? parent.quantity : (parent.totalSlots || 1);
       const newQty = Math.max(0, currentQty - 1);
-      setSelectedDetailDeal({ ...parent, quantity: newQty, status: newQty > 0 ? 'OPEN' : 'FUNDED' });
+      setSelectedDetailDeal({ ...parent, quantity: newQty, status: newQty > 0 ? 'OPEN' : 'FUNDED', depositTxHash: customDepositTxHash || parent.depositTxHash });
     }
     showNotice(`Escrow Paid & Secured!`);
   };
 
-  const handleUpdateDealStatus = (dealId: string, newStatus: Deal['status'], counterpartyName?: string) => {
-    updateDealStatusContext(dealId, newStatus, counterpartyName);
+  const handleUpdateDealStatus = (dealId: string, newStatus: Deal['status'], counterpartyName?: string, counterpartyWallet?: string, releaseTxHash?: string) => {
+    updateDealStatusContext(dealId, newStatus, counterpartyName, counterpartyWallet, releaseTxHash);
     if (selectedDetailDeal && (selectedDetailDeal.id === dealId || selectedDetailDeal.id.startsWith(dealId))) {
-      setSelectedDetailDeal((prev) => (prev ? { ...prev, status: newStatus } : null));
+      setSelectedDetailDeal((prev) => (prev ? { ...prev, status: newStatus, releaseTxHash: releaseTxHash || prev.releaseTxHash } : null));
     }
   };
 
@@ -765,8 +765,8 @@ export default function Home() {
         deal={selectedCheckoutDeal}
         isOpen={!!selectedCheckoutDeal}
         onClose={() => setSelectedCheckoutDeal(null)}
-        onPaymentComplete={(dealId) => {
-          handlePurchaseService(dealId);
+        onPaymentComplete={(dealId, customDepositTxHash) => {
+          handlePurchaseService(dealId, customDepositTxHash);
         }}
       />
       <SubmitDeliverableModal

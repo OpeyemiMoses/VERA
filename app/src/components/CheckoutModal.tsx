@@ -13,7 +13,7 @@ interface CheckoutModalProps {
   isOpen: boolean;
   onClose: () => void;
   deal: any;
-  onPaymentComplete: (dealId: string) => void;
+  onPaymentComplete: (dealId: string, customDepositTxHash?: string) => void;
 }
 
 export const CheckoutModal: React.FC<CheckoutModalProps> = ({
@@ -86,7 +86,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         setTxHash(fundTx);
         setStep('funded');
         deductBalance(deal.price, deal.currency);
-        onPaymentComplete(deal.id);
+        onPaymentComplete(deal.id, fundTx);
       } catch (err: any) {
         setStep('review');
         showError(err?.shortMessage || err?.message || 'On-chain deposit failed or cancelled.');
@@ -99,7 +99,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       const generatedTx = '0x' + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
       setTxHash(generatedTx);
       setStep('funded');
-      onPaymentComplete(deal.id);
+      onPaymentComplete(deal.id, generatedTx);
     }, 1500);
   };
 

@@ -43,7 +43,7 @@ import { getDeliverableImage } from '../utils/imageUtils';
 interface DealDetailPageProps {
   deal: Deal;
   onBack: () => void;
-  onUpdateDealStatus: (dealId: string, newStatus: Deal['status'], counterpartyName?: string) => void;
+  onUpdateDealStatus: (dealId: string, newStatus: Deal['status'], counterpartyName?: string, counterpartyWallet?: string, releaseTxHash?: string) => void;
   openCheckout: (deal: Deal) => void;
   openSubmitDeliverable: (deal: Deal) => void;
   openDisputeAudit: (txHash: string) => void;
@@ -318,8 +318,8 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
         });
 
         currentDeal.attestationTxHash = txHash;
-        acceptJob(currentDeal.id, activePersona.walletAddress, activePersona.name);
-        onUpdateDealStatus(currentDeal.id, 'ACCEPTED' as any, activePersona.name);
+        acceptJob(currentDeal.id, activePersona.walletAddress, activePersona.name, txHash);
+        onUpdateDealStatus(currentDeal.id, 'ACCEPTED' as any, activePersona.name, undefined, txHash);
         showNotice(`Job Accepted On-Chain (${txHash.slice(0, 10)}...)! Cleanverse attestation verified.`);
       } catch (err: any) {
         showNotice(`On-chain job acceptance failed: ${err?.shortMessage || err?.message}`);
@@ -391,7 +391,7 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
         });
 
         currentDeal.releaseTxHash = txHash;
-        onUpdateDealStatus(currentDeal.id, 'RELEASED');
+        onUpdateDealStatus(currentDeal.id, 'RELEASED', undefined, undefined, txHash);
         showNotice(`Payout Released On-Chain (${txHash.slice(0, 10)}...): ${netPayout} ${currentDeal.currency} to seller · ${feeAmount} ${currentDeal.currency} protocol fee.`);
       } catch (err: any) {
         showNotice(`On-chain payout release failed: ${err?.shortMessage || err?.message}`);

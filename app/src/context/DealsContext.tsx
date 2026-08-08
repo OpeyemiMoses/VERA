@@ -7,11 +7,11 @@ import { fetchDealsForWallet } from '../lib/onChainDeals';
 interface DealsContextType {
   deals: Deal[];
   createDeal: (newDeal: Deal) => void;
-  purchaseService: (originalDealId: string, buyerWallet: string, buyerName: string) => void;
-  acceptJob: (dealId: string, freelancerWallet: string, freelancerName: string) => void;
-  submitDeliverable: (dealId: string, deliverable: DeliverableData) => void;
+  purchaseService: (originalDealId: string, buyerWallet: string, buyerName: string, customDepositTxHash?: string) => void;
+  acceptJob: (dealId: string, freelancerWallet: string, freelancerName: string, attestationTxHash?: string) => void;
+  submitDeliverable: (dealId: string, deliverable: DeliverableData, attestationTxHash?: string) => void;
   rejectDeliverable: (dealId: string, reason: string) => void;
-  updateDealStatus: (dealId: string, newStatus: Deal['status'], counterpartyName?: string, counterpartyWallet?: string) => void;
+  updateDealStatus: (dealId: string, newStatus: Deal['status'], counterpartyName?: string, counterpartyWallet?: string, releaseTxHash?: string) => void;
   resetDeals: () => void;
   refreshOnChainDeals: () => Promise<void>;
   isFetchingOnChain: boolean;
@@ -94,7 +94,7 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const generateMockTxHash = () =>
     '0x' + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
 
-  const purchaseService = (originalDealId: string, rawBuyerWallet: string, rawBuyerName: string) => {
+  const purchaseService = (originalDealId: string, rawBuyerWallet: string, rawBuyerName: string, customDepositTxHash?: string) => {
     const baseId = originalDealId.split('-slot-')[0].split('-order-')[0].split('-accepted-')[0];
     const parentDeal = deals.find((d) => d.id === baseId || d.id === originalDealId);
     if (!parentDeal) return;
@@ -123,14 +123,12 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       quantity: newQty,
       acceptedCount: newAccepted,
       totalSlots: total,
-      // ONLY the initiator and THIS specific buyer participate in this slot!
       participantWallets: Array.from(new Set([parentDeal.initiatorAddress, buyerWallet])),
       counterpartyAddress: buyerWallet,
       counterpartyName: buyerName,
-      creationTxHash: parentDeal.creationTxHash || generateMockTxHash(),
-      depositTxHash: generateMockTxHash(),
+      creationTxHash: parentDeal.creationTxHash,
+      depositTxHash: customDepositTxHash || parentDeal.depositTxHash || (appMode === 'production' ? undefined : generateMockTxHash()),
       createdAt: Date.now(),
-      // Each slot is independent — clear any inherited deliverable/status data
       deliverable: undefined,
       deliverableUrl: undefined,
       deliverableNotes: undefined,
@@ -151,6 +149,7 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             totalSlots: total,
             participantWallets: updatedWallets,
             status: newQty > 0 ? ('OPEN' as const) : ('FUNDED' as const),
+            depositTxHash: customDepositTxHash || d.depositTxHash,
           };
         }
         return d;
@@ -158,7 +157,7 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     ]);
   };
 
-  const acceptJob = (dealId: string, rawFreelancerWallet: string, rawFreelancerName: string) => {
+  const acceptJob = (dealId: string, rawFreelancerWallet: string, rawFreelancerName: string, customAttestationTxHash?: string) => {
     const baseId = dealId.split('-slot-')[0].split('-order-')[0].split('-accepted-')[0];
     const parentJob = deals.find((d) => d.id === baseId || d.id === dealId);
     if (!parentJob) return;
@@ -187,18 +186,16 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       quantity: newQty,
       acceptedCount: newAccepted,
       totalSlots: total,
-      // ONLY the job poster and THIS specific freelancer participate in this slot!
       participantWallets: Array.from(new Set([parentJob.initiatorAddress, freelancerWallet])),
       counterpartyAddress: freelancerWallet,
       counterpartyName: freelancerName,
-      creationTxHash: parentJob.creationTxHash || generateMockTxHash(),
-      depositTxHash: generateMockTxHash(),
+      creationTxHash: parentJob.creationTxHash,
+      depositTxHash: parentJob.depositTxHash,
+      attestationTxHash: customAttestationTxHash || parentJob.attestationTxHash || (appMode === 'production' ? undefined : generateMockTxHash()),
       createdAt: Date.now(),
-      // Each slot is independent — clear any inherited deliverable/status data
       deliverable: undefined,
       deliverableUrl: undefined,
       deliverableNotes: undefined,
-      attestationTxHash: undefined,
       releaseTxHash: undefined,
       rejectionReason: undefined,
       rejectedAt: undefined,
@@ -215,6 +212,7 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             totalSlots: total,
             participantWallets: updatedWallets,
             status: newQty > 0 ? ('OPEN' as const) : ('FUNDED' as const),
+            attestationTxHash: customAttestationTxHash || d.attestationTxHash,
           };
         }
         return d;
@@ -222,7 +220,7 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     ]);
   };
 
-  const submitDeliverable = (dealId: string, deliverable: DeliverableData) => {
+  const submitDeliverable = (dealId: string, deliverable: DeliverableData, customAttestationTxHash?: string) => {
     setDeals((prev) =>
       prev.map((d) => {
         if (d.id === dealId) {
@@ -232,7 +230,7 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             deliverable,
             deliverableUrl: deliverable.url,
             deliverableNotes: deliverable.instructions,
-            attestationTxHash: generateMockTxHash(),
+            attestationTxHash: customAttestationTxHash || d.attestationTxHash || (appMode === 'production' ? undefined : generateMockTxHash()),
             rejectionReason: undefined,
             rejectedAt: undefined,
           };
@@ -262,20 +260,19 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     dealId: string,
     newStatus: Deal['status'],
     counterpartyName?: string,
-    counterpartyWallet?: string
+    counterpartyWallet?: string,
+    releaseTxHash?: string
   ) => {
-    const newReleaseHash = newStatus === 'RELEASED' ? generateMockTxHash() : undefined;
-
     setDeals((prev) =>
       prev.map((d) => {
-        // ONLY update the exact deal that was targeted — never bleed into sibling slots
         if (d.id !== dealId) return d;
+        const newReleaseHash = releaseTxHash || d.releaseTxHash || (newStatus === 'RELEASED' ? (appMode === 'production' ? undefined : generateMockTxHash()) : undefined);
         return {
           ...d,
           status: newStatus,
           counterpartyName: counterpartyName || d.counterpartyName,
           counterpartyAddress: counterpartyWallet || d.counterpartyAddress,
-          releaseTxHash: newReleaseHash || d.releaseTxHash,
+          releaseTxHash: newReleaseHash,
           autoTravelRuleGenerated: newStatus === 'RELEASED' ? true : d.autoTravelRuleGenerated,
         };
       })
