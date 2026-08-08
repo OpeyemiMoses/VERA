@@ -117,6 +117,12 @@ export async function fetchDealsForWallet(
 
   const deals: Deal[] = allData
     .filter((d): d is OnChainEscrowData => d !== null)
+    // Only include escrows where the connected wallet is the client OR the assigned freelancer
+    .filter((d) => {
+      const isClient = d.client.toLowerCase() === wallet;
+      const isFreelancer = d.freelancer !== '0x0000000000000000000000000000000000000000' && d.freelancer.toLowerCase() === wallet;
+      return isClient || isFreelancer;
+    })
     .map((d, idx): Deal => {
       const isCatkn = d.token.toLowerCase() === CATKN_ADDRESS.toLowerCase();
       const amountHuman = Number(d.amount) / 1e18;
@@ -135,7 +141,6 @@ export async function fetchDealsForWallet(
         status: isUnclaimedJob && d.state <= 1 ? 'OPEN' : escrowStateToStatus(d.state),
         statusLabel: isUnclaimedJob && d.state <= 1 ? 'Awaiting Freelancer' : escrowStateToLabel(d.state),
         chain: 'monad' as const,
-        // Required Deal fields with sensible defaults for on-chain escrows
         initiatorAddress: d.client,
         initiatorName: `${d.client.slice(0, 6)}...${d.client.slice(-4)}`,
         counterpartyAddress: d.freelancer !== '0x0000000000000000000000000000000000000000' ? d.freelancer : undefined,
@@ -144,12 +149,11 @@ export async function fetchDealsForWallet(
         minTier: 0,
         deliveryTerms: 'On-chain delivery confirmation',
         refundTerms: 'Client may cancel before funding; dispute resolution after acceptance',
-        deliveryDeadlineHrs: 168, // 7 days default
+        deliveryDeadlineHrs: 168,
         confirmationWindowHrs: 48,
         quantity: 1,
         totalSlots: 1,
         acceptedCount: isUnclaimedJob ? 0 : 1,
-        // On-chain specific
         clientAddress: d.client,
         freelancerAddress: d.freelancer !== '0x0000000000000000000000000000000000000000' ? d.freelancer : undefined,
         onChainState: d.state,

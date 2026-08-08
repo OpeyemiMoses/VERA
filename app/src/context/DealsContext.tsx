@@ -89,8 +89,18 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
     const combinedPoolMap = new Map<string, Deal>();
 
-    // 1. Add shared API deals from other devices/wallets
-    sharedApiDeals.forEach((d) => combinedPoolMap.set(d.id, d));
+    const w = prodWalletAddress?.toLowerCase() ?? '';
+
+    // 1. Add shared API deals — only those where the wallet is a participant, OR open/funded job postings with no freelancer yet
+    sharedApiDeals
+      .filter((d) => {
+        const isInitiator = d.initiatorAddress?.toLowerCase() === w;
+        const isCounterparty = d.counterpartyAddress?.toLowerCase() === w;
+        const isParticipant = d.participantWallets?.some((pw: string) => pw.toLowerCase() === w);
+        const isOpenJob = d.type === 'JOB_POSTING' && (d.status === 'OPEN' || d.status === 'FUNDED') && !d.counterpartyAddress;
+        return isInitiator || isCounterparty || isParticipant || isOpenJob;
+      })
+      .forEach((d) => combinedPoolMap.set(d.id, d));
     // 2. Add local deals (overrides if local is fresher)
     deals.forEach((d) => combinedPoolMap.set(d.id, d));
     // 3. Add raw on-chain deals if not already in pool
