@@ -5,7 +5,7 @@ import { X, ShieldCheck, ArrowRight, Wallet, Lock, CheckCircle2, FileText, Spark
 import { usePersona } from '../context/PersonaContext';
 import { useCleanverse } from '../hooks/useCleanverse';
 import { useToast } from '../context/ToastContext';
-import { useWriteContract } from 'wagmi';
+import { useWriteContract, usePublicClient } from 'wagmi';
 import { parseUnits } from 'viem';
 import { CATKN_ADDRESS, CATKN_ABI, ESCROW_ABI, CATKN_DECIMALS } from '../lib/contracts';
 
@@ -25,6 +25,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const { activePersona, hasSufficientBalance, activeBalance, claimFaucet, deductBalance, getPersonaTrustScore, appMode } = usePersona();
   const { checkCompliance, isChecking } = useCleanverse();
   const { writeContractAsync } = useWriteContract();
+  const publicClient = usePublicClient();
   const { showInfo, showError } = useToast();
   const [step, setStep] = useState<'review' | 'verifying' | 'funded'>('review');
   const [txHash, setTxHash] = useState<string | null>(null);
@@ -77,8 +78,17 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           args: [deal.escrowAddress as `0x${string}`, amount],
         });
 
+        showInfo(`Approval submitted (${approveTx.slice(0, 10)}...). Waiting for Monad block confirmation...`);
+        if (publicClient) {
+          try {
+            await publicClient.waitForTransactionReceipt({ hash: approveTx });
+          } catch (rcptErr) {
+            console.warn('[RECEIPT] Proceeding with fund after approve:', rcptErr);
+          }
+        }
+
         // Step 2: Fund Escrow Contract
-        showInfo(`Approval Confirmed (${approveTx.slice(0, 10)}...). Step 2/2: Confirm Escrow Deposit in your wallet...`);
+        showInfo(`Step 2/2: Confirm Escrow Deposit in your Web3 wallet...`);
         const fundTx = await writeContractAsync({
           address: deal.escrowAddress as `0x${string}`,
           abi: ESCROW_ABI,

@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import { usePersona } from '../context/PersonaContext';
 import { useToast } from '../context/ToastContext';
-import { useWriteContract } from 'wagmi';
+import { useWriteContract, usePublicClient } from 'wagmi';
 import { parseUnits } from 'viem';
 import { FACTORY_ADDRESS, CATKN_ADDRESS, ESCROW_FACTORY_ABI, ESCROW_ABI, CATKN_ABI, CATKN_DECIMALS } from '../lib/contracts';
 import { Deal, DealType, DeliverableFormat } from '../types/deal';
@@ -41,6 +41,7 @@ interface DealsPageProps {
 export const DealsPage: React.FC<DealsPageProps> = ({ onBackToHome, onDealCreated, initialDealType = 'SERVICE_LISTING' }) => {
   const { activePersona, hasSufficientBalance, activeBalance, claimFaucet, deductBalance, appMode } = usePersona();
   const { showInfo, showSuccess, showError } = useToast();
+  const publicClient = usePublicClient();
 
   const [dealType, setDealType] = useState<DealType>(initialDealType);
 
@@ -118,18 +119,30 @@ export const DealsPage: React.FC<DealsPageProps> = ({ onBackToHome, onDealCreate
           args: [CATKN_ADDRESS, totalAmountBigInt],
         });
 
+        if (publicClient) {
+          try {
+            await publicClient.waitForTransactionReceipt({ hash: deployTx });
+          } catch (e) {}
+        }
+
         const generatedEscrow = '0x' + deployTx.slice(2, 42);
         let realDepositTxHash: string | undefined = undefined;
 
         if (dealType === 'JOB_POSTING' && totalAmountHuman > 0) {
           try {
             showInfo(`Step 2/3: Approving ${totalAmountHuman} ${currency} token deposit...`);
-            await writeContractAsync({
+            const approveTx = await writeContractAsync({
               address: CATKN_ADDRESS,
               abi: CATKN_ABI,
               functionName: 'approve',
               args: [generatedEscrow as `0x${string}`, totalAmountBigInt],
             });
+
+            if (publicClient) {
+              try {
+                await publicClient.waitForTransactionReceipt({ hash: approveTx });
+              } catch (e) {}
+            }
 
             showInfo(`Step 3/3: Funding Escrow Deposit Vault on Monad Testnet...`);
             realDepositTxHash = await writeContractAsync({
@@ -137,7 +150,6 @@ export const DealsPage: React.FC<DealsPageProps> = ({ onBackToHome, onDealCreate
               abi: ESCROW_ABI,
               functionName: 'fund',
             });
-            deductBalance(totalAmountHuman, currency, activePersona.walletAddress);
             showSuccess('Escrow Vault Deployed & Deposit Locked on-chain on Monad Testnet!');
           } catch (fundErr: any) {
             console.warn('[JOB DEPOSIT] On-chain deposit step deferred:', fundErr.message);
