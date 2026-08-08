@@ -24,6 +24,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 }) => {
   const { activePersona, hasSufficientBalance, activeBalance, claimFaucet, deductBalance, getPersonaTrustScore, appMode } = usePersona();
   const { checkCompliance, isChecking } = useCleanverse();
+  const { writeContractAsync } = useWriteContract();
+  const { showInfo, showError } = useToast();
   const [step, setStep] = useState<'review' | 'verifying' | 'funded'>('review');
   const [txHash, setTxHash] = useState<string | null>(null);
 
@@ -44,9 +46,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const rawCollateral = (deal.price * sellerTrust.collateralPct) / 100;
   const collateralAmount = isMon ? parseFloat(rawCollateral.toFixed(4)) : Math.round(rawCollateral);
   const sellerHasSufficientCollateral = collateralAmount === 0 || hasSufficientBalance(collateralAmount, deal.currency, deal.initiatorAddress);
-
-  const { writeContractAsync } = useWriteContract();
-  const { showInfo, showError } = useToast();
 
   const handleFundEscrow = async () => {
     if (!sufficient) return;
