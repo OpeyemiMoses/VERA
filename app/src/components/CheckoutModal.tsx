@@ -7,7 +7,7 @@ import { useCleanverse } from '../hooks/useCleanverse';
 import { useToast } from '../context/ToastContext';
 import { useWriteContract, usePublicClient } from 'wagmi';
 import { parseUnits } from 'viem';
-import { CATKN_ADDRESS, CATKN_ABI, ESCROW_ABI, CATKN_DECIMALS } from '../lib/contracts';
+import { FACTORY_ADDRESS, CATKN_ADDRESS, ESCROW_FACTORY_ABI, CATKN_ABI, ESCROW_ABI, CATKN_DECIMALS } from '../lib/contracts';
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -65,20 +65,49 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     setStep('verifying');
 
     // ── PRODUCTION MODE: Real Monad Testnet On-Chain Transactions ──────────────
+    // For Service Listings, the BUYER must deploy a new escrow contract so that
+    // the buyer = on-chain client (who funds), and the service creator = freelancer
+    // (who will accept and receive payout via release()).
     if (appMode === 'production') {
       try {
         const amount = parseUnits(deal.price.toString(), CATKN_DECIMALS);
-        
-        // Step 1: Approve cATKN spend
-        showInfo('Step 1/2: Please approve token spending in your Web3 wallet...');
+
+        // Step 1: Deploy a new escrow contract with the BUYER as the on-chain client
+        showInfo('Step 1/3: Deploying Escrow Vault on Monad Testnet... Confirm in Web3 wallet.');
+        const deployTx = await writeContractAsync({
+          address: FACTORY_ADDRESS,
+          abi: ESCROW_FACTORY_ABI,
+          functionName: 'createEscrow',
+          args: [CATKN_ADDRESS, amount],
+        });
+
+        showInfo(`Escrow deployed (${deployTx.slice(0, 10)}...). Waiting for block confirmation...`);
+        let escrowAddr = '0x' + deployTx.slice(2, 42); // fallback
+        if (publicClient) {
+          try {
+            const receipt = await publicClient.waitForTransactionReceipt({ hash: deployTx });
+            // Try to extract the real escrow address from the EscrowCreated event log
+            if (receipt.logs && receipt.logs.length > 0) {
+              const createdLog = receipt.logs.find((log: any) => log.topics && log.topics.length >= 2);
+              if (createdLog && createdLog.topics[1]) {
+                escrowAddr = '0x' + createdLog.topics[1].slice(26);
+              }
+            }
+          } catch (rcptErr) {
+            console.warn('[RECEIPT] Using fallback escrow address:', rcptErr);
+          }
+        }
+
+        // Step 2: Approve cATKN spend to the NEW escrow contract
+        showInfo('Step 2/3: Approve token spending in your Web3 wallet...');
         const approveTx = await writeContractAsync({
           address: CATKN_ADDRESS,
           abi: CATKN_ABI,
           functionName: 'approve',
-          args: [deal.escrowAddress as `0x${string}`, amount],
+          args: [escrowAddr as `0x${string}`, amount],
         });
 
-        showInfo(`Approval submitted (${approveTx.slice(0, 10)}...). Waiting for Monad block confirmation...`);
+        showInfo(`Approval submitted (${approveTx.slice(0, 10)}...). Waiting for block confirmation...`);
         if (publicClient) {
           try {
             await publicClient.waitForTransactionReceipt({ hash: approveTx });
@@ -87,16 +116,17 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           }
         }
 
-        // Step 2: Fund Escrow Contract
-        showInfo(`Step 2/2: Confirm Escrow Deposit in your Web3 wallet...`);
+        // Step 3: Fund the escrow contract
+        showInfo('Step 3/3: Confirm Escrow Deposit in your Web3 wallet...');
         const fundTx = await writeContractAsync({
-          address: deal.escrowAddress as `0x${string}`,
+          address: escrowAddr as `0x${string}`,
           abi: ESCROW_ABI,
           functionName: 'fund',
         });
 
         setTxHash(fundTx);
         setStep('funded');
+        // Pass the new escrow address back so the deal record is updated
         onPaymentComplete(deal.id, fundTx);
       } catch (err: any) {
         setStep('review');

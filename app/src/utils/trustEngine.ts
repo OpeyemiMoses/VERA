@@ -18,7 +18,7 @@ export const calculateTrustScore = (
     return {
       score: 0,
       tierLevel: 'Low',
-      collateralPct: 15,
+      collateralPct: 0,
       releaseWindowHrs: 72,
       feePct: 3.0,
       reason: 'Identity Unverified (No Cleanverse A-Pass) · Maximum Security Terms Enforced',
@@ -52,19 +52,19 @@ export const calculateTrustScore = (
     return {
       score: totalScore,
       tierLevel: 'Low',
-      collateralPct: 15,
+      collateralPct: 0,
       releaseWindowHrs: 72,
       feePct: 3.0,
-      reason: `Trust Score ${totalScore}/100 (Tier ${persona.tier}) · 15% Collateral & 72h Hold Required`,
+      reason: `Trust Score ${totalScore}/100 (Tier ${persona.tier}) · Standard 72h Hold`,
     };
   } else if (totalScore < 70) {
     return {
       score: totalScore,
       tierLevel: 'Mid',
-      collateralPct: 5,
+      collateralPct: 0,
       releaseWindowHrs: 48,
       feePct: 1.5,
-      reason: `Trust Score ${totalScore}/100 (Tier ${persona.tier}) · Reduced 5% Collateral & Standard 48h Hold`,
+      reason: `Trust Score ${totalScore}/100 (Tier ${persona.tier}) · Standard 48h Hold`,
     };
   } else if (totalScore < 90) {
     return {
@@ -73,7 +73,7 @@ export const calculateTrustScore = (
       collateralPct: 0,
       releaseWindowHrs: 24,
       feePct: 0.5,
-      reason: `Trust Score ${totalScore}/100 (Tier ${persona.tier}) · 0% Collateral & 24h Fast-Track Payout`,
+      reason: `Trust Score ${totalScore}/100 (Tier ${persona.tier}) · 24h Fast-Track Payout`,
     };
   } else {
     return {
@@ -82,7 +82,7 @@ export const calculateTrustScore = (
       collateralPct: 0,
       releaseWindowHrs: 12,
       feePct: 0.25,
-      reason: `Trust Score ${totalScore}/100 (Tier ${persona.tier} · Elite) · Zero Collateral & 12h Express Settlement`,
+      reason: `Trust Score ${totalScore}/100 (Tier ${persona.tier} · Elite) · 12h Express Settlement`,
     };
   }
 };
