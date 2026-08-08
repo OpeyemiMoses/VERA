@@ -89,7 +89,13 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
 
   // Find if active persona has a specific funded/accepted order instance for this deal
   const userOrderInstance = deals.find((d) => {
-    const isMatch = d.id === deal.id || d.id.startsWith(`${deal.id}-order-`) || d.id.startsWith(`${deal.id}-accepted-`);
+    const baseMatchId = deal.id.split('-slot-')[0].split('-order-')[0].split('-accepted-')[0];
+    const isMatch =
+      d.id === deal.id ||
+      d.id.startsWith(`${deal.id}-order-`) ||
+      d.id.startsWith(`${deal.id}-accepted-`) ||
+      d.id.startsWith(`${deal.id}-slot-`) ||
+      d.id === `${baseMatchId}-slot-1`;
     if (!isMatch) return false;
     const isUserPart =
       (d.counterpartyAddress && d.counterpartyAddress.toLowerCase() === activePersona.walletAddress.toLowerCase()) ||

@@ -215,6 +215,8 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             acceptedCount: newAccepted,
             totalSlots: total,
             participantWallets: updatedWallets,
+            counterpartyAddress: d.counterpartyAddress || buyerWallet,
+            counterpartyName: d.counterpartyName || buyerName,
             status: newQty > 0 ? ('OPEN' as const) : ('FUNDED' as const),
             depositTxHash: customDepositTxHash || d.depositTxHash,
           };
@@ -278,6 +280,8 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             acceptedCount: newAccepted,
             totalSlots: total,
             participantWallets: updatedWallets,
+            counterpartyAddress: d.counterpartyAddress || freelancerWallet,
+            counterpartyName: d.counterpartyName || freelancerName,
             status: newQty > 0 ? ('OPEN' as const) : ('FUNDED' as const),
             attestationTxHash: customAttestationTxHash || d.attestationTxHash,
           };
@@ -288,9 +292,11 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   };
 
   const submitDeliverable = (dealId: string, deliverable: DeliverableData, customAttestationTxHash?: string) => {
+    const baseId = dealId.split('-slot-')[0].split('-order-')[0].split('-accepted-')[0];
     setDeals((prev) =>
       prev.map((d) => {
-        if (d.id === dealId) {
+        const isMatch = d.id === dealId || d.id === baseId || d.id.startsWith(`${baseId}-`);
+        if (isMatch) {
           return {
             ...d,
             status: 'DELIVERED' as const,
@@ -308,9 +314,11 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   };
 
   const rejectDeliverable = (dealId: string, reason: string) => {
+    const baseId = dealId.split('-slot-')[0].split('-order-')[0].split('-accepted-')[0];
     setDeals((prev) =>
       prev.map((d) => {
-        if (d.id === dealId) {
+        const isMatch = d.id === dealId || d.id === baseId || d.id.startsWith(`${baseId}-`);
+        if (isMatch) {
           return {
             ...d,
             status: 'REJECTED' as const,
@@ -330,9 +338,11 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     counterpartyWallet?: string,
     releaseTxHash?: string
   ) => {
+    const baseId = dealId.split('-slot-')[0].split('-order-')[0].split('-accepted-')[0];
     setDeals((prev) =>
       prev.map((d) => {
-        if (d.id !== dealId) return d;
+        const isMatch = d.id === dealId || d.id === baseId || d.id.startsWith(`${baseId}-`);
+        if (!isMatch) return d;
         const newReleaseHash = releaseTxHash || d.releaseTxHash || (newStatus === 'RELEASED' ? (appMode === 'production' ? undefined : generateMockTxHash()) : undefined);
         return {
           ...d,
