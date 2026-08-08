@@ -469,7 +469,7 @@ export const DealsPage: React.FC<DealsPageProps> = ({ onBackToHome, onDealCreate
                 </span>
               </div>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
-                💡 Locking {totalUpfrontDeposit} {currency} in Escrow contract upfront guarantees that all {slotsNum} freelancer slot(s) are fully covered and ready for payout upon work completion.
+                Locking {totalUpfrontDeposit} {currency} in Escrow contract upfront guarantees that all {slotsNum} freelancer slot(s) are fully covered and ready for payout upon work completion.
               </p>
             </div>
           )}
@@ -540,7 +540,7 @@ export const DealsPage: React.FC<DealsPageProps> = ({ onBackToHome, onDealCreate
             <ShieldCheck className="h-4 w-4" />
             <span>
               {!activePersona.isVerified
-                ? '🔒 Identity Blocked — Verification Required'
+                ? 'Identity Blocked — Verification Required'
                 : !sufficient
                 ? `Insufficient ${currency} Balance`
                 : isSubmitting

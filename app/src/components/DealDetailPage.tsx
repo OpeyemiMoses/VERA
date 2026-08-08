@@ -288,7 +288,7 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
     confirmDelivery(privKey, currentDeal.escrowAddress).catch(() => {});
 
     onUpdateDealStatus(currentDeal.id, 'RELEASED');
-    showNotice(`✅ Payout Released: ${netPayout} ${currentDeal.currency} to seller · ${feeAmount} ${currentDeal.currency} protocol fee (Trust Score ${recipientTrust.score}/100 → ${feePct}% rate)`);
+    showNotice(`Payout Released: ${netPayout} ${currentDeal.currency} to seller · ${feeAmount} ${currentDeal.currency} protocol fee (Trust Score ${recipientTrust.score}/100 → ${feePct}% rate)`);
     setIsProcessing(false);
   };
 

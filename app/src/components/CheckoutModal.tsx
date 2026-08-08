@@ -152,7 +152,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   </div>
                 </div>
                 <p className="text-[11px] text-slate-600 dark:text-slate-300 font-medium pt-1">
-                  💡 <span className="font-semibold text-slate-900 dark:text-white">{getPersonaTrustScore(activePersona.walletAddress).reason}</span>
+                  <span className="font-semibold text-slate-900 dark:text-white">{getPersonaTrustScore(activePersona.walletAddress).reason}</span>
                 </p>
               </div>
 

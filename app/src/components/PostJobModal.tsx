@@ -285,7 +285,7 @@ export const PostJobModal: React.FC<PostJobModalProps> = ({ isOpen, onClose, onJ
               </span>
             </div>
             <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
-              💡 Locking {totalUpfrontDeposit} {currency} in Escrow contract upfront guarantees that all {numSlots} freelancer slot(s) are fully covered and ready for payout upon work completion.
+              Locking {totalUpfrontDeposit} {currency} in Escrow contract upfront guarantees that all {numSlots} freelancer slot(s) are fully covered and ready for payout upon work completion.
             </p>
           </div>
 
@@ -329,7 +329,7 @@ export const PostJobModal: React.FC<PostJobModalProps> = ({ isOpen, onClose, onJ
               <Sparkles className="h-3.5 w-3.5" />
               <span>
                 {!activePersona.isVerified
-                  ? '🔒 Identity Blocked'
+                  ? 'Identity Blocked'
                   : !sufficient
                   ? `Insufficient ${currency} Balance`
                   : isSubmitting
