@@ -177,6 +177,10 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
   const isProvider = currentDeal.type === 'SERVICE_LISTING' ? isInitiator : isCounterparty;
   const isReceiver = currentDeal.type === 'JOB_POSTING' ? isInitiator : isCounterparty;
 
+  const totalSlots = currentDeal.totalSlots ?? (currentDeal.quantity !== undefined ? currentDeal.quantity : 1);
+  const acceptedCount = currentDeal.acceptedCount ?? (currentDeal.status !== 'OPEN' && currentDeal.status !== 'FUNDED' ? 1 : 0);
+  const openSlots = Math.max(0, totalSlots - acceptedCount);
+
   const hasAlreadyFundedOrPurchased = deals.some((d) => {
     const isRelated = d.id === baseId || d.id.startsWith(`${baseId}-`);
     if (!isRelated || d.status === 'OPEN') return false;
@@ -1332,9 +1336,9 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
           {!isInitiator && currentDeal.type === 'JOB_POSTING' && meetsTier && (
             <button
               onClick={handleAcceptJob}
-              disabled={hasAlreadyFundedOrPurchased || currentDeal.status !== 'OPEN' || isProcessing || isChecking || escrowLoading}
+              disabled={hasAlreadyFundedOrPurchased || (currentDeal.status !== 'OPEN' && currentDeal.status !== 'FUNDED') || openSlots <= 0 || isProcessing || isChecking || escrowLoading}
               className={`w-full font-extrabold py-4 px-6 rounded-2xl text-sm transition-all shadow-lg flex items-center justify-center gap-2 ${
-                hasAlreadyFundedOrPurchased || currentDeal.status !== 'OPEN'
+                hasAlreadyFundedOrPurchased || (currentDeal.status !== 'OPEN' && currentDeal.status !== 'FUNDED') || openSlots <= 0
                   ? 'neu-inset text-slate-500 dark:text-slate-400 opacity-60 cursor-not-allowed border border-slate-300 dark:border-slate-800'
                   : isProcessing
                   ? 'bg-cyan-500 text-white cursor-wait'
@@ -1345,11 +1349,11 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
               <span>
                 {hasAlreadyFundedOrPurchased
                   ? 'Accept Job (Already Claimed & Escrow Secured)'
-                  : currentDeal.status !== 'OPEN'
+                  : (openSlots <= 0 && currentDeal.status !== 'OPEN' && currentDeal.status !== 'FUNDED')
                   ? 'Job Slot Claimed'
                   : isProcessing
                   ? 'Verifying A-Pass...'
-                  : 'Accept Job (Cleanverse A-Pass Gate)'}
+                  : 'Accept Job & Verify Cleanverse Attestation'}
               </span>
             </button>
           )}

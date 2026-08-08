@@ -48,16 +48,25 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     return INITIAL_DEALS;
   });
 
-  // On-chain deals for Production Mode
+  // On-chain & Shared API deals for Production Mode
   const [onChainDeals, setOnChainDeals] = useState<Deal[]>([]);
+  const [sharedApiDeals, setSharedApiDeals] = useState<Deal[]>([]);
   const [isFetchingOnChain, setIsFetchingOnChain] = useState(false);
 
   const refreshOnChainDeals = useCallback(async () => {
     if (appMode !== 'production' || !prodWalletAddress) return;
     setIsFetchingOnChain(true);
     try {
-      const fetched = await fetchDealsForWallet(prodWalletAddress);
-      setOnChainDeals(fetched);
+      // 1. Fetch on-chain escrows from Monad Testnet RPC
+      const fetchedOnChain = await fetchDealsForWallet(prodWalletAddress);
+      setOnChainDeals(fetchedOnChain);
+
+      // 2. Fetch shared deal metadata from global server API registry
+      const res = await fetch('/api/deals');
+      const json = await res.json();
+      if (json.success && Array.isArray(json.deals)) {
+        setSharedApiDeals(json.deals);
+      }
     } catch (err) {
       console.error('[DealsContext] Failed to fetch on-chain deals:', err);
     } finally {
@@ -69,30 +78,51 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   useEffect(() => {
     if (appMode === 'production' && prodWalletAddress) {
       refreshOnChainDeals();
-      const interval = setInterval(refreshOnChainDeals, 10_000); // refresh every 10s
+      const interval = setInterval(refreshOnChainDeals, 5_000); // refresh every 5s for fast multi-wallet sync
       return () => clearInterval(interval);
     }
   }, [appMode, prodWalletAddress, refreshOnChainDeals]);
 
-  // In Production Mode, merge real on-chain statuses into local deals
+  // In Production Mode, merge: local deals + shared API registry deals + on-chain Monad escrows
   const activeDealList = useMemo(() => {
     if (appMode !== 'production') return deals;
 
-    const merged = deals.map((localDeal) => {
-      if (!localDeal.escrowAddress) return localDeal;
-      const onChain = onChainDeals.find(
-        (oc) => oc.escrowAddress.toLowerCase() === localDeal.escrowAddress.toLowerCase()
-      );
-      if (!onChain) return localDeal;
-      return {
-        ...localDeal,
-        status: onChain.status,
-        statusLabel: onChain.statusLabel,
-      };
+    const combinedPoolMap = new Map<string, Deal>();
+
+    // 1. Add shared API deals from other devices/wallets
+    sharedApiDeals.forEach((d) => combinedPoolMap.set(d.id, d));
+    // 2. Add local deals (overrides if local is fresher)
+    deals.forEach((d) => combinedPoolMap.set(d.id, d));
+    // 3. Add raw on-chain deals if not already in pool
+    onChainDeals.forEach((oc) => {
+      const existingKey = Array.from(combinedPoolMap.keys()).find((k) => {
+        const item = combinedPoolMap.get(k);
+        return item?.escrowAddress && oc.escrowAddress && item.escrowAddress.toLowerCase() === oc.escrowAddress.toLowerCase();
+      });
+      if (!existingKey) {
+        combinedPoolMap.set(oc.id, oc);
+      }
     });
 
-    return merged;
-  }, [deals, onChainDeals, appMode]);
+    const pool = Array.from(combinedPoolMap.values());
+
+    // Merge real on-chain statuses from Monad Testnet into all pool deals
+    return pool.map((deal) => {
+      if (!deal.escrowAddress) return deal;
+      const onChainMatch = onChainDeals.find(
+        (oc) => oc.escrowAddress && oc.escrowAddress.toLowerCase() === deal.escrowAddress.toLowerCase()
+      );
+      if (!onChainMatch) return deal;
+      return {
+        ...deal,
+        status: onChainMatch.status,
+        statusLabel: onChainMatch.statusLabel,
+        counterpartyAddress: onChainMatch.counterpartyAddress || deal.counterpartyAddress,
+        counterpartyName: onChainMatch.counterpartyName || deal.counterpartyName,
+        acceptedCount: onChainMatch.acceptedCount ?? deal.acceptedCount,
+      };
+    });
+  }, [deals, sharedApiDeals, onChainDeals, appMode]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -107,6 +137,15 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const createDeal = (newDeal: Deal) => {
     // Note: Balance deduction is handled directly in PostJobModal / CheckoutModal upon creation/purchase
     setDeals((prev) => [newDeal, ...prev]);
+
+    // Sync with global server API registry so 2nd wallet on another device can read it
+    if (typeof window !== 'undefined') {
+      fetch('/api/deals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newDeal),
+      }).catch((err) => console.warn('[DealsContext] Failed to sync deal to global registry:', err));
+    }
   };
 
   const generateMockTxHash = () =>
