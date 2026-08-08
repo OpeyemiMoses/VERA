@@ -21,7 +21,7 @@ import { useToast } from '../context/ToastContext';
 import { useEscrow } from '../hooks/useEscrow';
 import { useCleanverse, PERSONA_KEYS } from '../hooks/useCleanverse';
 import { useScrollRise } from '../hooks/useScrollRise';
-import { Deal } from '../types/deal';
+import { Deal, DealType } from '../types/deal';
 import {
   ShieldCheck,
   Plus,
@@ -33,6 +33,7 @@ import {
   ShoppingBag,
   UserCheck,
   Sparkles,
+  Zap,
   Lock,
   Layers,
   FileText,
@@ -61,6 +62,7 @@ export default function Home() {
   // After hydration, useEffect restores the correct tab from sessionStorage/localStorage.
   const [activeTab, setActiveTabState] = useState<string>('landing');
   const [appMounted, setAppMounted] = useState(false);
+  const [createDealType, setCreateDealType] = useState<DealType>('SERVICE_LISTING');
 
   const setActiveTab = (tab: string) => {
     setActiveTabState(tab);
@@ -343,7 +345,11 @@ export default function Home() {
             setActiveTab(tab);
             setSelectedDetailDeal(null);
           }}
-          openPostModal={() => setIsPostModalOpen(true)}
+          openPostModal={() => {
+            setCreateDealType('JOB_POSTING');
+            setActiveTab('create-deal');
+            setSelectedDetailDeal(null);
+          }}
           openPlayground={() => setIsPlaygroundOpen(true)}
           openDisputes={() => setIsDisputesOpen(true)}
           openProfile={() => setIsProfileOpen(true)}
@@ -361,7 +367,11 @@ export default function Home() {
             setActiveTab(tab);
             setSelectedDetailDeal(null);
           }}
-          openPostModal={() => setIsPostModalOpen(true)}
+          openPostModal={() => {
+            setCreateDealType('JOB_POSTING');
+            setActiveTab('create-deal');
+            setSelectedDetailDeal(null);
+          }}
           openPlayground={() => setIsPlaygroundOpen(true)}
           openDisputes={() => setIsDisputesOpen(true)}
           openProfile={() => setIsProfileOpen(true)}
@@ -382,8 +392,8 @@ export default function Home() {
             }}
             onSelectDeal={(d) => setSelectedDetailDeal(d)}
           />
-        ) : activeTab === 'deals' ? (
-          <DealsPage onBackToHome={() => setActiveTab('home')} onDealCreated={handleCreateDeal} />
+        ) : (activeTab === 'deals' || activeTab === 'create-deal') ? (
+          <DealsPage onBackToHome={() => setActiveTab('home')} onDealCreated={handleCreateDeal} initialDealType={createDealType} />
         ) : (
           <>
             {/* Hero Action Banner */}
@@ -542,14 +552,20 @@ export default function Home() {
                   </p>
                   <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
                     <button
-                      onClick={() => setIsPostModalOpen(true)}
+                      onClick={() => {
+                        setCreateDealType('JOB_POSTING');
+                        setActiveTab('create-deal');
+                      }}
                       className="neu-btn-primary px-5 py-2.5 rounded-2xl text-xs font-extrabold flex items-center gap-2 shadow-lg"
                     >
                       <Plus className="h-4 w-4" />
                       <span>Post Job & Deploy Escrow Vault</span>
                     </button>
                     <button
-                      onClick={() => setActiveTab('create-deal')}
+                      onClick={() => {
+                        setCreateDealType('SERVICE_LISTING');
+                        setActiveTab('create-deal');
+                      }}
                       className="neu-btn-secondary px-5 py-2.5 rounded-2xl text-xs font-extrabold flex items-center gap-2"
                     >
                       <Coins className="h-4 w-4 text-indigo-500" />

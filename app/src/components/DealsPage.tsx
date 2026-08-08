@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ShieldCheck,
   ChevronLeft,
@@ -35,13 +35,20 @@ import { Deal, DealType, DeliverableFormat } from '../types/deal';
 interface DealsPageProps {
   onBackToHome: () => void;
   onDealCreated: (newDeal: Deal) => void;
+  initialDealType?: DealType;
 }
 
-export const DealsPage: React.FC<DealsPageProps> = ({ onBackToHome, onDealCreated }) => {
+export const DealsPage: React.FC<DealsPageProps> = ({ onBackToHome, onDealCreated, initialDealType = 'SERVICE_LISTING' }) => {
   const { activePersona, hasSufficientBalance, activeBalance, claimFaucet, deductBalance, appMode } = usePersona();
   const { showInfo, showSuccess, showError } = useToast();
 
-  const [dealType, setDealType] = useState<DealType>('SERVICE_LISTING');
+  const [dealType, setDealType] = useState<DealType>(initialDealType);
+
+  useEffect(() => {
+    if (initialDealType) {
+      setDealType(initialDealType);
+    }
+  }, [initialDealType]);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('500');
