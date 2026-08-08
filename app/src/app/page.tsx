@@ -586,6 +586,8 @@ export default function Home() {
                     const totalSlots = deal.totalSlots ?? (deal.quantity !== undefined ? deal.quantity : 1);
                     const acceptedCount = deal.acceptedCount ?? ((deal.status !== 'OPEN' && deal.status !== 'FUNDED') ? 1 : 0);
                     const openSlots = Math.max(0, totalSlots - acceptedCount);
+                    // A freelancer is only truly assigned when counterpartyAddress is set and non-zero
+                    const hasCounterpartyAssigned = !!deal.counterpartyAddress && deal.counterpartyAddress !== '0x0000000000000000000000000000000000000000';
 
                     return (
                       <div
@@ -702,8 +704,8 @@ export default function Home() {
                             </button>
                           )}
 
-                          {/* Send Deliverable Button when Escrow is Funded or Job Accepted */}
-                          {(deal.status === 'FUNDED' || (deal.status as string) === 'ACCEPTED') && (
+                          {/* Send Deliverable Button: only shows when a counterparty (freelancer/buyer) has been assigned */}
+                          {(deal.status === 'FUNDED' || (deal.status as string) === 'ACCEPTED') && hasCounterpartyAssigned && (
                             (deal.type === 'SERVICE_LISTING' && isUserInitiator) ||
                             (deal.type === 'JOB_POSTING' && !isUserInitiator)
                           ) && !deal.deliverableUrl && (
@@ -731,8 +733,8 @@ export default function Home() {
                             </button>
                           )}
 
-                          {/* Freelancer Accept Button for Job Postings */}
-                          {!isUserInitiator && meetsTier && deal.type === 'JOB_POSTING' && deal.status === 'OPEN' && (
+                          {/* Freelancer Accept Button for Job Postings — visible when OPEN or FUNDED with no freelancer yet */}
+                          {!isUserInitiator && meetsTier && deal.type === 'JOB_POSTING' && (deal.status === 'OPEN' || (deal.status === 'FUNDED' && !hasCounterpartyAssigned)) && (
                             <button
                               onClick={() => handleAcceptJob(deal)}
                               disabled={userAlreadyParticipated || pendingDealId === deal.id || isChecking || escrowLoading}
