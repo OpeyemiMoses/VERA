@@ -13,7 +13,7 @@ interface CheckoutModalProps {
   isOpen: boolean;
   onClose: () => void;
   deal: any;
-  onPaymentComplete: (dealId: string, customDepositTxHash?: string) => void;
+  onPaymentComplete: (dealId: string, customDepositTxHash?: string, customEscrowAddress?: string) => void;
 }
 
 export const CheckoutModal: React.FC<CheckoutModalProps> = ({
@@ -127,7 +127,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         setTxHash(fundTx);
         setStep('funded');
         // Pass the new escrow address back so the deal record is updated
-        onPaymentComplete(deal.id, fundTx);
+        onPaymentComplete(deal.id, fundTx, escrowAddr);
       } catch (err: any) {
         setStep('review');
         showError(err?.shortMessage || err?.message || 'On-chain deposit failed or cancelled.');

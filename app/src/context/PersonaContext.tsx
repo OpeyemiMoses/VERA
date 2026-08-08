@@ -399,11 +399,18 @@ export const PersonaProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const { wKey, pKey } = resolveKeys(personaWalletOrKey);
     const isCatkn = !currency || currency.toLowerCase().includes('catkn');
 
+    if (appMode === 'production') {
+      if (isCatkn) {
+        setCatknDeductions((prev) => Math.max(0, prev - amount));
+      }
+    }
+
     if (isCatkn) {
       setCatknBalances((prev) => {
         const current = prev[wKey] ?? prev[pKey] ?? DEFAULT_CATKN[wKey] ?? 0;
         const newBal = current + amount;
-        const updated = { ...prev, [wKey]: newBal, [pKey]: newBal };
+        const updated = { ...prev, [wKey]: newBal, [pKey]: newBal, 'prod-wallet': newBal };
+        if (wagmiAddress) updated[wagmiAddress.toLowerCase()] = newBal;
         if (typeof window !== 'undefined') localStorage.setItem('vera_catkn_v7', JSON.stringify(updated));
         return updated;
       });
@@ -411,11 +418,14 @@ export const PersonaProvider: React.FC<{ children: React.ReactNode }> = ({ child
       setRealMonBalances((prev) => {
         const current = parseFloat(prev[wKey] || prev[pKey] || '0');
         const newBal = (current + amount).toFixed(4);
-        const updated = { ...prev, [wKey]: newBal, [pKey]: newBal };
+        const updated = { ...prev, [wKey]: newBal, [pKey]: newBal, 'prod-wallet': newBal };
+        if (wagmiAddress) updated[wagmiAddress.toLowerCase()] = newBal;
         if (typeof window !== 'undefined') localStorage.setItem('vera_mon_v7', JSON.stringify(updated));
         return updated;
       });
     }
+    refetchOnChainBalance();
+    fetchMonBalances();
     setBalanceNonce((v) => v + 1);
   };
 

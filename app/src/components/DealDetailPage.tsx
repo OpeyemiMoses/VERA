@@ -35,7 +35,7 @@ import { useDeals } from '../context/DealsContext';
 import { useToast } from '../context/ToastContext';
 import { useCleanverse, PERSONA_KEYS } from '../hooks/useCleanverse';
 import { useEscrow } from '../hooks/useEscrow';
-import { useWriteContract } from 'wagmi';
+import { useWriteContract, usePublicClient } from 'wagmi';
 import { ESCROW_ABI } from '../lib/contracts';
 import { SandboxPreviewModal } from './SandboxPreviewModal';
 import { RejectDeliverableModal } from './RejectDeliverableModal';
@@ -67,6 +67,7 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
   const { checkCompliance, isChecking } = useCleanverse();
   const { acceptWithAttestation, confirmDelivery, isLoading: escrowLoading } = useEscrow();
   const { writeContractAsync } = useWriteContract();
+  const publicClient = usePublicClient();
 
   const [notice, setNotice] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -330,6 +331,15 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
           args: [attestationSig as `0x${string}`, BigInt(deadlineVal || Math.floor(Date.now() / 1000) + 3600)],
         });
 
+        showNotice(`Attestation tx submitted (${txHash.slice(0, 10)}...). Waiting for Monad block confirmation...`);
+        if (publicClient) {
+          try {
+            await publicClient.waitForTransactionReceipt({ hash: txHash });
+          } catch (rcptErr) {
+            console.warn('[RECEIPT] Proceeding with acceptance confirmation:', rcptErr);
+          }
+        }
+
         currentDeal.attestationTxHash = txHash;
         acceptJob(currentDeal.id, activePersona.walletAddress, activePersona.name, txHash);
         onUpdateDealStatus(currentDeal.id, 'ACCEPTED' as any, activePersona.name, activePersona.walletAddress, txHash);
@@ -395,10 +405,21 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
           functionName: 'release',
         });
 
+        showNotice(`Release tx submitted (${txHash.slice(0, 10)}...). Waiting for Monad block confirmation...`);
+        if (publicClient) {
+          try {
+            await publicClient.waitForTransactionReceipt({ hash: txHash });
+          } catch (rcptErr) {
+            console.warn('[RECEIPT] Proceeding with release confirmation:', rcptErr);
+          }
+        }
+
         currentDeal.releaseTxHash = txHash;
-        onUpdateDealStatus(currentDeal.id, 'RELEASED', undefined, undefined, txHash);
+        onUpdateDealStatus(currentDeal.id, 'RELEASED', undefined, recipientWallet, txHash);
+        if (recipientWallet && netPayout > 0) {
+          addBalance(netPayout, currentDeal.currency, recipientWallet);
+        }
         showNotice(`Payout Released On-Chain (${txHash.slice(0, 10)}...): ${netPayout} ${currentDeal.currency} to provider · ${feeAmount} ${currentDeal.currency} protocol fee.`);
-        // In production the on-chain release() transfers funds directly — live balance updates from chain
       } catch (err: any) {
         showNotice(`On-chain payout release failed: ${err?.shortMessage || err?.message}`);
       } finally {

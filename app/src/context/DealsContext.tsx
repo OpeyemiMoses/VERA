@@ -7,7 +7,7 @@ import { fetchDealsForWallet } from '../lib/onChainDeals';
 interface DealsContextType {
   deals: Deal[];
   createDeal: (newDeal: Deal) => void;
-  purchaseService: (originalDealId: string, buyerWallet: string, buyerName: string, customDepositTxHash?: string) => void;
+  purchaseService: (originalDealId: string, buyerWallet: string, buyerName: string, customDepositTxHash?: string, customEscrowAddress?: string) => void;
   acceptJob: (dealId: string, freelancerWallet: string, freelancerName: string, attestationTxHash?: string) => void;
   submitDeliverable: (dealId: string, deliverable: DeliverableData, attestationTxHash?: string) => void;
   rejectDeliverable: (dealId: string, reason: string) => void;
@@ -162,7 +162,7 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const generateMockTxHash = () =>
     '0x' + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
 
-  const purchaseService = (originalDealId: string, rawBuyerWallet: string, rawBuyerName: string, customDepositTxHash?: string) => {
+  const purchaseService = (originalDealId: string, rawBuyerWallet: string, rawBuyerName: string, customDepositTxHash?: string, customEscrowAddress?: string) => {
     const baseId = originalDealId.split('-slot-')[0].split('-order-')[0].split('-accepted-')[0];
     const parentDeal = deals.find((d) => d.id === baseId || d.id === originalDealId);
     if (!parentDeal) return;
@@ -188,6 +188,7 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       id: `${baseId}-slot-${newAccepted}`,
       slotNumber: newAccepted,
       status: 'FUNDED',
+      escrowAddress: customEscrowAddress || parentDeal.escrowAddress,
       quantity: newQty,
       acceptedCount: newAccepted,
       totalSlots: total,
@@ -212,6 +213,7 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         if (d.id === parentDeal.id) {
           return {
             ...d,
+            escrowAddress: customEscrowAddress || d.escrowAddress,
             quantity: newQty,
             acceptedCount: newAccepted,
             totalSlots: total,

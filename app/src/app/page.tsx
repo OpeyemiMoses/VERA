@@ -15,7 +15,7 @@ import { LandingPage } from '../components/LandingPage';
 import { Footer } from '../components/Footer';
 import { UserProfileModal } from '../components/UserProfileModal';
 import { MobileBottomNav } from '../components/MobileBottomNav';
-import { useWriteContract } from 'wagmi';
+import { useWriteContract, usePublicClient } from 'wagmi';
 import { ESCROW_ABI } from '../lib/contracts';
 import { usePersona } from '../context/PersonaContext';
 import { useDeals } from '../context/DealsContext';
@@ -49,6 +49,7 @@ export default function Home() {
   useScrollRise();
   const { activePersona, activePersonaKey, appMode } = usePersona();
   const { writeContractAsync } = useWriteContract();
+  const publicClient = usePublicClient();
   const {
     deals,
     createDeal,
@@ -154,14 +155,20 @@ export default function Home() {
     showNotice(`Deliverable (${deliverable.format}) sent to buyer! Ready for review & release.`);
   };
 
-  const handlePurchaseService = (originalDealId: string, customDepositTxHash?: string) => {
-    purchaseServiceContext(originalDealId, activePersona.walletAddress, activePersona.name, customDepositTxHash);
+  const handlePurchaseService = (originalDealId: string, customDepositTxHash?: string, customEscrowAddress?: string) => {
+    purchaseServiceContext(originalDealId, activePersona.walletAddress, activePersona.name, customDepositTxHash, customEscrowAddress);
     const baseId = originalDealId.split('-order-')[0].split('-accepted-')[0];
     const parent = deals.find((d) => d.id === baseId || d.id === originalDealId);
     if (selectedDetailDeal && parent && (selectedDetailDeal.id === parent.id || selectedDetailDeal.id === originalDealId)) {
       const currentQty = parent.quantity !== undefined ? parent.quantity : (parent.totalSlots || 1);
       const newQty = Math.max(0, currentQty - 1);
-      setSelectedDetailDeal({ ...parent, quantity: newQty, status: newQty > 0 ? 'OPEN' : 'FUNDED', depositTxHash: customDepositTxHash || parent.depositTxHash });
+      setSelectedDetailDeal({
+        ...parent,
+        escrowAddress: customEscrowAddress || parent.escrowAddress,
+        quantity: newQty,
+        status: newQty > 0 ? 'OPEN' : 'FUNDED',
+        depositTxHash: customDepositTxHash || parent.depositTxHash,
+      });
     }
     showNotice(`Escrow Paid & Secured!`);
   };
@@ -222,6 +229,15 @@ export default function Home() {
           args: [attestationSig as `0x${string}`, BigInt(deadlineVal || Math.floor(Date.now() / 1000) + 3600)],
         });
 
+        showNotice(`Attestation tx submitted (${txHash.slice(0, 10)}...). Waiting for Monad block confirmation...`);
+        if (publicClient) {
+          try {
+            await publicClient.waitForTransactionReceipt({ hash: txHash });
+          } catch (rcptErr) {
+            console.warn('[RECEIPT] Proceeding with acceptance confirmation:', rcptErr);
+          }
+        }
+
         acceptJobContext(deal.id, activePersona.walletAddress, activePersona.name, txHash);
         updateDealStatusContext(deal.id, 'ACCEPTED' as any, activePersona.name, activePersona.walletAddress, txHash);
         showNotice(`Job Accepted On-Chain (${txHash.slice(0, 10)}...)! Cleanverse attestation verified.`);
@@ -274,6 +290,16 @@ export default function Home() {
           abi: ESCROW_ABI,
           functionName: 'release',
         });
+
+        showNotice(`Release tx submitted (${txHash.slice(0, 10)}...). Waiting for Monad block confirmation...`);
+        if (publicClient) {
+          try {
+            await publicClient.waitForTransactionReceipt({ hash: txHash });
+          } catch (rcptErr) {
+            console.warn('[RECEIPT] Proceeding with release confirmation:', rcptErr);
+          }
+        }
+
         updateDealStatusContext(deal.id, 'RELEASED', undefined, undefined, txHash);
         showNotice(`Payout Released On-Chain (${txHash.slice(0, 10)}...).`);
       } catch (err: any) {
@@ -860,8 +886,8 @@ export default function Home() {
         deal={selectedCheckoutDeal}
         isOpen={!!selectedCheckoutDeal}
         onClose={() => setSelectedCheckoutDeal(null)}
-        onPaymentComplete={(dealId, customDepositTxHash) => {
-          handlePurchaseService(dealId, customDepositTxHash);
+        onPaymentComplete={(dealId, customDepositTxHash, customEscrowAddress) => {
+          handlePurchaseService(dealId, customDepositTxHash, customEscrowAddress);
         }}
       />
       <SubmitDeliverableModal
