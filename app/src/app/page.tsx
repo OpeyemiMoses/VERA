@@ -284,12 +284,31 @@ export default function Home() {
 
     if (appMode === 'production') {
       try {
-        showNotice('Releasing Escrow Payout on Monad Testnet... Please confirm in Web3 wallet.');
-        const txHash = await writeContractAsync({
-          address: deal.escrowAddress as `0x${string}`,
-          abi: ESCROW_ABI,
-          functionName: 'release',
-        });
+        const recipient = deal.counterpartyAddress || deal.initiatorAddress;
+        let txHash: `0x${string}`;
+        if (recipient && recipient.startsWith('0x') && recipient !== '0x0000000000000000000000000000000000000000') {
+          try {
+            txHash = await writeContractAsync({
+              address: deal.escrowAddress as `0x${string}`,
+              abi: ESCROW_ABI,
+              functionName: 'releaseTo',
+              args: [recipient as `0x${string}`],
+            });
+          } catch (relToErr) {
+            console.warn('[RELEASE] releaseTo failed, falling back to release():', relToErr);
+            txHash = await writeContractAsync({
+              address: deal.escrowAddress as `0x${string}`,
+              abi: ESCROW_ABI,
+              functionName: 'release',
+            });
+          }
+        } else {
+          txHash = await writeContractAsync({
+            address: deal.escrowAddress as `0x${string}`,
+            abi: ESCROW_ABI,
+            functionName: 'release',
+          });
+        }
 
         showNotice(`Release tx submitted (${txHash.slice(0, 10)}...). Waiting for Monad block confirmation...`);
         if (publicClient) {

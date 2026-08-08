@@ -4,8 +4,8 @@
  */
 
 // ─── Deployed addresses (Monad Testnet — Chain 10143) ──────────────────────
-export const FACTORY_ADDRESS  = '0xC06815e09263bc1E4E0d073a58F4c6ff7Eee9334' as const;
-export const CATKN_ADDRESS    = '0x505B3F7C275Ee093aB5Aa46FCe3E14467a91Ce03' as const;
+export const FACTORY_ADDRESS  = '0xF01Da8383e5949DB1BccDeC278975f002Cfc0fe1' as const;
+export const CATKN_ADDRESS    = '0x5A7a2f264E6618d61Bd03a586C2F816fEe521Ea8' as const;
 export const MONAD_CHAIN_ID   = 10143;
 export const CATKN_DECIMALS   = 18;
 export const FAUCET_AMOUNT_CATKN = 10_000; // human-readable units
@@ -84,6 +84,12 @@ export const ESCROW_ABI = [
     stateMutability: 'nonpayable', inputs: [], outputs: [],
   },
   {
+    type: 'function', name: 'setFreelancer',
+    stateMutability: 'nonpayable',
+    inputs: [{ name: '_freelancer', type: 'address' }],
+    outputs: [],
+  },
+  {
     type: 'function', name: 'acceptWithAttestation',
     stateMutability: 'nonpayable',
     inputs: [{ name: 'signature', type: 'bytes' }, { name: 'deadline', type: 'uint256' }],
@@ -92,6 +98,12 @@ export const ESCROW_ABI = [
   {
     type: 'function', name: 'release',
     stateMutability: 'nonpayable', inputs: [], outputs: [],
+  },
+  {
+    type: 'function', name: 'releaseTo',
+    stateMutability: 'nonpayable',
+    inputs: [{ name: '_freelancer', type: 'address' }],
+    outputs: [],
   },
   {
     type: 'function', name: 'cancel',

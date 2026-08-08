@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "C:\\Users\\2tynm\\.gemini\\antigravity-ide\\scratch\\compliant-escrow-protocol\\contracts\\contracts\\Escrow.sol": {
-      "lastModificationDate": 1786176586224,
-      "contentHash": "e3b9fc3625fbe628540c9f2fb5e36ac3",
+      "lastModificationDate": 1786211911453,
+      "contentHash": "7e3461272c9f948303556bc3d7f257df",
       "sourceName": "contracts/Escrow.sol",
       "solcConfig": {
         "version": "0.8.24",

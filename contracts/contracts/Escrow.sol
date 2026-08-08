@@ -77,6 +77,15 @@ contract Escrow is ReentrancyGuard {
     }
 
     /**
+     * @notice Set freelancer wallet address
+     */
+    function setFreelancer(address _freelancer) external {
+        require(msg.sender == client || msg.sender == complianceAttestor, "Unauthorized caller");
+        require(_freelancer != address(0), "Invalid freelancer address");
+        freelancer = _freelancer;
+    }
+
+    /**
      * @notice Freelancer accepts job using Cleanverse Attestation Signature
      * @param signature Cryptographic attestation issued by backend after Cleanverse verification
      * @param deadline Timestamp limit for signature validity
@@ -101,12 +110,32 @@ contract Escrow is ReentrancyGuard {
     }
 
     /**
-     * @notice Releases funds to the freelancer upon successful work confirmation, routing platform fees to feeRecipient wallet.
+     * @notice Releases funds to freelancer upon successful work confirmation
      */
     function release() external nonReentrant {
         require(msg.sender == client || msg.sender == freelancer, "Unauthorized caller");
-        require(state == State.Accepted, "Escrow is not in Accepted state");
+        require(state == State.Accepted || state == State.Funded, "Escrow is not in releasable state");
+        require(freelancer != address(0), "Freelancer address not set");
 
+        _executeRelease(freelancer);
+    }
+
+    /**
+     * @notice Client releases funds to a specific freelancer recipient address
+     */
+    function releaseTo(address _freelancer) external nonReentrant {
+        require(msg.sender == client, "Only client can release to specified recipient");
+        require(state == State.Accepted || state == State.Funded, "Escrow is not in releasable state");
+        require(_freelancer != address(0), "Invalid freelancer address");
+
+        if (freelancer == address(0)) {
+            freelancer = _freelancer;
+        }
+
+        _executeRelease(_freelancer);
+    }
+
+    function _executeRelease(address recipient) internal {
         uint256 feeAmount = (amount * feeBps) / 10000;
         uint256 payoutAmount = amount - feeAmount;
 
@@ -117,17 +146,18 @@ contract Escrow is ReentrancyGuard {
             require(token.transfer(feeRecipient, feeAmount), "Fee transfer failed");
         }
 
-        // Payout net balance to seller/freelancer
-        require(token.transfer(freelancer, payoutAmount), "Release payout transfer failed");
+        // Payout net balance to recipient
+        require(token.transfer(recipient, payoutAmount), "Release payout transfer failed");
 
-        emit EscrowReleased(freelancer, payoutAmount, feeAmount);
+        emit EscrowReleased(recipient, payoutAmount, feeAmount);
     }
 
     /**
      * @notice Triggers dispute, locking state for resolution
      */
-    function dispute() external inState(State.Accepted) {
+    function dispute() external {
         require(msg.sender == client || msg.sender == freelancer, "Unauthorized caller");
+        require(state == State.Accepted || state == State.Funded, "Invalid state for dispute");
         state = State.Disputed;
         emit EscrowDisputed(msg.sender);
     }

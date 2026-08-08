@@ -399,11 +399,30 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
     if (appMode === 'production') {
       try {
         showNotice('Releasing Escrow Payout on Monad Testnet... Please confirm in Web3 wallet.');
-        const txHash = await writeContractAsync({
-          address: currentDeal.escrowAddress as `0x${string}`,
-          abi: ESCROW_ABI,
-          functionName: 'release',
-        });
+        let txHash: `0x${string}`;
+        if (recipientWallet && recipientWallet.startsWith('0x') && recipientWallet !== '0x0000000000000000000000000000000000000000') {
+          try {
+            txHash = await writeContractAsync({
+              address: currentDeal.escrowAddress as `0x${string}`,
+              abi: ESCROW_ABI,
+              functionName: 'releaseTo',
+              args: [recipientWallet as `0x${string}`],
+            });
+          } catch (relToErr) {
+            console.warn('[RELEASE] releaseTo failed, falling back to release():', relToErr);
+            txHash = await writeContractAsync({
+              address: currentDeal.escrowAddress as `0x${string}`,
+              abi: ESCROW_ABI,
+              functionName: 'release',
+            });
+          }
+        } else {
+          txHash = await writeContractAsync({
+            address: currentDeal.escrowAddress as `0x${string}`,
+            abi: ESCROW_ABI,
+            functionName: 'release',
+          });
+        }
 
         showNotice(`Release tx submitted (${txHash.slice(0, 10)}...). Waiting for Monad block confirmation...`);
         if (publicClient) {
