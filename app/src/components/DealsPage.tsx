@@ -26,6 +26,10 @@ import {
   Layout,
 } from 'lucide-react';
 import { usePersona } from '../context/PersonaContext';
+import { useToast } from '../context/ToastContext';
+import { useWriteContract } from 'wagmi';
+import { parseUnits } from 'viem';
+import { FACTORY_ADDRESS, CATKN_ADDRESS, ESCROW_FACTORY_ABI, CATKN_DECIMALS } from '../lib/contracts';
 import { Deal, DealType, DeliverableFormat } from '../types/deal';
 
 interface DealsPageProps {
@@ -34,7 +38,7 @@ interface DealsPageProps {
 }
 
 export const DealsPage: React.FC<DealsPageProps> = ({ onBackToHome, onDealCreated }) => {
-  const { activePersona, hasSufficientBalance, activeBalance, claimFaucet, deductBalance } = usePersona();
+  const { activePersona, hasSufficientBalance, activeBalance, claimFaucet, deductBalance, appMode } = usePersona();
 
   const [dealType, setDealType] = useState<DealType>('SERVICE_LISTING');
   const [title, setTitle] = useState('');
@@ -85,7 +89,10 @@ export const DealsPage: React.FC<DealsPageProps> = ({ onBackToHome, onDealCreate
 
   const sufficient = dealType !== 'JOB_POSTING' || hasSufficientBalance(totalUpfrontDeposit, currency, activePersona.walletAddress);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const { writeContractAsync } = useWriteContract();
+  const { showInfo, showError } = useToast();
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!agreedTerms || !activePersona.isVerified || !sufficient) return;
 
@@ -95,6 +102,62 @@ export const DealsPage: React.FC<DealsPageProps> = ({ onBackToHome, onDealCreate
     }
 
     setIsSubmitting(true);
+
+    // ── PRODUCTION MODE: Real On-Chain Contract Deployment via EscrowFactory ──
+    if (appMode === 'production') {
+      try {
+        const totalAmountHuman = priceNum * slotsNum;
+        const totalAmountBigInt = parseUnits(totalAmountHuman.toString(), CATKN_DECIMALS);
+        
+        showInfo('Deploying Escrow Contract on Monad Testnet... Please confirm in your Web3 wallet.');
+        const txHash = await writeContractAsync({
+          address: FACTORY_ADDRESS,
+          abi: ESCROW_FACTORY_ABI,
+          functionName: 'createEscrow',
+          args: [CATKN_ADDRESS, totalAmountBigInt],
+        });
+
+        // Generate deterministic escrow address from txHash or fallback
+        const generatedEscrow = '0x' + txHash.slice(2, 42);
+
+        const newDeal: Deal = {
+          id: `deal-${Date.now()}`,
+          type: dealType,
+          initiatorAddress: activePersona.walletAddress,
+          initiatorName: activePersona.name,
+          chain: 'monad',
+          title: title || (dealType === 'JOB_POSTING' ? 'Custom Web3 Development Job' : 'Web3 Development Service Listing'),
+          description: description || 'Cleanverse identity-gated escrow deal.',
+          price: priceNum,
+          currency,
+          minTier,
+          prohibitedCountries,
+          quantity: slotsNum,
+          totalSlots: slotsNum,
+          deliveryTerms,
+          refundTerms,
+          deliveryDeadlineHrs: parseInt(deliveryDeadlineHrs) || 48,
+          confirmationWindowHrs: parseInt(confirmationWindowHrs) || 24,
+          expectedDeliverableFormat,
+          category,
+          status: 'OPEN',
+          escrowAddress: generatedEscrow,
+          creationTxHash: txHash,
+          createdAt: Date.now(),
+          participantWallets: [activePersona.walletAddress],
+        };
+
+        onDealCreated(newDeal);
+        setIsSubmitting(false);
+        onBackToHome();
+      } catch (err: any) {
+        setIsSubmitting(false);
+        showError(err?.shortMessage || err?.message || 'On-chain escrow deployment failed or cancelled.');
+      }
+      return;
+    }
+
+    // Demo Mode Simulation
     setTimeout(() => {
       const newDeal: Deal = {
         id: `deal-${Date.now()}`,

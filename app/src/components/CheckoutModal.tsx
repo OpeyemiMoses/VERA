@@ -4,6 +4,10 @@ import React, { useState } from 'react';
 import { X, ShieldCheck, ArrowRight, Wallet, Lock, CheckCircle2, FileText, Sparkles, Building2, User, AlertCircle, Droplets, Zap } from 'lucide-react';
 import { usePersona } from '../context/PersonaContext';
 import { useCleanverse } from '../hooks/useCleanverse';
+import { useToast } from '../context/ToastContext';
+import { useWriteContract } from 'wagmi';
+import { parseUnits } from 'viem';
+import { CATKN_ADDRESS, CATKN_ABI, ESCROW_ABI, CATKN_DECIMALS } from '../lib/contracts';
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -18,7 +22,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   deal,
   onPaymentComplete,
 }) => {
-  const { activePersona, hasSufficientBalance, activeBalance, claimFaucet, deductBalance, getPersonaTrustScore } = usePersona();
+  const { activePersona, hasSufficientBalance, activeBalance, claimFaucet, deductBalance, getPersonaTrustScore, appMode } = usePersona();
   const { checkCompliance, isChecking } = useCleanverse();
   const [step, setStep] = useState<'review' | 'verifying' | 'funded'>('review');
   const [txHash, setTxHash] = useState<string | null>(null);
@@ -41,6 +45,9 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const collateralAmount = isMon ? parseFloat(rawCollateral.toFixed(4)) : Math.round(rawCollateral);
   const sellerHasSufficientCollateral = collateralAmount === 0 || hasSufficientBalance(collateralAmount, deal.currency, deal.initiatorAddress);
 
+  const { writeContractAsync } = useWriteContract();
+  const { showInfo, showError } = useToast();
+
   const handleFundEscrow = async () => {
     if (!sufficient) return;
 
@@ -55,7 +62,39 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
     setStep('verifying');
 
-    // Simulate smart contract deposit & funding
+    // ── PRODUCTION MODE: Real Monad Testnet On-Chain Transactions ──────────────
+    if (appMode === 'production') {
+      try {
+        const amount = parseUnits(deal.price.toString(), CATKN_DECIMALS);
+        
+        // Step 1: Approve cATKN spend
+        showInfo('Step 1/2: Please approve token spending in your Web3 wallet...');
+        const approveTx = await writeContractAsync({
+          address: CATKN_ADDRESS,
+          abi: CATKN_ABI,
+          functionName: 'approve',
+          args: [deal.escrowAddress as `0x${string}`, amount],
+        });
+
+        // Step 2: Fund Escrow Contract
+        showInfo(`Approval Confirmed (${approveTx.slice(0, 10)}...). Step 2/2: Confirm Escrow Deposit in your wallet...`);
+        const fundTx = await writeContractAsync({
+          address: deal.escrowAddress as `0x${string}`,
+          abi: ESCROW_ABI,
+          functionName: 'fund',
+        });
+
+        setTxHash(fundTx);
+        setStep('funded');
+        onPaymentComplete(deal.id);
+      } catch (err: any) {
+        setStep('review');
+        showError(err?.shortMessage || err?.message || 'On-chain deposit failed or cancelled.');
+      }
+      return;
+    }
+
+    // Demo Mode Simulation
     setTimeout(() => {
       const generatedTx = '0x' + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
       setTxHash(generatedTx);

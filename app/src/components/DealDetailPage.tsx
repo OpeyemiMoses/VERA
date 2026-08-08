@@ -33,6 +33,8 @@ import { useDeals } from '../context/DealsContext';
 import { useToast } from '../context/ToastContext';
 import { useCleanverse, PERSONA_KEYS } from '../hooks/useCleanverse';
 import { useEscrow } from '../hooks/useEscrow';
+import { useWriteContract } from 'wagmi';
+import { ESCROW_ABI } from '../lib/contracts';
 import { SandboxPreviewModal } from './SandboxPreviewModal';
 import { RejectDeliverableModal } from './RejectDeliverableModal';
 import { MonadExplorerModal } from './MonadExplorerModal';
@@ -57,11 +59,12 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
   openDisputeAudit,
   onSelectDeal,
 }) => {
-  const { activePersona, activePersonaKey, getPersonaBalance, addBalance, deductBalance, getPersonaTrustScore } = usePersona();
+  const { activePersona, activePersonaKey, getPersonaBalance, addBalance, deductBalance, getPersonaTrustScore, appMode } = usePersona();
   const { deals, rejectDeliverable, acceptJob } = useDeals();
   const { showSuccess } = useToast();
   const { checkCompliance, isChecking } = useCleanverse();
   const { acceptWithAttestation, confirmDelivery, isLoading: escrowLoading } = useEscrow();
+  const { writeContractAsync } = useWriteContract();
 
   const [notice, setNotice] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -296,8 +299,33 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
 
     showNotice(`Compliance passed. Submitting on-chain attestation to Escrow Contract...`);
 
-    const privKey = PERSONA_KEYS[activePersonaKey] || '0xb553cb10a16d0ce4a890cf2611922db0b572fd91ea4b11a56735f179b4b53516';
     const attestationSig = typeof compliance.attestation === 'object' ? compliance.attestation?.signature : compliance.attestation;
+    const deadlineVal = typeof compliance.attestation === 'object' ? compliance.attestation?.deadline : (Math.floor(Date.now() / 1000) + 3600);
+
+    // ── PRODUCTION MODE: Real On-Chain acceptWithAttestation Transaction ───────
+    if (appMode === 'production') {
+      try {
+        showNotice('Submitting acceptWithAttestation to Monad Testnet... Confirm in Web3 wallet.');
+        const txHash = await writeContractAsync({
+          address: currentDeal.escrowAddress as `0x${string}`,
+          abi: ESCROW_ABI,
+          functionName: 'acceptWithAttestation',
+          args: [attestationSig as `0x${string}`, BigInt(deadlineVal || Math.floor(Date.now() / 1000) + 3600)],
+        });
+
+        currentDeal.attestationTxHash = txHash;
+        acceptJob(currentDeal.id, activePersona.walletAddress, activePersona.name);
+        onUpdateDealStatus(currentDeal.id, 'ACCEPTED' as any, activePersona.name);
+        showNotice(`Job Accepted On-Chain (${txHash.slice(0, 10)}...)! Cleanverse attestation verified.`);
+      } catch (err: any) {
+        showNotice(`On-chain job acceptance failed: ${err?.shortMessage || err?.message}`);
+      } finally {
+        setIsProcessing(false);
+      }
+      return;
+    }
+
+    const privKey = PERSONA_KEYS[activePersonaKey] || '0xb553cb10a16d0ce4a890cf2611922db0b572fd91ea4b11a56735f179b4b53516';
     await acceptWithAttestation(
       privKey,
       currentDeal.escrowAddress,
@@ -348,8 +376,28 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
 
     showNotice(`Releasing ${netPayout} ${currentDeal.currency} to seller (${feePct}% protocol fee applied)...`);
 
+    // ── PRODUCTION MODE: Real On-Chain release Transaction ────────────────────
+    if (appMode === 'production') {
+      try {
+        showNotice('Releasing Escrow Payout on Monad Testnet... Please confirm in Web3 wallet.');
+        const txHash = await writeContractAsync({
+          address: currentDeal.escrowAddress as `0x${string}`,
+          abi: ESCROW_ABI,
+          functionName: 'release',
+        });
+
+        currentDeal.releaseTxHash = txHash;
+        onUpdateDealStatus(currentDeal.id, 'RELEASED');
+        showNotice(`Payout Released On-Chain (${txHash.slice(0, 10)}...): ${netPayout} ${currentDeal.currency} to seller · ${feeAmount} ${currentDeal.currency} protocol fee.`);
+      } catch (err: any) {
+        showNotice(`On-chain payout release failed: ${err?.shortMessage || err?.message}`);
+      } finally {
+        setIsProcessing(false);
+      }
+      return;
+    }
+
     const privKey = PERSONA_KEYS[activePersonaKey] || '0xb553cb10a16d0ce4a890cf2611922db0b572fd91ea4b11a56735f179b4b53516';
-    // Fire and forget - on-chain call may fail for mock deal addresses
     confirmDelivery(privKey, currentDeal.escrowAddress).catch(() => {});
 
     onUpdateDealStatus(currentDeal.id, 'RELEASED');
