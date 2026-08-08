@@ -649,6 +649,12 @@ export const PersonaProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const getPersonaBalance = (personaWalletOrKey?: string): { catkn: number; mon: string } => {
+    if (appMode === 'production' && (!personaWalletOrKey || personaWalletOrKey === 'prod-wallet' || personaWalletOrKey.toLowerCase() === wagmiAddress?.toLowerCase())) {
+      return {
+        catkn: onChainCatknBalance !== null ? onChainCatknBalance : (catknBalances[wagmiAddress?.toLowerCase() || ''] ?? 0),
+        mon: realMonBalances[wagmiAddress?.toLowerCase() || ''] ?? realMonBalances['prod-wallet'] ?? '0.0000',
+      };
+    }
     const { wKey, pKey } = resolveKeys(personaWalletOrKey);
     return {
       catkn: catknBalances[wKey] ?? catknBalances[pKey] ?? DEFAULT_CATKN[wKey] ?? 0,
@@ -692,15 +698,17 @@ export const PersonaProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // In Production Mode: immediately show 0 balances if wallet is disconnected
   const isWalletDisconnected = appMode === 'production' && !wagmiAddress;
   const activeBalance = {
-    // Production Mode: live on-chain cATKN balance (fallback to local state if indexing) | Demo Mode: localStorage
+    // Production Mode: live on-chain cATKN balance read directly from Monad Testnet RPC | Demo Mode: localStorage
     catkn: isWalletDisconnected
       ? 0
       : appMode === 'production'
-        ? (onChainCatknBalance !== null ? onChainCatknBalance : (catknBalances['prod-wallet'] ?? catknBalances[activeWalletKey] ?? 0))
+        ? (onChainCatknBalance !== null ? onChainCatknBalance : (catknBalances[wagmiAddress?.toLowerCase() || ''] ?? 0))
         : (catknBalances[activeWalletKey] ?? catknBalances[activePersonaId] ?? DEFAULT_CATKN[activeWalletKey] ?? 0),
     mon: isWalletDisconnected
       ? '0.0000'
-      : (realMonBalances['prod-wallet'] ?? realMonBalances[activeWalletKey] ?? realMonBalances[activePersonaId] ?? DEFAULT_MON[activeWalletKey] ?? '0.0000'),
+      : appMode === 'production'
+        ? (realMonBalances[wagmiAddress?.toLowerCase() || ''] ?? realMonBalances['prod-wallet'] ?? '0.0000')
+        : (realMonBalances[activeWalletKey] ?? realMonBalances[activePersonaId] ?? DEFAULT_MON[activeWalletKey] ?? '0.0000'),
     _version: balanceNonce,
   };
 
