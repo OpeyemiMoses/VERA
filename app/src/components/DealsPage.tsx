@@ -29,7 +29,7 @@ import { usePersona } from '../context/PersonaContext';
 import { useToast } from '../context/ToastContext';
 import { useWriteContract } from 'wagmi';
 import { parseUnits } from 'viem';
-import { FACTORY_ADDRESS, CATKN_ADDRESS, ESCROW_FACTORY_ABI, CATKN_DECIMALS } from '../lib/contracts';
+import { FACTORY_ADDRESS, CATKN_ADDRESS, ESCROW_FACTORY_ABI, ESCROW_ABI, CATKN_ABI, CATKN_DECIMALS } from '../lib/contracts';
 import { Deal, DealType, DeliverableFormat } from '../types/deal';
 
 interface DealsPageProps {
@@ -39,6 +39,7 @@ interface DealsPageProps {
 
 export const DealsPage: React.FC<DealsPageProps> = ({ onBackToHome, onDealCreated }) => {
   const { activePersona, hasSufficientBalance, activeBalance, claimFaucet, deductBalance, appMode } = usePersona();
+  const { showInfo, showSuccess, showError } = useToast();
 
   const [dealType, setDealType] = useState<DealType>('SERVICE_LISTING');
   const [title, setTitle] = useState('');
@@ -48,15 +49,33 @@ export const DealsPage: React.FC<DealsPageProps> = ({ onBackToHome, onDealCreate
   const [minTier, setMinTier] = useState<number>(20);
   const [prohibitedCountries, setProhibitedCountries] = useState<string[]>(['RU']);
   const [customCountryInput, setCustomCountryInput] = useState('');
-  const [quantity, setQuantity] = useState<string>('1');
-  const [category, setCategory] = useState('DeFi Protocols');
-  const [expectedDeliverableFormat, setExpectedDeliverableFormat] = useState<DeliverableFormat>('FILE');
-  const [deliveryTerms, setDeliveryTerms] = useState('GitHub code repository link + deployed demo site');
-  const [refundTerms, setRefundTerms] = useState('Full refund within 24h if specifications fail');
+  const [quantity, setQuantity] = useState('1');
+  const slots = quantity;
+  const setSlots = setQuantity;
+  const [deliveryTerms, setDeliveryTerms] = useState('Full deliverable source code and verification artifacts submitted within deadline.');
+  const [refundTerms, setRefundTerms] = useState('Full refund automatically returned to client if deliverable is rejected or missed.');
   const [deliveryDeadlineHrs, setDeliveryDeadlineHrs] = useState('48');
   const [confirmationWindowHrs, setConfirmationWindowHrs] = useState('24');
+  const [expectedDeliverableFormat, setExpectedDeliverableFormat] = useState<DeliverableFormat>('FILE');
+  const [category, setCategory] = useState('DeFi Protocols');
   const [agreedTerms, setAgreedTerms] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const categories = [
+    { id: 'DeFi Protocols', label: 'DeFi Protocols', icon: Coins },
+    { id: 'Security Audit', label: 'Security Audit', icon: ShieldCheck },
+    { id: 'Infrastructure', label: 'Infrastructure', icon: Cpu },
+    { id: 'Compliance & Identity', label: 'Compliance & Identity', icon: Shield },
+    { id: 'Tokenomics & Strategy', label: 'Tokenomics & Strategy', icon: BarChart3 },
+    { id: 'dApp Frontend & UX', label: 'dApp Frontend & UX', icon: Layout },
+  ];
+
+  const { writeContractAsync } = useWriteContract();
+
+  const priceNum = parseFloat(price) || 0;
+  const slotsNum = Math.max(1, parseInt(slots) || 1);
+  const totalUpfrontDeposit = currency === 'MON' ? parseFloat((priceNum * slotsNum).toFixed(4)) : Math.round(priceNum * slotsNum);
+  const sufficient = hasSufficientBalance(totalUpfrontDeposit, currency, activePersona.walletAddress);
 
   const toggleProhibitedCountry = (code: string) => {
     setProhibitedCountries((prev) =>
@@ -72,53 +91,51 @@ export const DealsPage: React.FC<DealsPageProps> = ({ onBackToHome, onDealCreate
     }
   };
 
-  const categories = [
-    { id: 'DeFi Protocols', label: 'DeFi Protocols', icon: Coins },
-    { id: 'Security Audit', label: 'Security Audit', icon: ShieldCheck },
-    { id: 'Infrastructure', label: 'Infrastructure', icon: Cpu },
-    { id: 'Compliance & Identity', label: 'Compliance & Identity', icon: Shield },
-    { id: 'Tokenomics & Strategy', label: 'Tokenomics & Strategy', icon: BarChart3 },
-    { id: 'dApp Frontend & UX', label: 'dApp Frontend & UX', icon: Layout },
-  ];
-
-  const priceNum = parseFloat(price) || 0;
-  const slotsNum = Math.max(1, parseInt(quantity) || 1);
-  const totalUpfrontDeposit = dealType === 'JOB_POSTING'
-    ? (currency === 'MON' ? parseFloat((priceNum * slotsNum).toFixed(4)) : Math.round(priceNum * slotsNum))
-    : 0;
-
-  const sufficient = dealType !== 'JOB_POSTING' || hasSufficientBalance(totalUpfrontDeposit, currency, activePersona.walletAddress);
-
-  const { writeContractAsync } = useWriteContract();
-  const { showInfo, showError } = useToast();
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!agreedTerms || !activePersona.isVerified || !sufficient) return;
 
-    if (dealType === 'JOB_POSTING' && totalUpfrontDeposit > 0) {
-      deductBalance(totalUpfrontDeposit, currency, activePersona.walletAddress);
-      console.log('[DEALS PAGE] Deducted upfront job deposit:', totalUpfrontDeposit, currency, 'from:', activePersona.walletAddress);
-    }
-
     setIsSubmitting(true);
 
-    // ── PRODUCTION MODE: Real On-Chain Contract Deployment via EscrowFactory ──
+    // ── PRODUCTION MODE: Real On-Chain Contract Deployment & Deposit via Web3 ──
     if (appMode === 'production') {
       try {
         const totalAmountHuman = priceNum * slotsNum;
         const totalAmountBigInt = parseUnits(totalAmountHuman.toString(), CATKN_DECIMALS);
         
-        showInfo('Deploying Escrow Contract on Monad Testnet... Please confirm in your Web3 wallet.');
-        const txHash = await writeContractAsync({
+        showInfo('Step 1/3: Deploying Escrow Contract Vault on Monad Testnet...');
+        const deployTx = await writeContractAsync({
           address: FACTORY_ADDRESS,
           abi: ESCROW_FACTORY_ABI,
           functionName: 'createEscrow',
           args: [CATKN_ADDRESS, totalAmountBigInt],
         });
 
-        // Generate deterministic escrow address from txHash or fallback
-        const generatedEscrow = '0x' + txHash.slice(2, 42);
+        const generatedEscrow = '0x' + deployTx.slice(2, 42);
+        let realDepositTxHash: string | undefined = undefined;
+
+        if (dealType === 'JOB_POSTING' && totalAmountHuman > 0) {
+          try {
+            showInfo(`Step 2/3: Approving ${totalAmountHuman} ${currency} token deposit...`);
+            await writeContractAsync({
+              address: CATKN_ADDRESS,
+              abi: CATKN_ABI,
+              functionName: 'approve',
+              args: [generatedEscrow as `0x${string}`, totalAmountBigInt],
+            });
+
+            showInfo(`Step 3/3: Funding Escrow Deposit Vault on Monad Testnet...`);
+            realDepositTxHash = await writeContractAsync({
+              address: generatedEscrow as `0x${string}`,
+              abi: ESCROW_ABI,
+              functionName: 'fund',
+            });
+            deductBalance(totalAmountHuman, currency, activePersona.walletAddress);
+            showSuccess('Escrow Vault Deployed & Deposit Locked on-chain on Monad Testnet!');
+          } catch (fundErr: any) {
+            console.warn('[JOB DEPOSIT] On-chain deposit step deferred:', fundErr.message);
+          }
+        }
 
         const newDeal: Deal = {
           id: `deal-${Date.now()}`,
@@ -140,9 +157,10 @@ export const DealsPage: React.FC<DealsPageProps> = ({ onBackToHome, onDealCreate
           confirmationWindowHrs: parseInt(confirmationWindowHrs) || 24,
           expectedDeliverableFormat,
           category,
-          status: 'OPEN',
+          status: realDepositTxHash ? 'FUNDED' : 'OPEN',
           escrowAddress: generatedEscrow,
-          creationTxHash: txHash,
+          creationTxHash: deployTx,
+          depositTxHash: realDepositTxHash,
           createdAt: Date.now(),
           participantWallets: [activePersona.walletAddress],
         };
