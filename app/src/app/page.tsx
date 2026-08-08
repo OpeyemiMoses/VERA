@@ -156,21 +156,11 @@ export default function Home() {
   };
 
   const handlePurchaseService = (originalDealId: string, customDepositTxHash?: string, customEscrowAddress?: string) => {
-    purchaseServiceContext(originalDealId, activePersona.walletAddress, activePersona.name, customDepositTxHash, customEscrowAddress);
-    const baseId = originalDealId.split('-order-')[0].split('-accepted-')[0];
-    const parent = deals.find((d) => d.id === baseId || d.id === originalDealId);
-    if (selectedDetailDeal && parent && (selectedDetailDeal.id === parent.id || selectedDetailDeal.id === originalDealId)) {
-      const currentQty = parent.quantity !== undefined ? parent.quantity : (parent.totalSlots || 1);
-      const newQty = Math.max(0, currentQty - 1);
-      setSelectedDetailDeal({
-        ...parent,
-        escrowAddress: customEscrowAddress || parent.escrowAddress,
-        quantity: newQty,
-        status: newQty > 0 ? 'OPEN' : 'FUNDED',
-        depositTxHash: customDepositTxHash || parent.depositTxHash,
-      });
+    const fundedOrder = purchaseServiceContext(originalDealId, activePersona.walletAddress, activePersona.name, customDepositTxHash, customEscrowAddress);
+    if (fundedOrder) {
+      setSelectedDetailDeal(fundedOrder);
     }
-    showNotice(`Escrow Paid & Secured!`);
+    showNotice(`Escrow Paid & Secured on Monad Testnet!`);
   };
 
   const handleUpdateDealStatus = (dealId: string, newStatus: Deal['status'], counterpartyName?: string, counterpartyWallet?: string, releaseTxHash?: string) => {

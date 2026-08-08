@@ -7,7 +7,7 @@ import { fetchDealsForWallet } from '../lib/onChainDeals';
 interface DealsContextType {
   deals: Deal[];
   createDeal: (newDeal: Deal) => void;
-  purchaseService: (originalDealId: string, buyerWallet: string, buyerName: string, customDepositTxHash?: string, customEscrowAddress?: string) => void;
+  purchaseService: (originalDealId: string, buyerWallet: string, buyerName: string, customDepositTxHash?: string, customEscrowAddress?: string) => Deal | undefined;
   acceptJob: (dealId: string, freelancerWallet: string, freelancerName: string, attestationTxHash?: string) => void;
   submitDeliverable: (dealId: string, deliverable: DeliverableData, attestationTxHash?: string) => void;
   rejectDeliverable: (dealId: string, reason: string) => void;
@@ -162,10 +162,16 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const generateMockTxHash = () =>
     '0x' + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
 
-  const purchaseService = (originalDealId: string, rawBuyerWallet: string, rawBuyerName: string, customDepositTxHash?: string, customEscrowAddress?: string) => {
+  const purchaseService = (
+    originalDealId: string,
+    rawBuyerWallet: string,
+    rawBuyerName: string,
+    customDepositTxHash?: string,
+    customEscrowAddress?: string
+  ): Deal | undefined => {
     const baseId = originalDealId.split('-slot-')[0].split('-order-')[0].split('-accepted-')[0];
     const parentDeal = deals.find((d) => d.id === baseId || d.id === originalDealId);
-    if (!parentDeal) return;
+    if (!parentDeal) return undefined;
 
     let buyerWallet = rawBuyerWallet;
     let buyerName = rawBuyerName;
@@ -189,7 +195,7 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       slotNumber: newAccepted,
       status: 'FUNDED',
       escrowAddress: customEscrowAddress || parentDeal.escrowAddress,
-      quantity: newQty,
+      quantity: 0,
       acceptedCount: newAccepted,
       totalSlots: total,
       participantWallets: Array.from(new Set([parentDeal.initiatorAddress, buyerWallet])),
@@ -220,13 +226,15 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             participantWallets: updatedWallets,
             counterpartyAddress: d.counterpartyAddress || buyerWallet,
             counterpartyName: d.counterpartyName || buyerName,
-            status: newQty > 0 ? ('OPEN' as const) : ('FUNDED' as const),
+            status: 'FUNDED' as const,
             depositTxHash: customDepositTxHash || d.depositTxHash,
           };
         }
         return d;
       }),
     ]);
+
+    return newOrder;
   };
 
   const acceptJob = (dealId: string, rawFreelancerWallet: string, rawFreelancerName: string, customAttestationTxHash?: string) => {
