@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { Deal, DeliverableData } from '../types/deal';
 import { INITIAL_DEALS } from '../data/mockDeals';
 import { usePersona } from './PersonaContext';
@@ -17,7 +17,7 @@ interface DealsContextType {
   isFetchingOnChain: boolean;
 }
 
-const STORAGE_KEY = 'vera_deals_v9';
+const STORAGE_KEY = 'vera_deals_v10';
 
 const DealsContext = createContext<DealsContextType | undefined>(undefined);
 
@@ -35,6 +35,7 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         localStorage.removeItem('vera_deals_v6');
         localStorage.removeItem('vera_deals_v7');
         localStorage.removeItem('vera_deals_v8');
+        localStorage.removeItem('vera_deals_v9');
 
         const stored = localStorage.getItem(STORAGE_KEY);
         if (stored) {
@@ -73,20 +74,35 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   }, [appMode, prodWalletAddress, refreshOnChainDeals]);
 
-  // In Production Mode, expose on-chain deals merged with any locally created ones
-  const activeDealList = appMode === 'production'
-    ? [...onChainDeals, ...deals.filter((d) => d.id.startsWith('prod-'))]
-    : deals;
+  // In Production Mode, merge real on-chain statuses into local deals
+  const activeDealList = useMemo(() => {
+    if (appMode !== 'production') return deals;
+
+    const merged = deals.map((localDeal) => {
+      if (!localDeal.escrowAddress) return localDeal;
+      const onChain = onChainDeals.find(
+        (oc) => oc.escrowAddress.toLowerCase() === localDeal.escrowAddress.toLowerCase()
+      );
+      if (!onChain) return localDeal;
+      return {
+        ...localDeal,
+        status: onChain.status,
+        statusLabel: onChain.statusLabel,
+      };
+    });
+
+    return merged;
+  }, [deals, onChainDeals, appMode]);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && appMode !== 'production') {
+    if (typeof window !== 'undefined') {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(deals));
       } catch (e) {
         console.error('Failed to save deals to localStorage:', e);
       }
     }
-  }, [deals, appMode]);
+  }, [deals]);
 
   const createDeal = (newDeal: Deal) => {
     // Note: Balance deduction is handled directly in PostJobModal / CheckoutModal upon creation/purchase
