@@ -39,6 +39,7 @@ import {
   Briefcase,
   AlertCircle,
   Eye,
+  Coins,
 } from 'lucide-react';
 
 export default function Home() {
@@ -531,14 +532,30 @@ export default function Home() {
               </div>
 
               {filteredDeals.length === 0 ? (
-                <div className="bg-white dark:bg-slate-900 rounded-3xl p-12 text-center border border-slate-200 dark:border-slate-800 space-y-3 transition-colors">
-                  <div className="h-12 w-12 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-400 flex items-center justify-center mx-auto font-bold">
-                    <Briefcase className="h-6 w-6" />
+                <div className="neu-card rounded-3xl p-12 text-center border-2 border-indigo-500/30 space-y-4 transition-colors">
+                  <div className="h-16 w-16 rounded-3xl neu-inset text-indigo-500 flex items-center justify-center mx-auto font-bold">
+                    <Sparkles className="h-8 w-8 text-indigo-500 animate-pulse" />
                   </div>
-                  <h4 className="text-sm font-bold text-slate-900 dark:text-white">No Deals Found</h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
-                    There are no listings matching your current filter criteria or persona view.
+                  <h4 className="text-base font-extrabold text-slate-900 dark:text-white">Cleanverse Monad Marketplace Ready</h4>
+                  <p className="text-xs text-slate-600 dark:text-slate-300 max-w-md mx-auto leading-relaxed font-medium">
+                    No active escrow deals exist yet on Monad Testnet. Be the first to deploy a multi-slot escrow job or list an identity-gated service!
                   </p>
+                  <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
+                    <button
+                      onClick={() => setIsPostModalOpen(true)}
+                      className="neu-btn-primary px-5 py-2.5 rounded-2xl text-xs font-extrabold flex items-center gap-2 shadow-lg"
+                    >
+                      <Plus className="h-4 w-4" />
+                      <span>Post Job & Deploy Escrow Vault</span>
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('create-deal')}
+                      className="neu-btn-secondary px-5 py-2.5 rounded-2xl text-xs font-extrabold flex items-center gap-2"
+                    >
+                      <Coins className="h-4 w-4 text-indigo-500" />
+                      <span>List Service & Escrow Vault</span>
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

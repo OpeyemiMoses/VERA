@@ -147,7 +147,7 @@ export const PersonaProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const { switchChain } = useSwitchChain();
   const { showSuccess, showError, showInfo } = useToast();
 
-  const [appMode, setAppMode] = useState<AppMode>('demo');
+  const [appMode, setAppMode] = useState<AppMode>('production');
   const [activePersonaKey, setActivePersonaKey] = useState<string>('alice');
   const [selectedChain, setSelectedChain] = useState<string>('monad');
   const [isConnected, setIsConnected] = useState<boolean>(true);

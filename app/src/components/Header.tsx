@@ -140,8 +140,8 @@ export const Header: React.FC<HeaderProps> = ({
               : <Moon className="h-4 w-4 text-purple-600" />}
           </button>
 
-          {/* RainbowKit Web3 Connect Wallet Button — ONLY in Production Mode, after mount to avoid SSR hydration mismatch */}
-          {mounted && appMode === 'production' && (
+          {/* RainbowKit Web3 Connect Wallet Button */}
+          {mounted && (
             <div className="flex-shrink-0">
               <ConnectButton accountStatus="avatar" chainStatus="icon" showBalance={false} />
             </div>
@@ -149,33 +149,14 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* Middle Row: Mode Switcher, Token Balances & Persona Tier Badges */}
+      {/* Middle Row: Network Indicator, Token Balances & Persona Tier Badges */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-        {/* App Mode Switcher */}
-        <div className="neu-inset p-1.5 flex items-center justify-center sm:justify-start gap-1 rounded-2xl w-full lg:w-auto overflow-x-auto">
-          <button
-            onClick={() => setAppMode('production')}
-            className={`px-3 py-2 rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 whitespace-nowrap ${
-              appMode === 'production'
-                ? 'neu-btn-primary shadow-md'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-            }`}
-          >
+        {/* Monad Testnet Live Badge */}
+        <div className="flex items-center gap-2">
+          <span className="px-3.5 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 neu-btn-primary shadow-md border border-purple-500/30">
             <Zap className="h-3.5 w-3.5 text-purple-400" />
-            <span>PRODUCTION MODE (LIVE)</span>
-          </button>
-
-          <button
-            onClick={() => setAppMode('demo')}
-            className={`px-3 py-2 rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 whitespace-nowrap ${
-              appMode === 'demo'
-                ? 'neu-btn-primary shadow-md'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-            }`}
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-            <span>SANDBOX DEMO MATRIX</span>
-          </button>
+            <span>MONAD TESTNET LIVE</span>
+          </span>
         </div>
 
         {/* Live Token Balances & Verification Status */}
