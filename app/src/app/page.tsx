@@ -415,7 +415,7 @@ export default function Home() {
         return !isChildInstance && !isUserInitiator;
       }
       if (activeTab === 'browse-jobs') {
-        return deal.type === 'JOB_POSTING' && !isChildInstance && !isUserInitiator;
+        return (deal.type === 'DIRECT_DEAL' || deal.type === 'SERVICE_LISTING') && !isChildInstance && !isUserInitiator;
       }
       if (activeTab === 'browse-services') {
         return deal.type === 'SERVICE_LISTING' && !isChildInstance && !isUserInitiator;
@@ -479,7 +479,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100/90 dark:bg-slate-950 font-sans text-slate-900 dark:text-white transition-colors duration-300 flex">
+    <div className="flex min-h-screen bg-[#e4ebf5] dark:bg-[#0b0e15] text-slate-900 dark:text-slate-100 font-sans selection:bg-indigo-500 selection:text-white transition-colors">
       {/* Sidebar — only participates in flex layout on desktop */}
       <div className="hidden md:block flex-shrink-0">
         <Sidebar
@@ -489,7 +489,7 @@ export default function Home() {
             setSelectedDetailDeal(null);
           }}
           openPostModal={() => {
-            setCreateDealType('JOB_POSTING');
+            setCreateDealType('SERVICE_LISTING');
             setActiveTab('create-deal');
             setSelectedDetailDeal(null);
           }}
@@ -511,7 +511,7 @@ export default function Home() {
             setSelectedDetailDeal(null);
           }}
           openPostModal={() => {
-            setCreateDealType('JOB_POSTING');
+            setCreateDealType('SERVICE_LISTING');
             setActiveTab('create-deal');
             setSelectedDetailDeal(null);
           }}
@@ -696,23 +696,13 @@ export default function Home() {
                   <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
                     <button
                       onClick={() => {
-                        setCreateDealType('JOB_POSTING');
+                        setCreateDealType('SERVICE_LISTING');
                         setActiveTab('create-deal');
                       }}
                       className="neu-btn-primary px-5 py-2.5 rounded-2xl text-xs font-extrabold flex items-center gap-2 shadow-lg"
                     >
                       <Plus className="h-4 w-4" />
-                      <span>Post Job & Deploy Escrow Vault</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        setCreateDealType('SERVICE_LISTING');
-                        setActiveTab('create-deal');
-                      }}
-                      className="neu-btn-secondary px-5 py-2.5 rounded-2xl text-xs font-extrabold flex items-center gap-2"
-                    >
-                      <Coins className="h-4 w-4 text-indigo-500" />
-                      <span>List Service & Escrow Vault</span>
+                      <span>Create Escrow Deal or Service Listing</span>
                     </button>
                   </div>
                 </div>
@@ -740,7 +730,7 @@ export default function Home() {
                         <div>
                           <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
                             <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-xl neu-inset text-indigo-600 dark:text-indigo-400 font-mono">
-                              {deal.type === 'JOB_POSTING' ? 'JOB REQUEST' : 'SERVICE OFFER'}
+                              {deal.type === 'DIRECT_DEAL' ? '1-ON-1 DEAL' : 'SERVICE OFFER'}
                             </span>
 
                             <div className="flex items-center gap-1.5">
@@ -771,7 +761,7 @@ export default function Home() {
                           {/* Initiator vs Counterparty Card */}
                           <div className="neu-inset rounded-2xl p-3 text-xs space-y-1 mb-3">
                             <div className="flex justify-between items-center text-[11px]">
-                              <span className="text-slate-400 font-medium">{deal.type === 'JOB_POSTING' ? 'Client / Employer:' : 'Seller / Provider:'}</span>
+                              <span className="text-slate-400 font-medium">Service Creator:</span>
                               <span className="font-bold text-slate-800 dark:text-slate-200">{deal.initiatorName}</span>
                             </div>
                             <div className="flex justify-between items-center text-[11px]">
@@ -847,11 +837,8 @@ export default function Home() {
                             </button>
                           )}
 
-                          {/* Send Deliverable Button: only shows when a counterparty (freelancer/buyer) has been assigned */}
-                          {(deal.status === 'FUNDED' || (deal.status as string) === 'ACCEPTED') && hasCounterpartyAssigned && (
-                            (deal.type === 'SERVICE_LISTING' && isUserInitiator) ||
-                            (deal.type === 'JOB_POSTING' && !isUserInitiator)
-                          ) && !deal.deliverableUrl && (
+                          {/* Send Deliverable Button: creator/provider sends deliverable once escrow is secured */}
+                          {(deal.status === 'FUNDED' || (deal.status as string) === 'ACCEPTED') && isUserInitiator && !deal.deliverableUrl && (
                             <button
                               onClick={() => setSelectedSubmitDeliverableDeal(deal)}
                               className="w-full bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white font-bold py-2.5 px-4 rounded-2xl text-xs transition-all flex items-center justify-center gap-1.5 shadow-md shadow-cyan-500/20"
@@ -862,10 +849,7 @@ export default function Home() {
                           )}
 
                           {/* Buyer Payout Release Button when Deliverable is received */}
-                          {deal.status === 'DELIVERED' && (
-                            (deal.type === 'SERVICE_LISTING' && !isUserInitiator) ||
-                            (deal.type === 'JOB_POSTING' && isUserInitiator)
-                          ) && (
+                          {deal.status === 'DELIVERED' && !isUserInitiator && (
                             <button
                               onClick={() => handleReleaseEscrow(deal)}
                               disabled={pendingDealId === deal.id}
@@ -873,30 +857,6 @@ export default function Home() {
                             >
                               <CheckCircle2 className="h-4 w-4" />
                               <span>Confirm Deliverable & Release Payout</span>
-                            </button>
-                          )}
-
-                          {/* Freelancer Accept Button for Job Postings — visible when OPEN or FUNDED with no freelancer yet */}
-                          {!isUserInitiator && meetsTier && deal.type === 'JOB_POSTING' && (deal.status === 'OPEN' || (deal.status === 'FUNDED' && !hasCounterpartyAssigned)) && (
-                            <button
-                              onClick={() => handleAcceptJob(deal)}
-                              disabled={userAlreadyParticipated || pendingDealId === deal.id || isChecking || escrowLoading}
-                              className={`w-full font-bold py-2.5 px-4 rounded-2xl text-xs transition-all flex items-center justify-center gap-1.5 shadow-sm ${
-                                userAlreadyParticipated
-                                  ? 'neu-inset text-slate-500 dark:text-slate-400 opacity-60 cursor-not-allowed border border-slate-300 dark:border-slate-800'
-                                  : pendingDealId === deal.id
-                                  ? 'bg-cyan-500 cursor-wait text-white'
-                                  : 'bg-slate-900 dark:bg-purple-600 hover:bg-slate-950 dark:hover:bg-purple-500 text-white'
-                              }`}
-                            >
-                              <ShieldCheck className="h-4 w-4 text-cyan-400" />
-                              <span>
-                                {userAlreadyParticipated
-                                  ? 'Accept Job (Already Claimed)'
-                                  : pendingDealId === deal.id
-                                  ? 'Checking compliance...'
-                                  : 'Accept Job (Cleanverse Gate)'}
-                              </span>
                             </button>
                           )}
                         </div>

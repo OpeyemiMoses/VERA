@@ -41,12 +41,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const { activePersona } = usePersona();
 
   const navItems = [
-    { id: 'home', label: 'Dashboard', icon: Home, badge: null },
-    { id: 'browse-jobs', label: 'Open Work Escrows', icon: Briefcase, badge: 'BOUNTIES' },
-    { id: 'browse-services', label: 'OTC & Fixed Escrows', icon: ShoppingBag, badge: 'SETTLEMENT' },
-    { id: 'my-created', label: 'My Vault Instances', icon: FolderCheck, badge: null },
-    { id: 'my-purchased', label: 'Active Settlements', icon: FileText, badge: null },
-    { id: 'deals', label: 'Deploy Escrow Vault', icon: PlusCircle, badge: 'NEW' },
+    { id: 'home', label: 'Marketplace', icon: Home, badge: null },
+    { id: 'browse-jobs', label: '1-on-1 Custom Deals', icon: Briefcase, badge: 'DEALS' },
+    { id: 'browse-services', label: 'Service Listings', icon: ShoppingBag, badge: 'OFFERS' },
+    { id: 'my-created', label: 'My Created Deals', icon: FolderCheck, badge: null },
+    { id: 'my-purchased', label: 'My Purchases & Contracts', icon: FileText, badge: null },
+    { id: 'create-deal', label: 'Create Escrow / Listing', icon: PlusCircle, badge: 'NEW' },
   ];
 
   const handleNavClick = (id: string) => {

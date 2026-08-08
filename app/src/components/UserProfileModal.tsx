@@ -130,8 +130,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
       });
     }
 
-    // ONLY show deposit in creator history if the CREATOR funded it (i.e. JOB_POSTING where Client funds upfront)
-    if (d.depositTxHash && d.type === 'JOB_POSTING') {
+    if (d.depositTxHash) {
       txHistory.push({
         id: `deposit-${d.id}`,
         type: 'FUND',
@@ -432,7 +431,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                       >
                         <div className="flex items-center justify-between">
                           <span className="text-[10px] font-bold px-2 py-0.5 rounded neu-inset text-indigo-600 dark:text-indigo-400 uppercase">
-                            {deal.type === 'JOB_POSTING' ? 'Job Posting' : 'Service Listing'}
+                            {deal.type === 'DIRECT_DEAL' ? '1-on-1 Deal' : 'Service Listing'}
                           </span>
                           <span className="text-xs font-extrabold text-slate-900 dark:text-white font-mono">{deal.price} {deal.currency}</span>
                         </div>
@@ -486,7 +485,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                         </h4>
 
                         <div className="flex items-center justify-between text-[10px] text-slate-600 dark:text-slate-300 font-mono pt-1">
-                          <span>{deal.type === 'JOB_POSTING' ? 'Client' : 'Seller'}: {deal.initiatorName}</span>
+                          <span>Creator: {deal.initiatorName}</span>
                           <span className="text-purple-600 dark:text-purple-400 font-bold uppercase">{deal.status}</span>
                         </div>
                       </div>

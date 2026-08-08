@@ -237,7 +237,7 @@ export const MobileDashboardView: React.FC<MobileDashboardViewProps> = ({
                 <div className="space-y-1 min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <span className="text-[9px] font-extrabold px-2 py-0.5 rounded neu-inset text-indigo-600 dark:text-indigo-400 uppercase font-mono">
-                      {deal.type === 'JOB_POSTING' ? 'JOB' : 'SERVICE'}
+                      {deal.type === 'DIRECT_DEAL' ? '1-ON-1' : 'SERVICE'}
                     </span>
                     <span className="text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400">
                       {deal.status}

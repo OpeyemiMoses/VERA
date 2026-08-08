@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 interface RegisteredDeal {
   id: string;
-  type: 'SERVICE_LISTING' | 'JOB_POSTING';
+  type: 'SERVICE_LISTING' | 'DIRECT_DEAL';
   title: string;
   description: string;
   category: string;

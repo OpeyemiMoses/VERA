@@ -179,12 +179,11 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
       (rawCounterpartyName && activePersona.name.toLowerCase().includes(rawCounterpartyName.toLowerCase())) ||
       (currentDeal.participantWallets && currentDeal.participantWallets.some((w) => w.toLowerCase() === activePersona.walletAddress.toLowerCase() && w.toLowerCase() !== currentDeal.initiatorAddress.toLowerCase())));
 
+  const hasCounterpartyAssigned = !!displayCounterpartyAddress && displayCounterpartyAddress !== '0x0000000000000000000000000000000000000000';
   const meetsTier = activePersona.isVerified && activePersona.tier >= currentDeal.minTier;
 
-  // Provider = Work/Service Provider (Seller for listings, Freelancer for jobs)
-  // Receiver = Funds Payer/Client (Buyer for listings, Client for jobs)
-  const isProvider = currentDeal.type === 'SERVICE_LISTING' ? isInitiator : isCounterparty;
-  const isReceiver = currentDeal.type === 'JOB_POSTING' ? isInitiator : isCounterparty;
+  const isProvider = isInitiator;
+  const isReceiver = isCounterparty;
 
   const totalSlots = currentDeal.totalSlots ?? (currentDeal.quantity !== undefined ? currentDeal.quantity : 1);
   const acceptedCount = currentDeal.acceptedCount ?? ((currentDeal.status !== 'OPEN' && currentDeal.status !== 'FUNDED') ? 1 : 0);
@@ -466,11 +465,8 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
 
   const isParticipant = isInitiator || isCounterparty;
 
-  // Privacy Guard: Lock to participants ONLY when a counterparty is actually assigned.
-  // For JOB_POSTING that is OPEN or FUNDED with no freelancer yet, ANY wallet can view & accept.
-  const hasCounterpartyAssigned = !!currentDeal.counterpartyAddress && currentDeal.counterpartyAddress !== '0x0000000000000000000000000000000000000000';
-  const isOpenJobWithNoFreelancer = currentDeal.type === 'JOB_POSTING' && (currentDeal.status === 'OPEN' || currentDeal.status === 'FUNDED') && !hasCounterpartyAssigned;
-  if (!isParticipant && currentDeal.status !== 'OPEN' && !isOpenJobWithNoFreelancer) {
+  const isOpenDealWithNoCounterparty = (currentDeal.type === 'DIRECT_DEAL' || currentDeal.type === 'SERVICE_LISTING') && (currentDeal.status === 'OPEN' || currentDeal.status === 'FUNDED') && !hasCounterpartyAssigned;
+  if (!isParticipant && currentDeal.status !== 'OPEN' && !isOpenDealWithNoCounterparty) {
     return (
       <div className="max-w-xl mx-auto py-16 px-4 animate-fadeIn space-y-6 text-center">
         <div className="neu-card p-8 space-y-4 border-2 border-indigo-500/30">
@@ -522,7 +518,7 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
         <div className="flex flex-wrap items-center justify-between gap-4 pb-6 border-b border-slate-300/40 dark:border-slate-800/60">
           <div className="flex items-center gap-3">
             <span className="text-xs font-bold px-3 py-1.5 rounded-xl neu-inset text-indigo-600 dark:text-indigo-400 font-mono">
-              {deal.type === 'JOB_POSTING' ? 'JOB POSTING' : 'SERVICE LISTING'}
+              {deal.type === 'DIRECT_DEAL' ? '1-ON-1 ESCROW DEAL' : 'PUBLIC SERVICE LISTING'}
             </span>
             <span className="text-xs font-bold px-3 py-1.5 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-300 border border-purple-500/30 flex items-center gap-1 font-mono">
               <ShieldCheck className="h-3.5 w-3.5 text-purple-500" />
@@ -607,7 +603,7 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
           {/* Creator / Initiator */}
           <div className="neu-inset p-4 space-y-2">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-              {deal.type === 'JOB_POSTING' ? 'CLIENT (JOB POSTER)' : 'SELLER (SERVICE OWNER)'}
+              SERVICE CREATOR / OFFERER
             </span>
             <div className="flex items-center gap-3">
               <div className="h-9 w-9 rounded-xl neu-card text-indigo-500 flex items-center justify-center font-bold">
@@ -627,7 +623,7 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
           <div className="neu-inset p-4 space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                {currentDeal.type === 'JOB_POSTING' ? 'FREELANCER (WORKER)' : 'BUYER (PAYER)'}
+                BUYER / PAYER
               </span>
               {slotSubOrders.length > 0 && (
                 <span className="text-[9px] font-mono font-bold text-purple-600 dark:text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20">
@@ -1019,7 +1015,7 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
           <div className="neu-inset p-5 space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <h4 className="text-xs font-extrabold uppercase text-indigo-600 dark:text-indigo-400 tracking-wider flex items-center gap-1.5">
-                <Package className="h-4 w-4 text-indigo-500" /> DELIVERABLE SUBMITTED BY {currentDeal.type === 'JOB_POSTING' ? 'FREELANCER' : 'SELLER'}
+                <Package className="h-4 w-4 text-indigo-500" /> DELIVERABLE SUBMITTED BY SERVICE CREATOR / PROVIDER
               </h4>
 
               <div className="flex items-center gap-2">
@@ -1394,7 +1390,7 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
           )}
 
           {/* Case 6: Freelancer / Seller accepts & verifies attestation */}
-          {!isInitiator && meetsTier && currentDeal.status !== 'DELIVERED' && currentDeal.status !== 'RELEASED' && (!currentDeal.attestationTxHash || currentDeal.type === 'JOB_POSTING') && (
+          {!isInitiator && meetsTier && currentDeal.status !== 'DELIVERED' && currentDeal.status !== 'RELEASED' && !currentDeal.attestationTxHash && (
             <button
               onClick={handleAcceptJob}
               disabled={hasAlreadyFundedOrPurchased || (currentDeal.status !== 'OPEN' && currentDeal.status !== 'FUNDED') || openSlots <= 0 || isProcessing || isChecking || escrowLoading}

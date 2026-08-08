@@ -98,8 +98,8 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         const isInitiator = d.initiatorAddress?.toLowerCase() === w;
         const isCounterparty = d.counterpartyAddress?.toLowerCase() === w;
         const isParticipant = d.participantWallets?.some((pw: string) => pw.toLowerCase() === w);
-        const isOpenJob = d.type === 'JOB_POSTING' && (d.status === 'OPEN' || d.status === 'FUNDED') && !d.counterpartyAddress;
-        return isInitiator || isCounterparty || isParticipant || isOpenJob;
+        const isOpenDeal = (d.type === 'DIRECT_DEAL' || d.type === 'SERVICE_LISTING') && d.status === 'OPEN' && !d.counterpartyAddress;
+        return isInitiator || isCounterparty || isParticipant || isOpenDeal;
       })
       .forEach((d) => combinedPoolMap.set(d.id, d));
     // 2. Add local deals (overrides if local is fresher)

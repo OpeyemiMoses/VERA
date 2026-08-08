@@ -131,7 +131,7 @@ export async function fetchDealsForWallet(
 
       return {
         id: `onchain-${d.address}`,
-        type: isUnclaimedJob ? ('JOB_POSTING' as const) : ('SERVICE_LISTING' as const),
+        type: isUnclaimedJob ? ('DIRECT_DEAL' as const) : ('SERVICE_LISTING' as const),
         escrowAddress: d.address,
         title: `Escrow ${d.address.slice(0, 6)}...${d.address.slice(-4)}`,
         description: `Live escrow contract on Monad Testnet`,

@@ -70,19 +70,20 @@ export const Header: React.FC<HeaderProps> = ({
   const getTabTitle = () => {
     switch (activeTab) {
       case 'home':
-        return 'Overview Dashboard';
+        return 'Overview Marketplace';
       case 'browse-jobs':
-        return 'Open Work Escrows (Bounties)';
+        return '1-on-1 Custom Escrow Deals';
       case 'browse-services':
-        return 'OTC & Service Settlement Vaults';
+        return 'Public Service Listings';
       case 'my-created':
-        return 'My Deployed Escrow Vaults';
+        return 'My Created Deals & Listings';
       case 'my-purchased':
-        return 'Active Settlements & Payouts';
+        return 'My Active Contracts & Purchases';
       case 'deals':
-        return 'Deploy Escrow Instance';
+      case 'create-deal':
+        return 'Create Escrow Deal / Service';
       default:
-        return 'Overview Dashboard';
+        return 'Overview Marketplace';
     }
   };
 

@@ -128,58 +128,32 @@ export const DealsPage: React.FC<DealsPageProps> = ({ onBackToHome, onDealCreate
         const generatedEscrow = '0x' + deployTx.slice(2, 42);
         let realDepositTxHash: string | undefined = undefined;
 
-        if (dealType === 'JOB_POSTING' && totalAmountHuman > 0) {
-          try {
-            showInfo(`Step 2/3: Approving ${totalAmountHuman} ${currency} token deposit...`);
-            const approveTx = await writeContractAsync({
-              address: CATKN_ADDRESS,
-              abi: CATKN_ABI,
-              functionName: 'approve',
-              args: [generatedEscrow as `0x${string}`, totalAmountBigInt],
-            });
-
-            if (publicClient) {
-              try {
-                await publicClient.waitForTransactionReceipt({ hash: approveTx });
-              } catch (e) {}
-            }
-
-            showInfo(`Step 3/3: Funding Escrow Deposit Vault on Monad Testnet...`);
-            realDepositTxHash = await writeContractAsync({
-              address: generatedEscrow as `0x${string}`,
-              abi: ESCROW_ABI,
-              functionName: 'fund',
-            });
-            showSuccess('Escrow Vault Deployed & Deposit Locked on-chain on Monad Testnet!');
-          } catch (fundErr: any) {
-            console.warn('[JOB DEPOSIT] On-chain deposit step deferred:', fundErr.message);
-          }
-        }
-
+        const capNum = dealType === 'SERVICE_LISTING' ? slotsNum : 1;
         const newDeal: Deal = {
           id: `deal-${Date.now()}`,
           type: dealType,
           initiatorAddress: activePersona.walletAddress,
           initiatorName: activePersona.name,
           chain: 'monad',
-          title: title || (dealType === 'JOB_POSTING' ? 'Custom Web3 Development Job' : 'Web3 Development Service Listing'),
+          title: title || (dealType === 'DIRECT_DEAL' ? '1-on-1 Custom Escrow Deal' : 'Web3 Development Service Listing'),
           description: description || 'Cleanverse identity-gated escrow deal.',
           price: priceNum,
           currency,
           minTier,
           prohibitedCountries,
-          quantity: slotsNum,
-          totalSlots: slotsNum,
+          serviceCapacity: capNum,
+          purchasedCount: 0,
+          quantity: capNum,
+          totalSlots: capNum,
           deliveryTerms,
           refundTerms,
           deliveryDeadlineHrs: parseInt(deliveryDeadlineHrs) || 48,
           confirmationWindowHrs: parseInt(confirmationWindowHrs) || 24,
           expectedDeliverableFormat,
           category,
-          status: realDepositTxHash ? 'FUNDED' : 'OPEN',
+          status: 'OPEN',
           escrowAddress: generatedEscrow,
           creationTxHash: deployTx,
-          depositTxHash: realDepositTxHash,
           createdAt: Date.now(),
           participantWallets: [activePersona.walletAddress],
         };
@@ -196,20 +170,23 @@ export const DealsPage: React.FC<DealsPageProps> = ({ onBackToHome, onDealCreate
 
     // Demo Mode Simulation
     setTimeout(() => {
+      const capNum = dealType === 'SERVICE_LISTING' ? slotsNum : 1;
       const newDeal: Deal = {
         id: `deal-${Date.now()}`,
         type: dealType,
         initiatorAddress: activePersona.walletAddress,
         initiatorName: activePersona.name,
         chain: 'monad',
-        title: title || (dealType === 'JOB_POSTING' ? 'Custom Web3 Development Job' : 'Web3 Development Service Listing'),
+        title: title || (dealType === 'DIRECT_DEAL' ? '1-on-1 Custom Escrow Deal' : 'Web3 Development Service Listing'),
         description: description || 'Cleanverse identity-gated escrow deal.',
         price: priceNum,
         currency,
         minTier,
         prohibitedCountries,
-        quantity: slotsNum,
-        totalSlots: slotsNum,
+        serviceCapacity: capNum,
+        purchasedCount: 0,
+        quantity: capNum,
+        totalSlots: capNum,
         deliveryTerms,
         refundTerms,
         deliveryDeadlineHrs: parseInt(deliveryDeadlineHrs) || 48,
@@ -338,10 +315,10 @@ export const DealsPage: React.FC<DealsPageProps> = ({ onBackToHome, onDealCreate
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Deal Type Switcher (Model A vs Model B) */}
         <div className="neu-card p-6 space-y-4">
-          <label className="block text-xs font-extrabold uppercase text-slate-800 dark:text-slate-200 tracking-wider">SELECT DEAL MODEL *</label>
+          <label className="block text-xs font-extrabold uppercase text-slate-800 dark:text-slate-200 tracking-wider">SELECT ESCROW TYPE *</label>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Model B: Service Listing */}
+            {/* Model A: Public Service Listing */}
             <div
               onClick={() => setDealType('SERVICE_LISTING')}
               className={`p-5 rounded-2xl cursor-pointer transition-all ${
@@ -357,37 +334,37 @@ export const DealsPage: React.FC<DealsPageProps> = ({ onBackToHome, onDealCreate
                   <ShoppingBag className="h-4 w-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">Fixed Service / OTC Escrow</h3>
-                  <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Provider-Initiated Fixed Settlement Offer</span>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">Public Service Listing</h3>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Multi-Client Service Offering (Set Capacity)</span>
                 </div>
               </div>
               <p className="text-xs text-slate-600 dark:text-slate-300 leading-snug">
-                You offer a service/digital contract at a fixed rate. Counterparties lock funds in an isolated escrow contract instance.
+                Offer a service (e.g. Audit, Design, Bot Development) at a fixed price to multiple clients with set capacity (e.g. 5 clients max).
               </p>
             </div>
 
-            {/* Model A: Work Bounty / Project Escrow */}
+            {/* Model B: 1-on-1 Custom Escrow Deal */}
             <div
-              onClick={() => setDealType('JOB_POSTING')}
+              onClick={() => setDealType('DIRECT_DEAL')}
               className={`p-5 rounded-2xl cursor-pointer transition-all ${
-                dealType === 'JOB_POSTING'
+                dealType === 'DIRECT_DEAL'
                   ? 'neu-card border-2 border-purple-500 text-slate-900 dark:text-white shadow-md'
                   : 'neu-inset opacity-80 hover:opacity-100'
               }`}
             >
               <div className="flex items-center gap-3 mb-2">
                 <div className={`h-9 w-9 rounded-xl flex items-center justify-center font-bold text-xs ${
-                  dealType === 'JOB_POSTING' ? 'neu-btn-primary' : 'neu-card text-slate-700 dark:text-slate-300'
+                  dealType === 'DIRECT_DEAL' ? 'neu-btn-primary' : 'neu-card text-slate-700 dark:text-slate-300'
                 }`}>
                   <Briefcase className="h-4 w-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">Work Bounty / Project Escrow</h3>
-                  <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Originator-Initiated Escrow Request</span>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">1-on-1 Custom Escrow Deal</h3>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Direct Shareable Escrow Agreement</span>
                 </div>
               </div>
               <p className="text-xs text-slate-600 dark:text-slate-300 leading-snug">
-                You post a project requirement. Verified freelancers apply/accept, and you fund escrow upon agreement.
+                Create a custom escrow deal between you and a specific counterparty. Share the unique deal link to lock funds & execute.
               </p>
             </div>
           </div>
@@ -400,7 +377,7 @@ export const DealsPage: React.FC<DealsPageProps> = ({ onBackToHome, onDealCreate
             <input
               type="text"
               required
-              placeholder={dealType === 'JOB_POSTING' ? 'e.g. Need Web3 React Developer for Smart Contract Escrow' : 'e.g. Custom Telegram Bot Development & Smart Contract Gating'}
+              placeholder={dealType === 'DIRECT_DEAL' ? 'e.g. 1-on-1 OTC Token Purchase & Escrow Agreement' : 'e.g. Full-Stack Smart Contract Audit & Security Service'}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="w-full px-4 py-3 neu-inset text-xs font-medium text-slate-900 dark:text-white focus:outline-none"
@@ -501,6 +478,28 @@ export const DealsPage: React.FC<DealsPageProps> = ({ onBackToHome, onDealCreate
               </select>
             </div>
           </div>
+
+          {/* Service Capacity for Service Listings */}
+          {dealType === 'SERVICE_LISTING' && (
+            <div className="neu-card p-4 space-y-2 border border-indigo-500/30">
+              <label className="block text-xs font-bold uppercase text-slate-800 dark:text-slate-200 tracking-wider">
+                SERVICE CAPACITY (MAX NUMBER OF CLIENTS / TIMES OFFERED) *
+              </label>
+              <input
+                type="number"
+                min="1"
+                max="100"
+                required
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
+                className="w-full px-4 py-3 neu-inset text-xs font-bold text-slate-900 dark:text-white focus:outline-none"
+                placeholder="e.g. 5 (How many clients can purchase this service listing)"
+              />
+              <p className="text-[11px] text-slate-500">
+                Specify the maximum number of times users can purchase this service. Each client gets an isolated 1-on-1 escrow vault.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Section 2: Validator Pool Compliance & Regional Restrictions */}
@@ -661,52 +660,21 @@ export const DealsPage: React.FC<DealsPageProps> = ({ onBackToHome, onDealCreate
 
         {/* Section 3: Agreement Checkbox & Submit */}
         <div className="neu-card p-6 space-y-4">
-          {/* Upfront Escrow Deposit Summary for Job Postings */}
-          {dealType === 'JOB_POSTING' && (
-            <div className="bg-indigo-500/10 border border-indigo-500/30 p-4 rounded-2xl space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-indigo-400 uppercase tracking-wider">
-                  Upfront Job Escrow Deposit Calculation
-                </span>
-                <span className="text-xs font-mono font-extrabold text-indigo-400 bg-indigo-500/20 px-2.5 py-1 rounded-lg border border-indigo-500/30">
-                  {slotsNum} Slot{slotsNum > 1 ? 's' : ''} × {priceNum} {currency}
-                </span>
-              </div>
-              <div className="flex items-baseline justify-between pt-1 border-t border-indigo-500/20">
-                <span className="text-xs font-medium text-slate-700 dark:text-slate-200">
-                  Total Upfront Lock Required:
-                </span>
-                <span className="text-base font-mono font-extrabold text-indigo-600 dark:text-indigo-400">
-                  {totalUpfrontDeposit} {currency}
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
-                Locking {totalUpfrontDeposit} {currency} in Escrow contract upfront guarantees that all {slotsNum} freelancer slot(s) are fully covered and ready for payout upon work completion.
-              </p>
+          <div className="bg-indigo-500/10 border border-indigo-500/30 p-4 rounded-2xl space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-indigo-400 uppercase tracking-wider">
+                {dealType === 'SERVICE_LISTING' ? 'Public Service Listing Details' : '1-on-1 Custom Deal Details'}
+              </span>
+              <span className="text-xs font-mono font-extrabold text-indigo-400 bg-indigo-500/20 px-2.5 py-1 rounded-lg border border-indigo-500/30">
+                {priceNum} {currency} {dealType === 'SERVICE_LISTING' ? `(Capacity: ${slotsNum} Clients)` : ''}
+              </span>
             </div>
-          )}
-
-          {/* Insufficient Balance Warning for Job Postings */}
-          {dealType === 'JOB_POSTING' && !sufficient && (
-            <div className="bg-rose-500/10 border border-rose-500/30 p-4 rounded-2xl space-y-2">
-              <div className="flex items-center gap-2 text-rose-500 font-bold text-xs">
-                <ShieldAlert className="h-5 w-5 text-rose-500 flex-shrink-0" />
-                <span>Insufficient Balance to Fund All {slotsNum} Slots</span>
-              </div>
-              <p className="text-xs text-slate-700 dark:text-slate-200">
-                You currently have <strong className="text-rose-500 dark:text-rose-400 font-mono">{currency === 'cATKN' ? `${activeBalance.catkn.toLocaleString()} cATKN` : `${activeBalance.mon} MON`}</strong>, but this job requires <strong className="text-slate-900 dark:text-white font-mono">{totalUpfrontDeposit.toLocaleString()} {currency}</strong> to fund {slotsNum} freelancer position(s).
-              </p>
-              {currency === 'cATKN' && (
-                <button
-                  type="button"
-                  onClick={() => claimFaucet()}
-                  className="neu-btn-primary px-3 py-1.5 text-xs font-extrabold flex items-center gap-1.5 mt-1"
-                >
-                  <span>Claim Faucet (+10,000 cATKN)</span>
-                </button>
-              )}
-            </div>
-          )}
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
+              {dealType === 'SERVICE_LISTING'
+                ? `Publishing this service listing allows up to ${slotsNum} clients to purchase. Buyers deposit funds into dedicated 1-on-1 escrow contracts upon purchase.`
+                : `Publishing this 1-on-1 custom deal generates a direct shareable link for your counterparty to lock escrow funds.`}
+            </p>
+          </div>
 
           {!activePersona.isVerified && (
             <div className="bg-rose-500/10 border border-rose-500/30 rounded-2xl p-4 space-y-2">
@@ -715,7 +683,7 @@ export const DealsPage: React.FC<DealsPageProps> = ({ onBackToHome, onDealCreate
                 <span>Cleanverse Protocol Error: Identity Blocked (Unverified Tier 0)</span>
               </div>
               <p className="text-xs text-slate-700 dark:text-slate-200 leading-relaxed">
-                Unverified or blocked wallets are strictly forbidden from creating Job Postings or Service Listings. Please complete verification at the Cleanverse Onboarding Portal.
+                Unverified or blocked wallets are strictly forbidden from creating Escrow Deals or Service Listings. Please complete verification at the Cleanverse Onboarding Portal.
               </p>
               <a
                 href="https://onboard.cleanverse.com/#start"
@@ -732,34 +700,32 @@ export const DealsPage: React.FC<DealsPageProps> = ({ onBackToHome, onDealCreate
           <label className="flex items-start gap-3 cursor-pointer">
             <input
               type="checkbox"
-              disabled={!activePersona.isVerified || !sufficient}
+              disabled={!activePersona.isVerified}
               checked={agreedTerms}
               onChange={(e) => setAgreedTerms(e.target.checked)}
               className="mt-0.5 rounded border-slate-300 text-indigo-500 focus:ring-indigo-500 h-4 w-4 disabled:opacity-50"
             />
             <span className="text-xs text-slate-700 dark:text-slate-200 leading-snug font-medium">
-              I agree to lock {dealType === 'JOB_POSTING' ? `${totalUpfrontDeposit} ${currency}` : 'funds'} in <code className="font-mono font-bold text-slate-900 dark:text-white">Escrow contract</code> on Monad Testnet. Cleanverse identity validation will enforce participant tier gating prior to payout release.
+              I agree to publish this <code className="font-mono font-bold text-slate-900 dark:text-white">Escrow contract</code> offer on Monad Testnet. Cleanverse identity validation will enforce participant tier gating prior to payout release.
             </span>
           </label>
 
           <button
             type="submit"
-            disabled={!agreedTerms || isSubmitting || !activePersona.isVerified || !sufficient}
+            disabled={!agreedTerms || isSubmitting || !activePersona.isVerified}
             className={`w-full neu-btn-primary py-4 px-6 text-xs font-extrabold flex items-center justify-center gap-2 ${
-              !agreedTerms || isSubmitting || !activePersona.isVerified || !sufficient ? 'opacity-50 cursor-not-allowed' : ''
+              !agreedTerms || isSubmitting || !activePersona.isVerified ? 'opacity-50 cursor-not-allowed' : ''
             }`}
           >
             <ShieldCheck className="h-4 w-4" />
             <span>
               {!activePersona.isVerified
                 ? 'Identity Blocked — Verification Required'
-                : !sufficient
-                ? `Insufficient ${currency} Balance`
                 : isSubmitting
-                ? 'Deploying Escrow Deal...'
-                : dealType === 'JOB_POSTING'
-                ? `Publish Job & Deposit ${totalUpfrontDeposit} ${currency}`
-                : 'Publish Service Listing'}
+                ? 'Deploying Escrow Offer...'
+                : dealType === 'DIRECT_DEAL'
+                ? 'Create 1-on-1 Custom Escrow Deal'
+                : 'Publish Public Service Listing'}
             </span>
           </button>
         </div>

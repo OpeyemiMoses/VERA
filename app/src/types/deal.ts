@@ -1,4 +1,4 @@
-export type DealType = 'JOB_POSTING' | 'SERVICE_LISTING';
+export type DealType = 'DIRECT_DEAL' | 'SERVICE_LISTING';
 export type DealStatus = 'OPEN' | 'FUNDED' | 'ACCEPTED' | 'DELIVERED' | 'RELEASED' | 'COMPLETED' | 'REJECTED' | 'DISPUTED' | 'REFUNDED' | 'CANCELLED';
 export type DeliverableFormat = 'URL' | 'FILE' | 'CREDENTIALS' | 'MULTI_ASSET';
 
@@ -54,7 +54,11 @@ export interface Deal {
   createdAt: number;
   shareableLink?: string;       // Direct shareable deal link URL
 
-  // Deprecated fields kept for backward compatibility
+  // Service Capacity (for Service Listings)
+  serviceCapacity?: number;     // Max number of times this service can be rendered to clients (e.g. 5)
+  purchasedCount?: number;      // Number of times purchased so far
+
+  // Sub-order tracking
   quantity?: number;
   totalSlots?: number;
   acceptedCount?: number;

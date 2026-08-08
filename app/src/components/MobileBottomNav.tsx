@@ -46,14 +46,14 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         }`}
       >
         <Briefcase className={`h-5 w-5 ${activeTab === 'browse-jobs' ? 'text-indigo-600 dark:text-indigo-400' : ''}`} />
-        <span className="text-[10px] font-bold">Escrows</span>
+        <span className="text-[10px] font-bold">1-on-1 Deals</span>
       </button>
 
       {/* Deploy Escrow Button (Center Prominent CTA) */}
       <button
-        onClick={() => setActiveTab('deals')}
+        onClick={() => setActiveTab('create-deal')}
         className="flex flex-col items-center justify-center h-12 w-12 rounded-full bg-gradient-to-tr from-indigo-600 via-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/30 -mt-5 hover:scale-105 active:scale-95 transition-all"
-        title="Deploy New Escrow Instance"
+        title="Create New Escrow Deal or Service Listing"
       >
         <PlusCircle className="h-6 w-6 text-white" />
       </button>
