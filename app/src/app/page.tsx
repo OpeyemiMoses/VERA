@@ -584,8 +584,8 @@ export default function Home() {
                     const userAlreadyParticipated = hasUserParticipated(deal);
 
                     const totalSlots = deal.totalSlots ?? (deal.quantity !== undefined ? deal.quantity : 1);
-                    const acceptedCount = deal.acceptedCount ?? (deal.status !== 'OPEN' ? 1 : 0);
-                    const openSlots = deal.quantity !== undefined ? deal.quantity : Math.max(0, totalSlots - acceptedCount);
+                    const acceptedCount = deal.acceptedCount ?? ((deal.status !== 'OPEN' && deal.status !== 'FUNDED') ? 1 : 0);
+                    const openSlots = Math.max(0, totalSlots - acceptedCount);
 
                     return (
                       <div

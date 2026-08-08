@@ -178,7 +178,7 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
   const isReceiver = currentDeal.type === 'JOB_POSTING' ? isInitiator : isCounterparty;
 
   const totalSlots = currentDeal.totalSlots ?? (currentDeal.quantity !== undefined ? currentDeal.quantity : 1);
-  const acceptedCount = currentDeal.acceptedCount ?? (currentDeal.status !== 'OPEN' && currentDeal.status !== 'FUNDED' ? 1 : 0);
+  const acceptedCount = currentDeal.acceptedCount ?? ((currentDeal.status !== 'OPEN' && currentDeal.status !== 'FUNDED') ? 1 : 0);
   const openSlots = Math.max(0, totalSlots - acceptedCount);
 
   const hasAlreadyFundedOrPurchased = deals.some((d) => {
@@ -415,8 +415,11 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
 
   const isParticipant = isInitiator || isCounterparty;
 
-  // Privacy Guard: Active escrow deals between two counterparties are strictly locked to those two personas
-  if (!isParticipant && currentDeal.status !== 'OPEN') {
+  // Privacy Guard: Lock to participants ONLY when a counterparty is actually assigned.
+  // For JOB_POSTING that is OPEN or FUNDED with no freelancer yet, ANY wallet can view & accept.
+  const hasCounterpartyAssigned = !!currentDeal.counterpartyAddress && currentDeal.counterpartyAddress !== '0x0000000000000000000000000000000000000000';
+  const isOpenJobWithNoFreelancer = currentDeal.type === 'JOB_POSTING' && (currentDeal.status === 'OPEN' || currentDeal.status === 'FUNDED') && !hasCounterpartyAssigned;
+  if (!isParticipant && currentDeal.status !== 'OPEN' && !isOpenJobWithNoFreelancer) {
     return (
       <div className="max-w-xl mx-auto py-16 px-4 animate-fadeIn space-y-6 text-center">
         <div className="neu-card p-8 space-y-4 border-2 border-indigo-500/30">
@@ -1261,8 +1264,8 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
             </button>
           )}
 
-          {/* Case 3: Provider (Seller or Accepted Freelancer) submits deliverable */}
-          {(currentDeal.status === 'FUNDED' || (currentDeal.status as string) === 'ACCEPTED') && isProvider && !currentDeal.deliverableUrl && !currentDeal.deliverable && (
+          {/* Case 3: Provider (Accepted Freelancer) submits deliverable — only after a freelancer has been assigned */}
+          {(currentDeal.status === 'FUNDED' || (currentDeal.status as string) === 'ACCEPTED') && isProvider && hasCounterpartyAssigned && !currentDeal.deliverableUrl && !currentDeal.deliverable && (
             <button
               onClick={() => openSubmitDeliverable(currentDeal)}
               className="w-full bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white font-extrabold py-4 px-6 rounded-2xl text-sm transition-all shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-2"
