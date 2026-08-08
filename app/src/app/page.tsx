@@ -15,6 +15,8 @@ import { LandingPage } from '../components/LandingPage';
 import { Footer } from '../components/Footer';
 import { UserProfileModal } from '../components/UserProfileModal';
 import { MobileBottomNav } from '../components/MobileBottomNav';
+import { useWriteContract } from 'wagmi';
+import { ESCROW_ABI } from '../lib/contracts';
 import { usePersona } from '../context/PersonaContext';
 import { useDeals } from '../context/DealsContext';
 import { useToast } from '../context/ToastContext';
@@ -45,7 +47,8 @@ import {
 
 export default function Home() {
   useScrollRise();
-  const { activePersona, activePersonaKey } = usePersona();
+  const { activePersona, activePersonaKey, appMode } = usePersona();
+  const { writeContractAsync } = useWriteContract();
   const {
     deals,
     createDeal,
@@ -189,9 +192,31 @@ export default function Home() {
     }
 
     showNotice(`Compliance passed. Submitting on-chain attestation to Escrow Contract...`);
+    const attestationSig = typeof compliance.attestation === 'object' ? compliance.attestation?.signature : compliance.attestation;
+    const deadlineVal = typeof compliance.attestation === 'object' ? compliance.attestation?.deadline : (Math.floor(Date.now() / 1000) + 3600);
+
+    if (appMode === 'production') {
+      try {
+        showNotice('Submitting acceptWithAttestation to Monad Testnet... Confirm in Web3 wallet.');
+        const txHash = await writeContractAsync({
+          address: deal.escrowAddress as `0x${string}`,
+          abi: ESCROW_ABI,
+          functionName: 'acceptWithAttestation',
+          args: [attestationSig as `0x${string}`, BigInt(deadlineVal || Math.floor(Date.now() / 1000) + 3600)],
+        });
+
+        acceptJobContext(deal.id, activePersona.walletAddress, activePersona.name, txHash);
+        updateDealStatusContext(deal.id, 'ACCEPTED' as any, activePersona.name, activePersona.walletAddress, txHash);
+        showNotice(`Job Accepted On-Chain (${txHash.slice(0, 10)}...)! Cleanverse attestation verified.`);
+      } catch (err: any) {
+        showNotice(`On-chain job acceptance failed: ${err?.shortMessage || err?.message}`);
+      } finally {
+        setPendingDealId(null);
+      }
+      return;
+    }
 
     const privKey = PERSONA_KEYS[activePersonaKey] || '0xb553cb10a16d0ce4a890cf2611922db0b572fd91ea4b11a56735f179b4b53516';
-    const attestationSig = typeof compliance.attestation === 'object' ? compliance.attestation?.signature : compliance.attestation;
     await acceptWithAttestation(
       privKey,
       deal.escrowAddress,
@@ -223,6 +248,24 @@ export default function Home() {
   const handleReleaseEscrow = async (deal: Deal) => {
     setPendingDealId(deal.id);
     showNotice(`Releasing ${deal.price} ${deal.currency} on-chain to provider...`);
+
+    if (appMode === 'production') {
+      try {
+        showNotice('Releasing Escrow Payout on Monad Testnet... Please confirm in Web3 wallet.');
+        const txHash = await writeContractAsync({
+          address: deal.escrowAddress as `0x${string}`,
+          abi: ESCROW_ABI,
+          functionName: 'release',
+        });
+        updateDealStatusContext(deal.id, 'RELEASED', undefined, undefined, txHash);
+        showNotice(`Payout Released On-Chain (${txHash.slice(0, 10)}...).`);
+      } catch (err: any) {
+        showNotice(`On-chain payout release failed: ${err?.shortMessage || err?.message}`);
+      } finally {
+        setPendingDealId(null);
+      }
+      return;
+    }
 
     const privKey = PERSONA_KEYS[activePersonaKey] || '0xb553cb10a16d0ce4a890cf2611922db0b572fd91ea4b11a56735f179b4b53516';
     await confirmDelivery(privKey, deal.escrowAddress);

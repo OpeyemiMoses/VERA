@@ -234,8 +234,8 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     let freelancerWallet = rawFreelancerWallet;
     let freelancerName = rawFreelancerName;
 
-    // If freelancer matches job poster, auto-assign counterparty to opposite persona for demo flow
-    if (freelancerWallet.toLowerCase() === parentJob.initiatorAddress.toLowerCase()) {
+    // In sandbox mode only: if freelancer matches job poster, auto-assign counterparty to opposite persona for demo flow
+    if (appMode !== 'production' && freelancerWallet.toLowerCase() === parentJob.initiatorAddress.toLowerCase()) {
       const isAlice = parentJob.initiatorAddress.toLowerCase().includes('0x0b7e');
       freelancerWallet = isAlice ? '0x76A470f543373b596af06a52240EC779da5AEDb6' : '0x0b7E601E0c41B7Ac3Ce5177cb5c37A37B84a4d16';
       freelancerName = isAlice ? 'Bob (Verified Freelancer)' : 'Alice (Client)';

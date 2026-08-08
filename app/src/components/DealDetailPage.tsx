@@ -330,7 +330,7 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
 
         currentDeal.attestationTxHash = txHash;
         acceptJob(currentDeal.id, activePersona.walletAddress, activePersona.name, txHash);
-        onUpdateDealStatus(currentDeal.id, 'ACCEPTED' as any, activePersona.name, undefined, txHash);
+        onUpdateDealStatus(currentDeal.id, 'ACCEPTED' as any, activePersona.name, activePersona.walletAddress, txHash);
         showNotice(`Job Accepted On-Chain (${txHash.slice(0, 10)}...)! Cleanverse attestation verified.`);
       } catch (err: any) {
         showNotice(`On-chain job acceptance failed: ${err?.shortMessage || err?.message}`);
