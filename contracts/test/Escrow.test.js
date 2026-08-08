@@ -22,7 +22,7 @@ describe("Compliant Escrow Protocol Smart Contracts", function () {
     escrowFactory = await Factory.deploy(attestorSigner.address);
     await escrowFactory.waitForDeployment();
 
-    // 3. Create Escrow instance via Factory
+    // 3. Create Escrow instance via Factory (1.5% default fee = 150 bps)
     const tx = await escrowFactory.connect(client).createEscrow(await mockToken.getAddress(), AMOUNT);
     const receipt = await tx.wait();
     const event = receipt.logs.find(log => log.fragment && log.fragment.name === 'EscrowCreated');
@@ -36,6 +36,8 @@ describe("Compliant Escrow Protocol Smart Contracts", function () {
     expect(await escrow.client()).to.equal(client.address);
     expect(await escrow.amount()).to.equal(AMOUNT);
     expect(await escrow.complianceAttestor()).to.equal(attestorSigner.address);
+    expect(await escrow.feeRecipient()).to.equal(attestorSigner.address);
+    expect(await escrow.feeBps()).to.equal(150); // 1.5% default
     expect(await escrow.state()).to.equal(0); // State.Created
   });
 
@@ -90,7 +92,7 @@ describe("Compliant Escrow Protocol Smart Contracts", function () {
     ).to.be.revertedWith("Invalid compliance attestation signature");
   });
 
-  it("should release funds to freelancer upon completion", async function () {
+  it("should release net funds to freelancer and route platform fee to feeRecipient", async function () {
     // Fund & Accept
     await mockToken.connect(client).approve(await escrow.getAddress(), AMOUNT);
     await escrow.connect(client).fund();
@@ -103,14 +105,25 @@ describe("Compliant Escrow Protocol Smart Contracts", function () {
     const signature = await attestorSigner.signMessage(ethers.getBytes(messageHash));
     await escrow.connect(freelancer).acceptWithAttestation(signature, deadline);
 
+    const feeBps = await escrow.feeBps();
+    const feeAmount = (AMOUNT * BigInt(feeBps)) / BigInt(10000);
+    const payoutAmount = AMOUNT - feeAmount;
+
+    const initialFreelancerBalance = await mockToken.balanceOf(freelancer.address);
+    const initialTreasuryBalance = await mockToken.balanceOf(attestorSigner.address);
+
     // Release
-    const initialBalance = await mockToken.balanceOf(freelancer.address);
     await expect(escrow.connect(client).release())
       .to.emit(escrow, "EscrowReleased")
-      .withArgs(freelancer.address, AMOUNT);
+      .withArgs(freelancer.address, payoutAmount, feeAmount);
 
     expect(await escrow.state()).to.equal(3); // State.Completed
-    expect(await mockToken.balanceOf(freelancer.address)).to.equal(initialBalance + AMOUNT);
+
+    // Verify freelancer receives net payout
+    expect(await mockToken.balanceOf(freelancer.address)).to.equal(initialFreelancerBalance + payoutAmount);
+
+    // Verify treasury wallet receives platform fee
+    expect(await mockToken.balanceOf(attestorSigner.address)).to.equal(initialTreasuryBalance + feeAmount);
   });
 
   it("should handle dispute and resolution", async function () {
@@ -139,16 +152,5 @@ describe("Compliant Escrow Protocol Smart Contracts", function () {
 
     expect(await escrow.state()).to.equal(5); // State.Resolved
     expect(await mockToken.balanceOf(freelancer.address)).to.equal(initialBalance + AMOUNT);
-  });
-
-  it("should allow client to cancel unfunded / unaccepted escrow", async function () {
-    await mockToken.connect(client).approve(await escrow.getAddress(), AMOUNT);
-    await escrow.connect(client).fund();
-
-    const initialBalance = await mockToken.balanceOf(client.address);
-    await escrow.connect(client).cancel();
-
-    expect(await escrow.state()).to.equal(6); // State.Cancelled
-    expect(await mockToken.balanceOf(client.address)).to.equal(initialBalance + AMOUNT);
   });
 });

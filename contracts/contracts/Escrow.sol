@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
 /**
  * @title Escrow
- * @notice Identity-Gated Escrow contract requiring Cleanverse Attestation to accept jobs.
+ * @notice Identity-Gated Escrow contract requiring Cleanverse Attestation to accept jobs & automatically routing platform fees to the Protocol Treasury wallet.
  */
 contract Escrow is ReentrancyGuard {
     using ECDSA for bytes32;
@@ -18,6 +18,8 @@ contract Escrow is ReentrancyGuard {
     address public immutable factory;
     address public immutable client;
     address public immutable complianceAttestor; // Protocol backend key verifying Cleanverse API
+    address public immutable feeRecipient;        // Protocol Treasury / Owner wallet receiving platform fees
+    uint256 public immutable feeBps;              // Platform fee in basis points (e.g., 150 = 1.5%)
     IERC20 public immutable token;
     uint256 public immutable amount;
 
@@ -26,7 +28,7 @@ contract Escrow is ReentrancyGuard {
 
     event EscrowFunded(address indexed client, uint256 amount);
     event EscrowAccepted(address indexed freelancer);
-    event EscrowReleased(address indexed freelancer, uint256 amount);
+    event EscrowReleased(address indexed freelancer, uint256 payoutAmount, uint256 feeAmount);
     event EscrowDisputed(address indexed triggeredBy);
     event EscrowResolved(address indexed winner, uint256 amount);
     event EscrowCancelled();
@@ -45,18 +47,23 @@ contract Escrow is ReentrancyGuard {
         address _client,
         address _token,
         uint256 _amount,
-        address _attestor
+        address _attestor,
+        address _feeRecipient,
+        uint256 _feeBps
     ) {
         require(_client != address(0), "Invalid client address");
         require(_token != address(0), "Invalid token address");
         require(_attestor != address(0), "Invalid attestor address");
         require(_amount > 0, "Amount must be greater than zero");
+        require(_feeBps <= 1000, "Fee cannot exceed 10%");
 
         factory = msg.sender;
         client = _client;
         token = IERC20(_token);
         amount = _amount;
         complianceAttestor = _attestor;
+        feeRecipient = _feeRecipient;
+        feeBps = _feeBps;
         state = State.Created;
     }
 
@@ -94,15 +101,26 @@ contract Escrow is ReentrancyGuard {
     }
 
     /**
-     * @notice Releases funds to the freelancer upon successful work confirmation
+     * @notice Releases funds to the freelancer upon successful work confirmation, routing platform fees to feeRecipient wallet.
      */
     function release() external nonReentrant {
         require(msg.sender == client || msg.sender == freelancer, "Unauthorized caller");
         require(state == State.Accepted, "Escrow is not in Accepted state");
 
+        uint256 feeAmount = (amount * feeBps) / 10000;
+        uint256 payoutAmount = amount - feeAmount;
+
         state = State.Completed;
-        require(token.transfer(freelancer, amount), "Release payout transfer failed");
-        emit EscrowReleased(freelancer, amount);
+
+        // Route platform fee to owner/treasury wallet
+        if (feeAmount > 0 && feeRecipient != address(0)) {
+            require(token.transfer(feeRecipient, feeAmount), "Fee transfer failed");
+        }
+
+        // Payout net balance to seller/freelancer
+        require(token.transfer(freelancer, payoutAmount), "Release payout transfer failed");
+
+        emit EscrowReleased(freelancer, payoutAmount, feeAmount);
     }
 
     /**
