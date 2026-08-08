@@ -475,15 +475,18 @@ export const DealsPage: React.FC<DealsPageProps> = ({ onBackToHome, onDealCreate
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase text-slate-800 dark:text-slate-200 tracking-wider mb-1.5">MAX SLOTS *</label>
-              <input
-                type="number"
-                min="1"
-                required
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
+              <label className="block text-xs font-bold uppercase text-slate-800 dark:text-slate-200 tracking-wider mb-1.5">DELIVERY DEADLINE *</label>
+              <select
+                value={deliveryDeadlineHrs}
+                onChange={(e) => setDeliveryDeadlineHrs(e.target.value)}
                 className="w-full px-4 py-3 neu-inset text-xs font-bold text-slate-900 dark:text-white focus:outline-none"
-              />
+              >
+                <option value="24">24 Hours</option>
+                <option value="48">48 Hours (2 Days)</option>
+                <option value="72">72 Hours (3 Days)</option>
+                <option value="168">7 Days (1 Week)</option>
+                <option value="336">14 Days (2 Weeks)</option>
+              </select>
             </div>
           </div>
         </div>

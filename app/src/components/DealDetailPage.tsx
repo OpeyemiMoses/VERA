@@ -26,6 +26,8 @@ import {
   Coins,
   Zap,
   Code,
+  Share2,
+  Copy,
 } from 'lucide-react';
 import { Deal } from '../types/deal';
 import { usePersona, MOCK_PERSONAS } from '../context/PersonaContext';
@@ -486,17 +488,24 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
               <ShieldCheck className="h-3.5 w-3.5 text-purple-500" />
               Min Tier {deal.minTier}
             </span>
-            {(() => {
-              const total = deal.totalSlots ?? (deal.quantity !== undefined ? deal.quantity : 1);
-              const accepted = deal.acceptedCount ?? ((deal.status !== 'OPEN' && deal.status !== 'FUNDED') ? 1 : 0);
-              const openSlots = Math.max(0, total - accepted);
-
-              return (
-                <span className="text-xs font-mono font-bold text-slate-700 dark:text-slate-200 neu-inset px-3 py-1.5">
-                  Slots: <span className="text-indigo-600 dark:text-indigo-400 font-extrabold">{openSlots}</span> of {total} open ({accepted} Claimed)
-                </span>
-              );
-            })()}
+            <button
+              type="button"
+              onClick={() => {
+                const link = typeof window !== 'undefined' ? `${window.location.origin}/?deal=${currentDeal.id}` : '';
+                if (link) {
+                  navigator.clipboard.writeText(link);
+                  showNotice('Shareable Escrow Link copied to clipboard! Send to your counterparty.');
+                }
+              }}
+              className="neu-btn-secondary px-3 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 hover:scale-105 transition-all shadow-sm cursor-pointer"
+            >
+              <Share2 className="h-3.5 w-3.5" />
+              <span>Copy Escrow Link</span>
+            </button>
+            <span className="text-xs font-mono font-bold text-slate-700 dark:text-slate-200 neu-inset px-3 py-1.5 flex items-center gap-1">
+              <Lock className="h-3.5 w-3.5 text-purple-500" />
+              <span>1-on-1 Escrow Vault</span>
+            </span>
           </div>
 
           <div className="text-right">

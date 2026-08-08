@@ -102,15 +102,32 @@ export default function Home() {
   const [auditTxHash, setAuditTxHash] = useState<string>('');
   const [pendingDealId, setPendingDealId] = useState<string | null>(null);
 
-  // Auto-sync selectedDetailDeal with latest global deals state
+  // Check URL query parameters for ?deal=deal-xxx shareable links
   useEffect(() => {
-    if (selectedDetailDeal) {
-      const latest = deals.find((d) => d.id === selectedDetailDeal.id);
-      if (latest) {
-        setSelectedDetailDeal(latest);
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const dealIdParam = params.get('deal');
+      if (dealIdParam) {
+        const found = deals.find(
+          (d) => d.id === dealIdParam || (d.escrowAddress && d.escrowAddress.toLowerCase() === dealIdParam.toLowerCase())
+        );
+        if (found) {
+          setSelectedDetailDeal(found);
+          setActiveTabState('home');
+        }
       }
     }
   }, [deals]);
+
+  // Auto-sync selectedDetailDeal with latest global deals state
+  useEffect(() => {
+    if (selectedDetailDeal) {
+      const updated = deals.find((d) => d.id === selectedDetailDeal.id || (d.escrowAddress && d.escrowAddress.toLowerCase() === selectedDetailDeal.escrowAddress?.toLowerCase()));
+      if (updated && JSON.stringify(updated) !== JSON.stringify(selectedDetailDeal)) {
+        setSelectedDetailDeal(updated);
+      }
+    }
+  }, [deals, selectedDetailDeal]);
 
 
   const showNotice = (msg: string) => {
@@ -646,12 +663,12 @@ export default function Home() {
                             <div className="flex items-center gap-1.5">
                               <span
                                 className={`text-[10px] font-bold px-2 py-0.5 rounded-lg font-mono ${
-                                  openSlots > 0
-                                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
-                                    : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/30'
+                                  hasCounterpartyAssigned
+                                    ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/30'
+                                    : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
                                 }`}
                               >
-                                {openSlots} of {totalSlots} open
+                                {hasCounterpartyAssigned ? '1-on-1 Locked' : 'Awaiting via Link'}
                               </span>
 
                               <span className="flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/30 font-mono">
@@ -675,9 +692,9 @@ export default function Home() {
                               <span className="font-bold text-slate-800 dark:text-slate-200">{deal.initiatorName}</span>
                             </div>
                             <div className="flex justify-between items-center text-[11px]">
-                              <span className="text-slate-400 font-medium">Slots Claimed:</span>
+                              <span className="text-slate-400 font-medium">Counterparty Link:</span>
                               <span className="font-bold text-indigo-500 dark:text-indigo-400">
-                                {acceptedCount} of {totalSlots} Claimed
+                                {hasCounterpartyAssigned ? 'Assigned & Locked' : 'Shareable Link Ready'}
                               </span>
                             </div>
                           </div>

@@ -23,8 +23,8 @@ export interface Deal {
   type: DealType;
   initiatorAddress: string;     // Wallet address of creator
   initiatorName: string;        // Persona/Name of creator
-  counterpartyAddress?: string; // Wallet address of acceptor/buyer
-  counterpartyName?: string;    // Persona/Name of acceptor/buyer
+  counterpartyAddress?: string; // Wallet address of counterparty (assigned upon link acceptance/funding)
+  counterpartyName?: string;    // Persona/Name of counterparty
   chain: 'monad';
   title: string;
   description: string;
@@ -37,9 +37,6 @@ export interface Deal {
   refundTerms: string;          // When refunds apply
   deliveryDeadlineHrs: number;
   confirmationWindowHrs: number;
-  quantity?: number;            // Remaining available slots
-  totalSlots?: number;          // Total initial slots
-  acceptedCount?: number;       // Number of slots accepted/paid
   expectedDeliverableFormat?: DeliverableFormat;
   category: string;
   status: DealStatus;
@@ -49,13 +46,19 @@ export interface Deal {
   rejectedAt?: number;          // Timestamp when deliverable was rejected
   deliverableUrl?: string;     // Legacy fallback
   deliverableNotes?: string;   // Legacy fallback
-  participantWallets?: string[]; // Array of wallet addresses that have bought or accepted this deal
-  slotNumber?: number;          // Slot index (#1, #2, #3...) for multi-slot sub-orders
+  participantWallets?: string[]; // Array of wallet addresses that participate in this deal
   creationTxHash?: string;     // EVM Tx Hash for Escrow Smart Contract Deployment
   depositTxHash?: string;      // EVM Tx Hash for Buyer Escrow Deposit
   attestationTxHash?: string;  // EVM Tx Hash for Deliverable Attestation
   releaseTxHash?: string;      // EVM Tx Hash for On-Chain Payout Release
   createdAt: number;
+  shareableLink?: string;       // Direct shareable deal link URL
+
+  // Deprecated fields kept for backward compatibility
+  quantity?: number;
+  totalSlots?: number;
+  acceptedCount?: number;
+  slotNumber?: number;
 
   // Trust-Adjusted Escrow Terms Engine fields
   trustScoreAtCreation?: number; // 0-100 Trust Score at time of deal creation/acceptance
