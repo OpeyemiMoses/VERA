@@ -547,6 +547,11 @@ export const PersonaProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const claimFaucet = async (personaKey?: string) => {
+    // ── Guard: In production mode, wallet must be connected ─────────────────
+    if (appMode === 'production' && !wagmiAddress) {
+      showError('Please connect your wallet first to use the faucet.');
+      return;
+    }
     if (appMode === 'production' && wagmiAddress) {
       try {
         showInfo('Triggering cATKN testnet faucet drop on Monad...');
