@@ -1,0 +1,22 @@
+{
+  "name": "compliant-escrow-sdk",
+  "version": "1.0.0",
+  "description": "TypeScript SDK & Cleanverse Integration Services for Compliant Escrow Protocol",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "demo": "ts-node src/demo-runner.ts"
+  },
+  "dependencies": {
+    "axios": "^1.6.8",
+    "dotenv": "^16.4.5",
+    "ethers": "^6.11.1",
+    "viem": "^2.9.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.30",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.3"
+  }
+}
