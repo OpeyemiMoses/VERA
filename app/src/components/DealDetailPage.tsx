@@ -1393,8 +1393,8 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
             </div>
           )}
 
-          {/* Case 6: JOB_POSTING & Freelancer accepts */}
-          {!isInitiator && currentDeal.type === 'JOB_POSTING' && meetsTier && (
+          {/* Case 6: Freelancer / Seller accepts & verifies attestation */}
+          {!isInitiator && meetsTier && currentDeal.status !== 'DELIVERED' && currentDeal.status !== 'RELEASED' && (!currentDeal.attestationTxHash || currentDeal.type === 'JOB_POSTING') && (
             <button
               onClick={handleAcceptJob}
               disabled={hasAlreadyFundedOrPurchased || (currentDeal.status !== 'OPEN' && currentDeal.status !== 'FUNDED') || openSlots <= 0 || isProcessing || isChecking || escrowLoading}
