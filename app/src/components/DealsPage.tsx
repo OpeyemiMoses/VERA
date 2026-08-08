@@ -24,6 +24,8 @@ import {
   Shield,
   BarChart3,
   Layout,
+  Layers,
+  Sparkles,
 } from 'lucide-react';
 import { usePersona } from '../context/PersonaContext';
 import { useToast } from '../context/ToastContext';
@@ -65,18 +67,9 @@ export const DealsPage: React.FC<DealsPageProps> = ({ onBackToHome, onDealCreate
   const [deliveryDeadlineHrs, setDeliveryDeadlineHrs] = useState('48');
   const [confirmationWindowHrs, setConfirmationWindowHrs] = useState('24');
   const [expectedDeliverableFormat, setExpectedDeliverableFormat] = useState<DeliverableFormat>('FILE');
-  const [category, setCategory] = useState('DeFi Protocols');
+  const [category, setCategory] = useState('Smart Contract Audits');
   const [agreedTerms, setAgreedTerms] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const categories = [
-    { id: 'DeFi Protocols', label: 'DeFi Protocols', icon: Coins },
-    { id: 'Security Audit', label: 'Security Audit', icon: ShieldCheck },
-    { id: 'Infrastructure', label: 'Infrastructure', icon: Cpu },
-    { id: 'Compliance & Identity', label: 'Compliance & Identity', icon: Shield },
-    { id: 'Tokenomics & Strategy', label: 'Tokenomics & Strategy', icon: BarChart3 },
-    { id: 'dApp Frontend & UX', label: 'dApp Frontend & UX', icon: Layout },
-  ];
 
   const { writeContractAsync } = useWriteContract();
 
@@ -220,47 +213,56 @@ export const DealsPage: React.FC<DealsPageProps> = ({ onBackToHome, onDealCreate
 
   const templates = [
     {
-      name: 'Freelance Standard',
-      icon: Briefcase,
-      title: 'Custom Web3 Frontend & Smart Contract Gating',
-      description: 'Full-stack Web3 application with attestation signing and token gating.',
-      price: '500',
-      minTier: 15,
+      name: 'Smart Contract Audit',
+      icon: ShieldCheck,
+      title: 'Institutional Smart Contract Audit & Formal Verification',
+      description: 'Comprehensive static analysis, manual review, and signed audit certificate.',
+      price: '800',
+      minTier: 20,
       quantity: '1',
-      category: 'Software',
-      deliveryTerms: 'GitHub repository access + deployed Vercel instance',
-      refundTerms: 'Full refund within 24h if specifications fail',
+      category: 'Smart Contract Audits',
+      deliveryTerms: 'Formal PDF Audit Report + GitHub PR code fixes',
+      refundTerms: 'Full refund within 24h if verification fails',
       deadline: '48',
       format: 'FILE' as DeliverableFormat,
     },
     {
-      name: 'Enterprise Audit',
-      icon: ShieldCheck,
-      title: 'Institutional Smart Contract Audit & Formal Verification',
-      description: 'Comprehensive static analysis, manual review, and signed audit certificate.',
-      price: '10000',
-      minTier: 60,
-      quantity: '2',
-      category: 'Software',
-      deliveryTerms: 'PDF Audit Report signed by lead auditor + pull request fixes',
-      refundTerms: 'Full refund if deadline missed by > 48 hours',
-      deadline: '120',
-      format: 'FILE' as DeliverableFormat,
+      name: 'Full-Stack dApp Build',
+      icon: Code,
+      title: 'Custom Web3 Frontend & Smart Contract Gating',
+      description: 'Full-stack Web3 application with attestation signing and token gating.',
+      price: '500',
+      minTier: 15,
+      quantity: '3',
+      category: 'Full-Stack Web3 & Frontend',
+      deliveryTerms: 'GitHub repository access + deployed Vercel instance',
+      refundTerms: 'Full refund within 24h if specifications fail',
+      deadline: '72',
+      format: 'URL' as DeliverableFormat,
     },
     {
-      name: 'Compliant Payroll',
-      icon: Wallet,
-      title: 'Monthly Verified Contributor Distribution',
-      description: 'Identity-gated payroll batch for Cleanverse Tier 20+ verified team members.',
+      name: 'ZKP Compliance Integration',
+      icon: Lock,
+      title: 'Cleanverse A-Pass Zero-Knowledge Compliance Engine',
+      description: 'Integration of FATF Travel Rule audit trails and A-Pass identity gating.',
       price: '1200',
-      minTier: 20,
-      quantity: '5',
-      category: 'Consulting',
-      deliveryTerms: 'Monthly progress milestone deliverable report',
-      refundTerms: 'Unused milestone funds returned to treasury',
+      minTier: 30,
+      quantity: '2',
+      category: 'ZKP & Identity Security',
+      deliveryTerms: 'Cleanverse SDK integration + audited compliance logs',
+      refundTerms: 'Unused milestone funds returned to buyer',
       deadline: '24',
-      format: 'MULTI_ASSET' as DeliverableFormat,
+      format: 'CREDENTIALS' as DeliverableFormat,
     },
+  ];
+
+  const categories = [
+    { id: 'Smart Contract Audits', label: 'Smart Contract Audits', icon: ShieldCheck },
+    { id: 'Full-Stack Web3 & Frontend', label: 'Full-Stack Web3', icon: Code },
+    { id: 'DeFi & Yield Protocols', label: 'DeFi & Yield', icon: Coins },
+    { id: 'ZKP & Identity Security', label: 'ZKP & Identity', icon: Lock },
+    { id: 'Tokenomics & Governance', label: 'Tokenomics', icon: Layers },
+    { id: 'Web3 Design & Branding', label: 'Web3 Design', icon: Sparkles },
   ];
 
   return (

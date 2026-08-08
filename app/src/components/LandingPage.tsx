@@ -187,67 +187,89 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </div>
         </section>
 
-        {/* STON 3-Column Module Cards Grid */}
+        {/* 4-Column Module Cards Grid */}
         <section id="features" className="space-y-4 pt-2 scroll-rise">
           <div className="text-center max-w-2xl mx-auto space-y-2">
             <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-              Built for Cleanverse Compliance & Web3 Freelance DeFi
+              Cleanverse Compliance & Web3 Escrow Architecture
             </h2>
             <p className="text-sm text-slate-600 dark:text-slate-300 font-medium">
-              Three core pillars driving the next generation of identity-gated Web3 smart contracts.
+              Four core pillars powering identity-gated Web3 freelancing and private escrow agreements on Monad Testnet.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Card 1 */}
-            <div className="neu-card p-6 space-y-4 transition-all group">
-              <div className="h-12 w-12 rounded-2xl neu-inset text-indigo-600 dark:text-indigo-400 font-extrabold flex items-center justify-center">
-                <ShieldCheck className="h-6 w-6" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+            {/* Card 1: Public Service Marketplace */}
+            <div className="neu-card p-5 space-y-3.5 transition-all group">
+              <div className="h-11 w-11 rounded-2xl neu-inset text-indigo-600 dark:text-indigo-400 font-extrabold flex items-center justify-center">
+                <Briefcase className="h-5 w-5" />
               </div>
-              <h3 className="text-lg font-extrabold text-slate-900 dark:text-white">Cleanverse A-Pass Gating</h3>
+              <h3 className="text-base font-extrabold text-slate-900 dark:text-white">Public Service Marketplace</h3>
               <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
-                Every escrow deposit dynamically checks live risk tiers (Tier 15, Tier 25) and OFAC sanction lists before allowing wallet interactions.
+                Browse fixed-price Web3 services listed by verified creators across Smart Contract Audits, Full-Stack dApps, and ZKP Security.
               </p>
-              <div className="pt-2">
+              <div className="pt-1">
                 <button onClick={onLaunchApp} className="text-xs font-extrabold text-indigo-600 dark:text-indigo-400 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                  <span>Explore Gated Marketplace</span>
+                  <span>Explore Marketplace</span>
                   <ChevronRight className="h-4 w-4" />
                 </button>
               </div>
             </div>
 
-            {/* Card 2 */}
-            <div className="neu-card p-6 space-y-4 transition-all group">
-              <div className="h-12 w-12 rounded-2xl neu-inset text-purple-600 dark:text-purple-400 font-extrabold flex items-center justify-center">
-                <Lock className="h-6 w-6" />
+            {/* Card 2: Private 1-on-1 Escrow Deals */}
+            <div className="neu-card p-5 space-y-3.5 transition-all group">
+              <div className="h-11 w-11 rounded-2xl neu-inset text-purple-600 dark:text-purple-400 font-extrabold flex items-center justify-center">
+                <Lock className="h-5 w-5" />
               </div>
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-extrabold text-slate-900 dark:text-white">Vera Vault ZK Secrets</h3>
-                <span className="text-[10px] font-bold bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full font-mono">
-                  ENCRYPTED
+                <h3 className="text-base font-extrabold text-slate-900 dark:text-white">Private 1-on-1 Deals</h3>
+                <span className="text-[9px] font-bold bg-purple-500/20 text-purple-600 dark:text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded-full font-mono">
+                  DIRECT LINK
                 </span>
               </div>
               <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
-                Deliverables (source code repos, API keys, credentials) are client-encrypted with zero-knowledge secret masking.
+                Create custom 1-on-1 deals hidden from the public marketplace. Share via instant QR Code, Copy Link, WhatsApp, or Telegram.
               </p>
-              <div className="pt-2">
+              <div className="pt-1">
                 <button onClick={onLaunchApp} className="text-xs font-extrabold text-purple-600 dark:text-purple-400 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                  <span>View ZK Vault</span>
+                  <span>Create Private Deal</span>
                   <ChevronRight className="h-4 w-4" />
                 </button>
               </div>
             </div>
 
-            {/* Card 3 */}
-            <div className="neu-card p-6 space-y-4 transition-all group">
-              <div className="h-12 w-12 rounded-2xl neu-inset text-emerald-600 dark:text-emerald-400 font-extrabold flex items-center justify-center">
-                <FileText className="h-6 w-6" />
+            {/* Card 3: Dynamic Fee Engine */}
+            <div className="neu-card p-5 space-y-3.5 transition-all group">
+              <div className="h-11 w-11 rounded-2xl neu-inset text-emerald-600 dark:text-emerald-400 font-extrabold flex items-center justify-center">
+                <ShieldCheck className="h-5 w-5" />
               </div>
-              <h3 className="text-lg font-extrabold text-slate-900 dark:text-white">Travel Rule PDF Audits</h3>
+              <h3 className="text-base font-extrabold text-slate-900 dark:text-white">Dynamic Fee Engine</h3>
               <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
-                Every settled escrow automatically compiles a cryptographic FATF Travel Rule PDF report containing sender, receiver, and validator pool IDs.
+                Cleanverse A-Pass identity risk scores calculate dynamic platform fees ranging from 0.25% for Elite Tiers up to 3.0% for unverified users.
               </p>
+              <div className="pt-1">
+                <button onClick={onLaunchApp} className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                  <span>Check Trust Score</span>
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
 
+            {/* Card 4: Travel Rule Audits */}
+            <div className="neu-card p-5 space-y-3.5 transition-all group">
+              <div className="h-11 w-11 rounded-2xl neu-inset text-cyan-600 dark:text-cyan-400 font-extrabold flex items-center justify-center">
+                <FileText className="h-5 w-5" />
+              </div>
+              <h3 className="text-base font-extrabold text-slate-900 dark:text-white">Travel Rule PDF Audits</h3>
+              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
+                Settled escrows generate cryptographic FATF Travel Rule PDF compliance reports with validator signatures and state proofs.
+              </p>
+              <div className="pt-1">
+                <button onClick={onLaunchApp} className="text-xs font-extrabold text-cyan-600 dark:text-cyan-400 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                  <span>View Sample Report</span>
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
             </div>
           </div>
         </section>

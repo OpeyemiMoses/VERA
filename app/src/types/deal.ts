@@ -2,6 +2,16 @@ export type DealType = 'DIRECT_DEAL' | 'SERVICE_LISTING';
 export type DealStatus = 'OPEN' | 'FUNDED' | 'ACCEPTED' | 'DELIVERED' | 'RELEASED' | 'COMPLETED' | 'REJECTED' | 'DISPUTED' | 'REFUNDED' | 'CANCELLED';
 export type DeliverableFormat = 'URL' | 'FILE' | 'CREDENTIALS' | 'MULTI_ASSET';
 
+export const MARKETPLACE_CATEGORIES = [
+  'All',
+  'Smart Contract Audits',
+  'Full-Stack Web3 & Frontend',
+  'DeFi & Yield Protocols',
+  'ZKP & Identity Security',
+  'Tokenomics & Governance',
+  'Web3 Design & Branding',
+] as const;
+
 export interface DeliverableData {
   format: DeliverableFormat;
   url?: string;

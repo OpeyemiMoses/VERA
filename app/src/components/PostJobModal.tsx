@@ -7,7 +7,7 @@ import { parseUnits } from 'viem';
 import { usePersona } from '../context/PersonaContext';
 import { useToast } from '../context/ToastContext';
 import { FACTORY_ADDRESS, CATKN_ADDRESS, ESCROW_FACTORY_ABI, ESCROW_ABI, CATKN_ABI, CATKN_DECIMALS } from '../lib/contracts';
-import { Deal } from '../types/deal';
+import { Deal, MARKETPLACE_CATEGORIES } from '../types/deal';
 
 interface PostJobModalProps {
   isOpen: boolean;
@@ -22,7 +22,7 @@ export const PostJobModal: React.FC<PostJobModalProps> = ({ isOpen, onClose, onJ
 
   const [dealType, setDealType] = useState<'SERVICE_LISTING' | 'DIRECT_DEAL'>('SERVICE_LISTING');
   const [title, setTitle] = useState('');
-  const [category, setCategory] = useState('DeFi Protocols');
+  const [category, setCategory] = useState<string>('Smart Contract Audits');
   const [pricePerSlot, setPricePerSlot] = useState('1000');
   const [slots, setSlots] = useState('5');
   const [currency, setCurrency] = useState<'cATKN' | 'MON'>('cATKN');
@@ -246,14 +246,7 @@ export const PostJobModal: React.FC<PostJobModalProps> = ({ isOpen, onClose, onJ
               SELECT CATEGORY *
             </label>
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-              {[
-                'DeFi Protocols',
-                'Security Audit',
-                'Infrastructure',
-                'Compliance & Identity',
-                'Tokenomics & Strategy',
-                'dApp Frontend & UX',
-              ].map((cat) => (
+              {MARKETPLACE_CATEGORIES.filter(c => c !== 'All').map((cat) => (
                 <button
                   key={cat}
                   type="button"

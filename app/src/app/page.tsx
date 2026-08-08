@@ -23,7 +23,7 @@ import { useToast } from '../context/ToastContext';
 import { useEscrow } from '../hooks/useEscrow';
 import { useCleanverse, PERSONA_KEYS } from '../hooks/useCleanverse';
 import { useScrollRise } from '../hooks/useScrollRise';
-import { Deal, DealType } from '../types/deal';
+import { Deal, DealType, MARKETPLACE_CATEGORIES } from '../types/deal';
 import {
   ShieldCheck,
   Plus,
@@ -641,15 +641,15 @@ export default function Home() {
                 <Search className="h-4 w-4 text-slate-400 absolute left-3.5 top-3.5" />
               </div>
 
-              <div className="flex items-center gap-2 overflow-x-auto pb-1">
-                {['All', 'DeFi Protocols', 'Security Audit', 'Infrastructure', 'Compliance & Identity', 'Tokenomics & Strategy', 'dApp Frontend & UX'].map((cat) => (
+              <div className="flex items-center gap-2 overflow-x-auto pb-1 max-w-full no-scrollbar">
+                {MARKETPLACE_CATEGORIES.map((cat) => (
                   <button
                     key={cat}
                     onClick={() => setFilterCategory(cat)}
-                    className={`px-4 py-2 rounded-2xl text-xs font-bold transition-all ${
+                    className={`px-4 py-2 rounded-2xl text-xs font-bold transition-all whitespace-nowrap ${
                       filterCategory === cat
-                        ? 'neu-btn-primary shadow-md'
-                        : 'neu-btn-secondary'
+                        ? 'neu-btn-primary text-white shadow-md'
+                        : 'neu-btn-secondary text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
                     }`}
                   >
                     {cat}
