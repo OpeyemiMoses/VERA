@@ -25,3 +25,8 @@ yarn-error.log*
 # OS metadata
 .DS_Store
 Thumbs.db
+
+# Local Submission Papers & Demo Scripts (Do not track in public GitHub)
+SUBMISSION_EMAIL.md
+DEMO_PRESENTATION_SCRIPT.md
+ONE_PAGE_SUMMARY.md
