@@ -37,6 +37,8 @@ import { useToast } from '../context/ToastContext';
 import { useCleanverse, PERSONA_KEYS } from '../hooks/useCleanverse';
 import { useEscrow } from '../hooks/useEscrow';
 import { useWriteContract, usePublicClient } from 'wagmi';
+import { QRCodeSVG } from 'qrcode.react';
+import { ShareEscrowModal } from './ShareEscrowModal';
 import { ESCROW_ABI } from '../lib/contracts';
 import { SandboxPreviewModal } from './SandboxPreviewModal';
 import { RejectDeliverableModal } from './RejectDeliverableModal';
@@ -75,6 +77,7 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
   const [showSecretCredentials, setShowSecretCredentials] = useState(false);
   const [isSandboxOpen, setIsSandboxOpen] = useState(false);
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   // MonadExplorerModal state
   const [selectedTxHash, setSelectedTxHash] = useState<string | null>(null);
@@ -534,17 +537,11 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
             {isInitiator && (
               <button
                 type="button"
-                onClick={() => {
-                  const link = typeof window !== 'undefined' ? `${window.location.origin}/?deal=${currentDeal.id}` : '';
-                  if (link) {
-                    navigator.clipboard.writeText(link);
-                    showNotice('Shareable Escrow Link copied to clipboard! Send to your counterparty.');
-                  }
-                }}
+                onClick={() => setIsShareModalOpen(true)}
                 className="neu-btn-secondary px-3 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 hover:scale-105 transition-all shadow-sm cursor-pointer"
               >
                 <Share2 className="h-3.5 w-3.5" />
-                <span>Copy Escrow Link</span>
+                <span>Share & QR Code</span>
               </button>
             )}
             <span className="text-xs font-mono font-bold text-slate-700 dark:text-slate-200 neu-inset px-3 py-1.5 flex items-center gap-1">
@@ -693,6 +690,88 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
             )}
           </div>
         </div>
+
+        {/* Share & QR Code Panel for Creator */}
+        {isInitiator && (
+          <div className="neu-card p-5 rounded-2xl border-2 border-indigo-500/30 space-y-4 bg-gradient-to-br from-indigo-500/5 via-purple-500/5 to-transparent">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Share2 className="h-4 w-4 text-indigo-500" />
+                <h3 className="text-xs font-extrabold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+                  PRIVATE 1-ON-1 ESCROW SHARE & QR INVITE
+                </h3>
+              </div>
+              <span className="text-[10px] font-mono font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded border border-indigo-500/20">
+                CREATOR ONLY
+              </span>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              {/* QR Code */}
+              <div className="p-2.5 bg-white rounded-xl shadow-md border border-slate-200 flex-shrink-0">
+                <QRCodeSVG
+                  value={typeof window !== 'undefined' ? `${window.location.origin}/?deal=${currentDeal.id}` : ''}
+                  size={100}
+                  level="H"
+                />
+              </div>
+
+              {/* Share Buttons */}
+              <div className="space-y-2.5 min-w-0 flex-1 w-full">
+                <p className="text-xs text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
+                  Send this private link or scan QR code with your counterparty to lock escrow funds.
+                </p>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const link = typeof window !== 'undefined' ? `${window.location.origin}/?deal=${currentDeal.id}` : '';
+                      if (link) {
+                        navigator.clipboard.writeText(link);
+                        showNotice('Shareable Escrow Link copied to clipboard!');
+                      }
+                    }}
+                    className="neu-btn-primary px-3.5 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1.5 shadow-sm"
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                    <span>Copy Escrow Link 🔗</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const link = typeof window !== 'undefined' ? `${window.location.origin}/?deal=${currentDeal.id}` : '';
+                      const text = `🔒 Private Escrow Deal: ${currentDeal.title} (${currentDeal.price} ${currentDeal.currency})\nLock Escrow via VERA Protocol:\n${link}`;
+                      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+                    }}
+                    className="bg-[#25D366] hover:bg-[#20ba5a] text-white font-extrabold px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                  >
+                    <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                      <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.205 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l.399.638-1.005 3.673 3.754-.997.595.359z"/>
+                    </svg>
+                    <span>WhatsApp</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const link = typeof window !== 'undefined' ? `${window.location.origin}/?deal=${currentDeal.id}` : '';
+                      const text = `🔒 Private Escrow Deal: ${currentDeal.title} (${currentDeal.price} ${currentDeal.currency})`;
+                      window.open(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`, '_blank');
+                    }}
+                    className="bg-[#229ED9] hover:bg-[#1d8bb0] text-white font-extrabold px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                  >
+                    <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                      <path d="M12 0C5.37 0 0 5.37 0 12s5.37 12 12 12 12-5.37 12-12S18.63 0 12 0zm5.562 8.161c-.18.717-.962 4.084-1.362 5.411-.168.56-.379.747-.579.765-.434.039-.763-.286-1.183-.561-.657-.431-1.028-.697-1.666-1.117-.737-.486-.259-.753.161-1.189.11-.114 2.022-1.854 2.06-2.016.005-.02.01-.095-.035-.135-.044-.04-.11-.026-.157-.015-.067.015-1.135.721-3.204 2.12-.303.208-.578.31-.825.304-.271-.006-.793-.153-1.181-.279-.475-.154-.852-.236-.819-.498.017-.137.197-.278.539-.423 2.113-.919 3.524-1.525 4.232-1.819 2.015-.838 2.434-.984 2.707-.989.06 0 .195.014.282.085.073.059.094.139.103.196.009.057.02.196.002.302z"/>
+                    </svg>
+                    <span>Telegram</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Trust-Adjusted Escrow Terms Engine Card */}
         {(() => {
@@ -1466,6 +1545,17 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
         amount={`${currentDeal.price} ${currentDeal.currency}`}
         initiatorName={currentDeal.initiatorName}
         counterpartyName={displayCounterpartyName}
+      />
+
+      {/* Share Private Escrow Deal Modal */}
+      <ShareEscrowModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        dealId={currentDeal.id}
+        title={currentDeal.title}
+        price={currentDeal.price}
+        currency={currentDeal.currency}
+        minTier={currentDeal.minTier}
       />
     </div>
   );

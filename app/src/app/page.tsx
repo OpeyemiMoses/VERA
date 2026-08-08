@@ -410,24 +410,17 @@ export default function Home() {
 
       const isChildInstance = deal.id.includes('-order-') || deal.id.includes('-accepted-') || deal.id.includes('-slot-');
 
-      if (activeTab === 'home') {
-        // Overview Dashboard: Exclude user's own created deals and child instances (user's own deals are available in My Created Deals)
-        return !isChildInstance && !isUserInitiator;
+      if (activeTab === 'home' || activeTab === 'browse-services' || activeTab === 'browse-jobs') {
+        // Public Marketplace: ONLY display public SERVICE_LISTING items (no private 1-on-1 deals!)
+        return deal.type === 'SERVICE_LISTING' && !isChildInstance && deal.status === 'OPEN' && !isUserInitiator;
       }
-      if (activeTab === 'browse-jobs') {
-        return (deal.type === 'DIRECT_DEAL' || deal.type === 'SERVICE_LISTING') && !isChildInstance && !isUserInitiator;
-      }
-      if (activeTab === 'browse-services') {
-        return deal.type === 'SERVICE_LISTING' && !isChildInstance && !isUserInitiator;
-      }
-      if (activeTab === 'my-created' || activeTab === 'my-jobs' || activeTab === 'my-listings') {
-        // Creator view: Show main listing templates and non-slot deals created by user (exclude child slot instances)
+      if (activeTab === 'my-created' || activeTab === 'my-jobs' || activeTab === 'my-listings' || activeTab === 'my-deals') {
+        // Creator view: Show all deals/listings created by active wallet (exclude child slot sub-orders)
         return isUserInitiator && !isChildInstance;
       }
-      if (activeTab === 'my-purchased' || activeTab === 'my-work' || activeTab === 'my-purchases') {
-        // Buyer/Participant view: Show child slot instances OR non-listing deals where user is counterparty (exclude parent listing templates)
-        const isPurchasedContract = isChildInstance || (deal.counterpartyAddress && deal.counterpartyAddress.toLowerCase() === activePersona.walletAddress.toLowerCase() && deal.status !== 'OPEN');
-        return !isUserInitiator && isUserCounterparty && isPurchasedContract;
+      if (activeTab === 'my-purchased' || activeTab === 'my-work' || activeTab === 'my-purchases' || activeTab === 'my-contracts') {
+        // Participant/Buyer view: Show child sub-orders OR deals where user is counterparty/participant
+        return !isUserInitiator && isUserCounterparty;
       }
 
       return true;
