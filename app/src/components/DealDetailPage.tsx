@@ -179,19 +179,29 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
     }
   }
 
-  const displayCounterpartyAddress = counterpartyWallet;
+  const displayCounterpartyAddress = counterpartyWallet || currentDeal.clientAddress;
+
+  const userWallet = activePersona.walletAddress.toLowerCase();
+  const userIsClient = (currentDeal.clientAddress && currentDeal.clientAddress.toLowerCase() === userWallet) ||
+    (currentDeal.counterpartyAddress && currentDeal.counterpartyAddress.toLowerCase() === userWallet && currentDeal.type === 'SERVICE_LISTING');
 
   const isCounterparty =
-    !isInitiator &&
-    ((displayCounterpartyAddress && displayCounterpartyAddress.toLowerCase() === activePersona.walletAddress.toLowerCase()) ||
-      (rawCounterpartyName && activePersona.name.toLowerCase().includes(rawCounterpartyName.toLowerCase())) ||
-      (currentDeal.participantWallets && currentDeal.participantWallets.some((w) => w.toLowerCase() === activePersona.walletAddress.toLowerCase() && w.toLowerCase() !== currentDeal.initiatorAddress.toLowerCase())));
+    userIsClient ||
+    (!isInitiator &&
+      ((displayCounterpartyAddress && displayCounterpartyAddress.toLowerCase() === userWallet) ||
+        (rawCounterpartyName && activePersona.name.toLowerCase().includes(rawCounterpartyName.toLowerCase())) ||
+        (currentDeal.participantWallets && currentDeal.participantWallets.some((w) => w.toLowerCase() === userWallet && w.toLowerCase() !== currentDeal.initiatorAddress.toLowerCase()))));
 
   const hasCounterpartyAssigned = !!displayCounterpartyAddress && displayCounterpartyAddress !== '0x0000000000000000000000000000000000000000';
   const meetsTier = activePersona.isVerified && activePersona.tier >= currentDeal.minTier;
 
-  const isProvider = isInitiator;
-  const isReceiver = isCounterparty;
+  // For Service Listings, Initiator (Seller) is Provider, Client (Buyer) is Receiver
+  // For Job Listings, Freelancer is Provider, Initiator (Client) is Receiver
+  const isProvider = currentDeal.type === 'SERVICE_LISTING'
+    ? userWallet === currentDeal.initiatorAddress.toLowerCase() || (currentDeal.freelancerAddress && userWallet === currentDeal.freelancerAddress.toLowerCase())
+    : (currentDeal.freelancerAddress && userWallet === currentDeal.freelancerAddress.toLowerCase()) || (userWallet !== currentDeal.initiatorAddress.toLowerCase() && isCounterparty);
+
+  const isReceiver = !isProvider;
 
   const totalSlots = currentDeal.totalSlots ?? (currentDeal.quantity !== undefined ? currentDeal.quantity : 1);
   const acceptedCount = currentDeal.acceptedCount ?? ((currentDeal.status !== 'OPEN' && currentDeal.status !== 'FUNDED') ? 1 : 0);

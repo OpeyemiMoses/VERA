@@ -47,7 +47,7 @@ import {
 
 export default function Home() {
   useScrollRise();
-  const { activePersona, activePersonaKey, appMode } = usePersona();
+  const { activePersona, activePersonaKey, appMode, addBalance } = usePersona();
   const { writeContractAsync } = useWriteContract();
   const publicClient = usePublicClient();
   const {
@@ -372,13 +372,36 @@ export default function Home() {
     setPendingDealId(null);
   };
 
+  const handleOpenDealDetail = (deal: Deal) => {
+    const baseId = deal.id.split('-slot-')[0].split('-order-')[0].split('-accepted-')[0];
+    const userWallet = activePersona.walletAddress.toLowerCase();
+    const relatedDeals = activeDealList.filter(
+      (d) => d.id === deal.id || d.id === baseId || d.id.startsWith(`${baseId}-`)
+    );
+
+    const matchWithDeliverable = relatedDeals.find((d) => d.deliverable || d.deliverableUrl);
+    const userSubOrder = relatedDeals.find(
+      (d) => (d.clientAddress && d.clientAddress.toLowerCase() === userWallet) ||
+             (d.counterpartyAddress && d.counterpartyAddress.toLowerCase() === userWallet)
+    );
+
+    const best = matchWithDeliverable || userSubOrder || deal;
+    setSelectedDetailDeal(best);
+  };
+
   const handleReleaseEscrow = async (deal: Deal) => {
     setPendingDealId(deal.id);
-    showNotice(`Releasing ${deal.price} ${deal.currency} on-chain to provider...`);
+    showNotice(`Releasing ${deal.price} ${deal.currency} to provider...`);
+
+    const callerAddress = activePersona.walletAddress.toLowerCase();
+    const recipient =
+      (deal.freelancerAddress && deal.freelancerAddress.toLowerCase() !== callerAddress ? deal.freelancerAddress : undefined) ||
+      (deal.deliverable?.senderAddress && deal.deliverable.senderAddress.toLowerCase() !== callerAddress ? deal.deliverable.senderAddress : undefined) ||
+      (deal.initiatorAddress && deal.initiatorAddress.toLowerCase() !== callerAddress ? deal.initiatorAddress : undefined) ||
+      (deal.type === 'SERVICE_LISTING' ? deal.initiatorAddress : deal.counterpartyAddress || deal.initiatorAddress);
 
     if (appMode === 'production') {
       try {
-        const recipient = deal.counterpartyAddress || deal.initiatorAddress;
         let txHash: `0x${string}`;
         if (recipient && recipient.startsWith('0x') && recipient !== '0x0000000000000000000000000000000000000000') {
           try {
@@ -437,24 +460,16 @@ export default function Home() {
     const privKey = PERSONA_KEYS[activePersonaKey] || '0xb553cb10a16d0ce4a890cf2611922db0b572fd91ea4b11a56735f179b4b53516';
     await confirmDelivery(privKey, deal.escrowAddress);
 
+    if (recipient) {
+      addBalance(deal.price, deal.currency, recipient);
+    }
+
     handleUpdateDealStatus(deal.id, 'RELEASED');
-    showNotice(`Payout Released. Funds transferred on-chain.`);
+    showNotice(`Payout Released: ${deal.price} ${deal.currency} credited to provider (${recipient.slice(0, 8)}...).`);
     setPendingDealId(null);
   };
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-
-  const handleOpenDealDetail = (targetDeal: Deal) => {
-    const userOrderInstance = deals.find(
-      (d) =>
-        (d.id.startsWith(`${targetDeal.id}-order-`) ||
-         d.id.startsWith(`${targetDeal.id}-accepted-`) ||
-         d.id.startsWith(`${targetDeal.id}-slot-`) ||
-         d.id === targetDeal.id) &&
-        d.status !== 'OPEN'
-    );
-    setSelectedDetailDeal(userOrderInstance || targetDeal);
-  };
 
   const getFilteredDeals = () => {
     return deals.filter((deal) => {
