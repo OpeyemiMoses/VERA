@@ -6,6 +6,8 @@ import { fetchDealsForWallet } from '../lib/onChainDeals';
 
 interface DealsContextType {
   deals: Deal[];
+  activeDealList: Deal[];
+  sharedApiDeals: Deal[];
   createDeal: (newDeal: Deal) => void;
   purchaseService: (originalDealId: string, buyerWallet: string, buyerName: string, customDepositTxHash?: string, customEscrowAddress?: string) => Deal | undefined;
   acceptJob: (dealId: string, freelancerWallet: string, freelancerName: string, attestationTxHash?: string) => void;
@@ -494,6 +496,8 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     <DealsContext.Provider
       value={{
         deals: activeDealList,
+        activeDealList,
+        sharedApiDeals,
         createDeal,
         purchaseService,
         acceptJob,
