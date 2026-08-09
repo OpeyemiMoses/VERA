@@ -115,8 +115,14 @@ export async function fetchDealsForWallet(
     allData.push(...results);
   }
 
+  const STALE_TEST_ESCROWS = [
+    '0xfec955745dce6df08fc1ba3ddae1fa3c978071d1',
+    '0x6438a4d46ce6db6642d99d3aa4e6015b67ab5a07',
+  ];
+
   const deals: Deal[] = allData
     .filter((d): d is OnChainEscrowData => d !== null)
+    .filter((d) => !STALE_TEST_ESCROWS.includes(d.address.toLowerCase()))
     // Include escrows where the connected wallet is client or assigned freelancer
     .filter((d) => {
       const isClient = d.client.toLowerCase() === wallet;
