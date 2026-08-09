@@ -117,12 +117,11 @@ export async function fetchDealsForWallet(
 
   const deals: Deal[] = allData
     .filter((d): d is OnChainEscrowData => d !== null)
-    // Include escrows where the connected wallet is client, assigned freelancer, or any open unclaimed escrow
+    // Include escrows where the connected wallet is client or assigned freelancer
     .filter((d) => {
       const isClient = d.client.toLowerCase() === wallet;
       const isFreelancer = d.freelancer !== '0x0000000000000000000000000000000000000000' && d.freelancer.toLowerCase() === wallet;
-      const isOpenEscrow = d.freelancer === '0x0000000000000000000000000000000000000000' && d.state <= 1;
-      return isClient || isFreelancer || isOpenEscrow;
+      return isClient || isFreelancer;
     })
     .map((d, idx): Deal => {
       const isCatkn = d.token.toLowerCase() === CATKN_ADDRESS.toLowerCase();

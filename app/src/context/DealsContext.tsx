@@ -59,9 +59,10 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       }
 
       // 2. Fetch on-chain escrows from Monad Testnet RPC if in production mode
-      if (appMode === 'production' && prodWalletAddress) {
+      const activeWallet = prodWalletAddress || (typeof window !== 'undefined' ? (window as any).ethereum?.selectedAddress : null);
+      if (appMode === 'production' && activeWallet) {
         setIsFetchingOnChain(true);
-        const fetchedOnChain = await fetchDealsForWallet(prodWalletAddress);
+        const fetchedOnChain = await fetchDealsForWallet(activeWallet);
         setOnChainDeals(fetchedOnChain);
       }
     } catch (err) {

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Header } from '../components/Header';
 import { Sidebar } from '../components/Sidebar';
 import { OnboardingModal } from '../components/OnboardingModal';
@@ -103,12 +103,16 @@ export default function Home() {
   const [auditTxHash, setAuditTxHash] = useState<string>('');
   const [pendingDealId, setPendingDealId] = useState<string | null>(null);
 
-  // Check URL query parameters for ?deal=deal-xxx shareable links (Mobile & Desktop)
+  const hasProcessedUrlDeal = useRef(false);
+
+  // Check URL query parameters for ?deal=deal-xxx shareable links ONCE on mount
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined' || hasProcessedUrlDeal.current) return;
     const params = new URLSearchParams(window.location.search);
     const dealIdParam = params.get('deal');
     if (!dealIdParam) return;
+
+    hasProcessedUrlDeal.current = true;
 
     // Immediately switch off landing page to home view on mobile & desktop
     setActiveTabState('home');
