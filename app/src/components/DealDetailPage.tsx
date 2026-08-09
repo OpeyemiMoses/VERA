@@ -1037,19 +1037,24 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
               </div>
 
               {/* 3. Deliverable Attestation Tx */}
-              <div className="neu-inset p-2.5 flex items-center justify-between">
-                <span className="text-slate-500 font-bold">3. Attestation Tx:</span>
-                {currentDeal.attestationTxHash ? (
-                  <button
-                    onClick={() => handleOpenTxModal(currentDeal.attestationTxHash!, 'attestation')}
-                    className="text-purple-600 dark:text-purple-400 font-bold hover:underline flex items-center gap-1 cursor-pointer"
-                  >
-                    {currentDeal.attestationTxHash.slice(0, 10)}... <ExternalLink className="h-3 w-3" />
-                  </button>
-                ) : (
-                  <span className="text-slate-400">Awaiting Submission</span>
-                )}
-              </div>
+              {(() => {
+                const effectiveAttestTx = currentDeal.attestationTxHash || currentDeal.deliverable?.signature || (currentDeal.deliverable?.payloadHash?.startsWith('0x') ? currentDeal.deliverable.payloadHash : undefined);
+                return (
+                  <div className="neu-inset p-2.5 flex items-center justify-between">
+                    <span className="text-slate-500 font-bold">3. Attestation Tx:</span>
+                    {effectiveAttestTx ? (
+                      <button
+                        onClick={() => handleOpenTxModal(effectiveAttestTx, 'attestation')}
+                        className="text-purple-600 dark:text-purple-400 font-bold hover:underline flex items-center gap-1 cursor-pointer"
+                      >
+                        {effectiveAttestTx.slice(0, 10)}... <ExternalLink className="h-3 w-3" />
+                      </button>
+                    ) : (
+                      <span className="text-slate-400">Awaiting Submission</span>
+                    )}
+                  </div>
+                );
+              })()}
 
               {/* 4. On-Chain Payout Release Tx */}
               <div className="neu-inset p-2.5 flex items-center justify-between">

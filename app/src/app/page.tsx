@@ -197,7 +197,7 @@ export default function Home() {
         deliverable,
         deliverableUrl: deliverable.url,
         deliverableNotes: deliverable.instructions,
-        attestationTxHash: customAttestationHash || selectedDetailDeal.attestationTxHash,
+        attestationTxHash: customAttestationHash || deliverable.signature || (deliverable.payloadHash?.startsWith('0x') ? deliverable.payloadHash : undefined) || selectedDetailDeal.attestationTxHash,
       });
     }
     showNotice(`Deliverable (${deliverable.format}) sent to buyer! Cleanverse Attestation confirmed on-chain.`);

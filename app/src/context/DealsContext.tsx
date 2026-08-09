@@ -299,7 +299,7 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             deliverable,
             deliverableUrl: deliverable.url,
             deliverableNotes: deliverable.instructions,
-            attestationTxHash: customAttestationTxHash || d.attestationTxHash || (appMode === 'production' ? undefined : generateMockTxHash()),
+            attestationTxHash: customAttestationTxHash || deliverable.signature || (deliverable.payloadHash?.startsWith('0x') ? deliverable.payloadHash : undefined) || d.attestationTxHash || (appMode === 'production' ? undefined : generateMockTxHash()),
             rejectionReason: undefined,
             rejectedAt: undefined,
           };
