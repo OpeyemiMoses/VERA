@@ -374,15 +374,13 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
   const handleReleaseFunds = async () => {
     setIsProcessing(true);
 
-    // Determine recipient BEFORE any async calls
+    // Determine recipient BEFORE any async calls: ALWAYS the seller / provider who sent deliverables!
     let recipientWallet: string;
-    if (currentDeal.type === 'SERVICE_LISTING') {
-      recipientWallet = currentDeal.initiatorAddress;
+    if (currentDeal.freelancerAddress && currentDeal.freelancerAddress !== '0x0000000000000000000000000000000000000000' && currentDeal.freelancerAddress.toLowerCase() !== currentDeal.initiatorAddress.toLowerCase()) {
+      recipientWallet = currentDeal.freelancerAddress;
     } else {
-      recipientWallet = currentDeal.counterpartyAddress ||
-        currentDeal.participantWallets?.find(
-          (w) => w.toLowerCase() !== currentDeal.initiatorAddress.toLowerCase()
-        ) || '';
+      // In seller-created deals (DIRECT_DEAL or SERVICE_LISTING), initiator is the seller.
+      recipientWallet = currentDeal.initiatorAddress;
     }
 
     // Compute trust-adjusted platform fee from the RECIPIENT's Trust Score
