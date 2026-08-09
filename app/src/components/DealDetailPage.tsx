@@ -1475,19 +1475,50 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
             </div>
           )}
 
-          {/* Case 6: 1-on-1 Direct Deal — counterparty pays escrow to begin */}
+          {/* Case 6a: 1-on-1 Direct Deal — INITIATOR / CLIENT deposits funds into escrow */}
+          {isInitiator && currentDeal.type === 'DIRECT_DEAL' && currentDeal.status !== 'DELIVERED' && currentDeal.status !== 'RELEASED' && (currentDeal.status === 'OPEN' || !currentDeal.depositTxHash) && (
+            <div className="space-y-3">
+              <div className="p-4 rounded-2xl bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-300/40 dark:border-indigo-500/20">
+                <p className="text-xs font-semibold text-indigo-800 dark:text-indigo-300 leading-relaxed">
+                  You created this 1-on-1 Escrow Deal. Deposit <span className="font-extrabold text-indigo-700 dark:text-indigo-400">{currentDeal.price} {currentDeal.currency}</span> into the Escrow Vault so the counterparty can verify their Cleanverse A-Pass, accept, and begin work.
+                </p>
+              </div>
+              <button
+                onClick={() => openCheckout(currentDeal)}
+                disabled={isProcessing || escrowLoading}
+                className="w-full font-extrabold py-4 px-6 rounded-2xl text-sm transition-all shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white"
+              >
+                <Wallet className="h-5 w-5" />
+                <span>Deposit & Fund Escrow ({currentDeal.price} {currentDeal.currency})</span>
+              </button>
+            </div>
+          )}
+
+          {/* Case 6b: 1-on-1 Direct Deal — INITIATOR / CLIENT waiting for counterparty acceptance after funding */}
+          {isInitiator && currentDeal.type === 'DIRECT_DEAL' && currentDeal.status === 'FUNDED' && !hasCounterpartyAssigned && (
+            <div className="neu-inset p-5 text-center space-y-1 border-2 border-indigo-500/30">
+              <h4 className="text-xs font-extrabold text-indigo-600 dark:text-indigo-400 flex items-center justify-center gap-1.5">
+                <CheckCircle2 className="h-4 w-4 text-indigo-500" /> Escrow Vault Funded ({currentDeal.price} {currentDeal.currency})
+              </h4>
+              <p className="text-xs font-medium text-slate-800 dark:text-slate-200">
+                Waiting for counterparty to verify Cleanverse A-Pass and accept the deal.
+              </p>
+            </div>
+          )}
+
+          {/* Case 6c: 1-on-1 Direct Deal — COUNTERPARTY accepts and verifies A-Pass */}
           {!isInitiator && currentDeal.type === 'DIRECT_DEAL' && meetsTier && currentDeal.status !== 'DELIVERED' && currentDeal.status !== 'RELEASED' && !currentDeal.attestationTxHash && (
             <div className="space-y-3">
               <div className="p-4 rounded-2xl bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-300/40 dark:border-indigo-500/20">
                 <p className="text-xs font-semibold text-indigo-800 dark:text-indigo-300 leading-relaxed">
-                  <span className="font-extrabold text-indigo-700 dark:text-indigo-400">{currentDeal.initiatorName}</span> has locked funds in escrow and is waiting for you to pay your side and confirm participation. Your Cleanverse A-Pass will be verified before the deal begins.
+                  <span className="font-extrabold text-indigo-700 dark:text-indigo-400">{currentDeal.initiatorName}</span> has created this 1-on-1 Escrow Deal for <span className="font-bold">{currentDeal.price} {currentDeal.currency}</span>. Verify your Cleanverse A-Pass to accept and begin work.
                 </p>
               </div>
               <button
                 onClick={handleAcceptJob}
-                disabled={hasAlreadyFundedOrPurchased || (currentDeal.status !== 'OPEN' && currentDeal.status !== 'FUNDED') || openSlots <= 0 || isProcessing || isChecking || escrowLoading}
+                disabled={hasAlreadyFundedOrPurchased || openSlots <= 0 || isProcessing || isChecking || escrowLoading}
                 className={`w-full font-extrabold py-4 px-6 rounded-2xl text-sm transition-all shadow-lg flex items-center justify-center gap-2 ${
-                  hasAlreadyFundedOrPurchased || (currentDeal.status !== 'OPEN' && currentDeal.status !== 'FUNDED') || openSlots <= 0
+                  hasAlreadyFundedOrPurchased || openSlots <= 0
                     ? 'neu-inset text-slate-500 dark:text-slate-400 opacity-60 cursor-not-allowed border border-slate-300 dark:border-slate-800'
                     : isProcessing
                     ? 'bg-cyan-500 text-white cursor-wait'
@@ -1497,10 +1528,10 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
                 <ShieldCheck className="h-5 w-5" />
                 <span>
                   {hasAlreadyFundedOrPurchased
-                    ? 'Escrow Secured — Deal Active'
+                    ? 'Deal Active & Escrow Secured'
                     : isProcessing
                     ? 'Verifying A-Pass & Confirming...'
-                    : `Pay Escrow & Begin Deal (${currentDeal.price} ${currentDeal.currency})`}
+                    : 'Accept Deal & Verify Cleanverse A-Pass'}
                 </span>
               </button>
             </div>
