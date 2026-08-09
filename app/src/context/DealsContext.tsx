@@ -243,6 +243,7 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       rejectedAt: undefined,
     };
 
+    let updatedParentDeal: Deal | undefined;
     setDeals((prev) => {
       const parentInPrev = prev.find((d) => d.id === parentDeal.id || d.id === baseId);
       const updatedParent = parentInPrev
@@ -255,8 +256,8 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             participantWallets: updatedWallets,
             clientAddress: parentInPrev.clientAddress || buyerWallet,
             freelancerAddress: parentInPrev.freelancerAddress || parentDeal.initiatorAddress,
-            counterpartyAddress: parentInPrev.counterpartyAddress || buyerWallet,
-            counterpartyName: parentInPrev.counterpartyName || buyerName,
+            counterpartyAddress: buyerWallet,
+            counterpartyName: buyerName,
             status: 'FUNDED' as const,
             depositTxHash: customDepositTxHash || parentInPrev.depositTxHash,
           }
@@ -275,15 +276,28 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             depositTxHash: customDepositTxHash || parentDeal.depositTxHash,
           };
 
+      updatedParentDeal = updatedParent;
       const filteredPrev = prev.filter((d) => d.id !== parentDeal.id && d.id !== baseId && d.id !== newOrder.id);
       return [newOrder, updatedParent, ...filteredPrev];
     });
 
+    // POST the sub-order (deal-123-slot-1) to the server
     fetch('/api/deals', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newOrder),
     }).catch(() => {});
+
+    // POST the updated base deal (deal-123, status: FUNDED) so the SELLER's device polls and sees FUNDED too
+    setTimeout(() => {
+      if (updatedParentDeal) {
+        fetch('/api/deals', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatedParentDeal),
+        }).catch(() => {});
+      }
+    }, 100);
 
     return newOrder;
   };
