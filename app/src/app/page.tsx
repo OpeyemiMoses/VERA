@@ -252,17 +252,22 @@ export default function Home() {
 
   const handlePurchaseService = (originalDealId: string, customDepositTxHash?: string, customEscrowAddress?: string) => {
     const fundedOrder = purchaseServiceContext(originalDealId, activePersona.walletAddress, activePersona.name, customDepositTxHash, customEscrowAddress);
-    const targetDeal = fundedOrder || deals.find((d) => d.id === originalDealId || d.id.startsWith(originalDealId)) || selectedDetailDeal;
-    if (targetDeal) {
-      const finalFunded: Deal = {
-        ...targetDeal,
-        status: 'FUNDED' as const,
-        depositTxHash: customDepositTxHash || targetDeal.depositTxHash,
-        escrowAddress: customEscrowAddress || targetDeal.escrowAddress,
-        counterpartyAddress: activePersona.walletAddress,
-        counterpartyName: activePersona.name,
-      };
-      setSelectedDetailDeal(finalFunded);
+    if (fundedOrder) {
+      setSelectedDetailDeal(fundedOrder);
+    } else {
+      const targetDeal = deals.find((d) => d.id === originalDealId || d.id.startsWith(originalDealId)) || selectedDetailDeal;
+      if (targetDeal) {
+        const finalFunded: Deal = {
+          ...targetDeal,
+          status: 'FUNDED' as const,
+          depositTxHash: customDepositTxHash || targetDeal.depositTxHash,
+          escrowAddress: customEscrowAddress || targetDeal.escrowAddress,
+          clientAddress: activePersona.walletAddress,
+          counterpartyAddress: activePersona.walletAddress,
+          counterpartyName: activePersona.name,
+        };
+        setSelectedDetailDeal(finalFunded);
+      }
     }
     showNotice(`Escrow Paid & Secured on Monad Testnet!`);
   };

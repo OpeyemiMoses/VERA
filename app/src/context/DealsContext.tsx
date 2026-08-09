@@ -62,7 +62,7 @@ const STORAGE_KEY = 'vera_deals_v700_clean';
 const DealsContext = createContext<DealsContextType | undefined>(undefined);
 
 export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { deductBalance, addBalance, appMode, prodWalletAddress } = usePersona();
+  const { activePersona, deductBalance, addBalance, appMode, prodWalletAddress } = usePersona();
 
   const [deals, setDeals] = useState<Deal[]>(() => {
     if (typeof window !== 'undefined') {
@@ -377,6 +377,11 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     const baseId = dealId.split('-slot-')[0].split('-order-')[0].split('-accepted-')[0];
     const attestHash = customAttestationTxHash || deliverable.signature || (deliverable.payloadHash?.startsWith('0x') ? deliverable.payloadHash : undefined);
 
+    const deliverableWithSender: DeliverableData = {
+      ...deliverable,
+      senderAddress: deliverable.senderAddress || activePersona.walletAddress,
+    };
+
     // Find any buyer info from local state or shared server state
     const knownBuyerDeal =
       deals.find((d) => (d.id === dealId || d.id.startsWith(`${baseId}-`)) && d.counterpartyAddress && d.counterpartyAddress !== '0x0000000000000000000000000000000000000000') ||
@@ -388,9 +393,9 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     const makeDelivered = (d: Deal): Deal => ({
       ...d,
       status: 'DELIVERED' as const,
-      deliverable,
-      deliverableUrl: deliverable.url,
-      deliverableNotes: deliverable.instructions,
+      deliverable: deliverableWithSender,
+      deliverableUrl: deliverableWithSender.url,
+      deliverableNotes: deliverableWithSender.instructions,
       attestationTxHash: attestHash || d.attestationTxHash || (appMode === 'production' ? undefined : generateMockTxHash()),
       counterpartyAddress: d.counterpartyAddress || buyerWallet,
       counterpartyName: d.counterpartyName || buyerName,
