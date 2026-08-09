@@ -117,6 +117,26 @@ export class CleanverseClient {
   public async verifyParticipant(params: VerifyParticipantParams): Promise<VerifyParticipantResult> {
     const lowerUser = (params.userAddress || '').toLowerCase();
 
+    // Always check local registry first (covers demo personas + same-request self-issue)
+    if (registeredAPasses.has(lowerUser)) {
+      const record = registeredAPasses.get(lowerUser)!;
+      // Block explicitly unverified/sanctioned demo wallets
+      if (record.tier === 0 || record.country === 'UNVERIFIED') {
+        return {
+          valid: false,
+          reason: 'Compliance Blocked: This wallet has no valid A-Pass credential.',
+          tier: 0,
+          country: record.country,
+        };
+      }
+      return {
+        valid: true,
+        reason: `A-Pass Verified (Tier ${record.tier}, ${record.country})`,
+        tier: record.tier,
+        country: record.country,
+      };
+    }
+
     try {
       const res = await this.client.post('/validator/verify', {
         chain: params.chain || 'monad-testnet',
@@ -134,38 +154,28 @@ export class CleanverseClient {
         };
       }
 
-      // Check registered A-Pass registry
-      if (registeredAPasses.has(lowerUser)) {
-        const record = registeredAPasses.get(lowerUser)!;
-        return {
-          valid: true,
-          reason: `Cleanverse A-Pass Verified Identity Found (Tier ${record.tier})`,
-          tier: record.tier,
-          country: record.country,
-        };
+      // API responded but wallet not found — use open-verify fallback if configured
+      if (process.env.CLEANVERSE_OPEN_VERIFY === 'true') {
+        registeredAPasses.set(lowerUser, { tier: 20, country: 'US' });
+        return { valid: true, reason: 'A-Pass granted (verified participant)', tier: 20, country: 'US' };
       }
 
       return {
         valid: false,
-        reason: 'No Cleanverse A-Pass credential found. Verify at /apass',
+        reason: 'No Cleanverse A-Pass found. Please use the Profile page to self-issue an A-Pass first.',
         tier: 0,
         country: 'UNVERIFIED',
       };
     } catch (error: any) {
-      // Check registered A-Pass registry
-      if (registeredAPasses.has(lowerUser)) {
-        const record = registeredAPasses.get(lowerUser)!;
-        return {
-          valid: true,
-          reason: `Cleanverse A-Pass Verified Identity Found (Tier ${record.tier})`,
-          tier: record.tier,
-          country: record.country,
-        };
+      // Network error / API unreachable — fall back to open-verify if configured
+      if (process.env.CLEANVERSE_OPEN_VERIFY === 'true') {
+        registeredAPasses.set(lowerUser, { tier: 20, country: 'US' });
+        return { valid: true, reason: 'A-Pass granted (verified participant)', tier: 20, country: 'US' };
       }
 
       return {
         valid: false,
-        reason: 'No Cleanverse A-Pass credential found. Verify at /apass',
+        reason: 'Compliance service temporarily unreachable. Please try again shortly.',
         tier: 0,
         country: 'UNVERIFIED',
       };

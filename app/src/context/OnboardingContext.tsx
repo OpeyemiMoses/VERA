@@ -14,41 +14,41 @@ export const TOUR_STEPS: TourStep[] = [
   {
     id: 0,
     title: 'Welcome to Vera Protocol',
-    subtitle: 'Compliant On-Chain Escrow Protocol',
+    subtitle: 'Compliant On-Chain Escrow',
     description:
-      'Create protected deals, hire verified talent, and lock payments safely on-chain using Cleanverse A-Pass identity and Validator Compliance rules.',
+      'Vera is a compliant escrow protocol built on Monad. Connect your wallet, get identity-verified with a Cleanverse A-Pass, and start creating or paying into escrow deals — safely on-chain.',
     targetId: 'welcome-dialog',
   },
   {
     id: 1,
-    title: 'Create or Pay Safely',
+    title: 'Start a Deal or List a Service',
     subtitle: 'Escrow Action Center',
     description:
-      'Post new freelance deals or fund escrow instances with A-Tokens. Funds remain locked securely on-chain until work delivery is confirmed.',
+      'Hit the + button to create a Private Escrow Deal with a specific counterparty, or list a public Service on the Marketplace. Funds lock on-chain and only release when both sides agree.',
     targetId: 'hero-action-section',
   },
   {
     id: 2,
-    title: 'Escrow in 3 Clear Steps',
-    subtitle: 'Automated Lifecycle',
+    title: 'How Escrow Works',
+    subtitle: 'Three-Step Lifecycle',
     description:
-      '1. Client creates deal terms -> 2. Buyer locks payment -> 3. Freelancer verifies identity & delivers work for payout.',
+      '1. Initiator creates and funds the escrow. 2. Counterparty verifies their identity (A-Pass) and enters the deal. 3. Once work is delivered and confirmed, funds release to the provider automatically.',
     targetId: 'how-it-works-section',
   },
   {
     id: 3,
-    title: 'Identity-Gated Marketplace',
-    subtitle: 'A-Pass & Validator Pool Gating',
+    title: 'Browse the Marketplace',
+    subtitle: 'Identity-Gated Services',
     description:
-      'Every deal requires freelancers to pass Cleanverse Validator Pool checks before accepting. Unverified or sanctioned wallets are automatically blocked.',
+      'Explore verified service listings from compliant providers. Every service on Vera requires passing Cleanverse identity checks — no anonymous or sanctioned wallets allowed.',
     targetId: 'popular-services-section',
   },
   {
     id: 4,
-    title: 'Live Persona & Compliance Toolbar',
-    subtitle: 'Hackathon Demo Mode',
+    title: 'Your Deals & Profile',
+    subtitle: 'My Deals + Wallet Profile',
     description:
-      'Use the top header bar to switch between Alice (Client), Bob (Verified Freelancer), Charlie (Unverified), and Vlad (Sanctioned) in real time!',
+      'Track all your active deals from the My Deals tab. Visit your Profile to check your A-Pass status, claim testnet tokens from the faucet, and view your on-chain transaction history.',
     targetId: 'persona-bar-header',
   },
 ];
