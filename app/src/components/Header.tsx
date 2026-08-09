@@ -189,13 +189,13 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Verification Status & Trust Score Badges */}
           {activePersona.isVerified ? (
             <div className="flex items-center gap-2">
-              <div className="neu-card-soft px-3 py-2 flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400">
+              <div className="neu-card-soft px-3 py-2 flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400" title="CVI: Cleanverse Verification Infrastructure A-Pass Tier">
                 <ShieldCheck className="h-4 w-4 text-emerald-500" />
-                <span>Tier {activePersona.tier}</span>
+                <span>CVI Tier {activePersona.tier}</span>
               </div>
-              <div className="neu-card-soft px-3 py-2 flex items-center gap-1.5 text-xs font-extrabold text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 shadow-sm">
+              <div className="neu-card-soft px-3 py-2 flex items-center gap-1.5 text-xs font-extrabold text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 shadow-sm" title="CVA: Cleanverse Verification Attestation Score">
                 <Sparkles className="h-3.5 w-3.5 text-indigo-500" />
-                <span>Score {trustDetails.score}/100</span>
+                <span>CVA Score {trustDetails.score}/100</span>
                 <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-indigo-500/10 text-indigo-600 dark:text-indigo-300">
                   {trustDetails.feePct}% Fee
                 </span>
@@ -205,7 +205,7 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="flex items-center gap-2">
               <div className="neu-card-soft px-3 py-2 flex items-center gap-1.5 text-xs font-bold text-rose-600 dark:text-rose-400">
                 <ShieldAlert className="h-4 w-4 text-rose-500" />
-                <span>Identity Blocked</span>
+                <span>CVI Blocked</span>
               </div>
               <button
                 onClick={() => selfIssueAPass('US', 30)}
@@ -213,7 +213,7 @@ export const Header: React.FC<HeaderProps> = ({
                 title="Issue Cleanverse CVI A-Pass Credential via generate_apass API"
               >
                 <Sparkles className="h-3.5 w-3.5 text-amber-300" />
-                <span>Issue A-Pass CVI</span>
+                <span>Issue CVI A-Pass</span>
               </button>
             </div>
           )}
