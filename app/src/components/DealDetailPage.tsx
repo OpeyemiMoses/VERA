@@ -416,6 +416,23 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
       ? recipientWallet
       : (currentDeal.counterpartyAddress || currentDeal.freelancerAddress || currentDeal.initiatorAddress);
 
+    // ── Cleanverse CVI Verification Gate: Check buyer compliance BEFORE allowing payout release ──
+    showNotice('Running Cleanverse CVI compliance check...');
+    const releaseCompliance = await checkCompliance(
+      activePersona.walletAddress,
+      currentDeal.escrowAddress || '',
+      process.env.NEXT_PUBLIC_FACTORY_ADDRESS || '',
+      'monad-testnet',
+      currentDeal.minTier,
+      currentDeal.prohibitedCountries
+    );
+
+    if (!releaseCompliance.allowed) {
+      setIsProcessing(false);
+      showNotice(`Compliance Rejection: ${releaseCompliance.reason || 'Cleanverse A-Pass verification failed'}`);
+      return;
+    }
+
     // Compute trust-adjusted platform fee from the RECIPIENT's Trust Score
     const recipientTrust = getPersonaTrustScore(targetSeller);
     const feePct = currentDeal.platformFeePct ?? recipientTrust.feePct;

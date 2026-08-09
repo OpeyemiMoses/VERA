@@ -22,6 +22,7 @@ import { useWriteContract, usePublicClient } from 'wagmi';
 import { Deal, DeliverableData, DeliverableFormat } from '../types/deal';
 import { validateDeliverableFile } from '../utils/fileValidation';
 import { usePersona } from '../context/PersonaContext';
+import { useCleanverse } from '../hooks/useCleanverse';
 import { useToast } from '../context/ToastContext';
 import { ESCROW_ABI } from '../lib/contracts';
 
@@ -39,6 +40,7 @@ export const SubmitDeliverableModal: React.FC<SubmitDeliverableModalProps> = ({
   onSubmitDeliverable,
 }) => {
   const { activePersona, appMode } = usePersona();
+  const { checkCompliance } = useCleanverse();
   const { writeContractAsync } = useWriteContract();
   const publicClient = usePublicClient();
   const { showInfo, showError } = useToast();
@@ -116,6 +118,23 @@ export const SubmitDeliverableModal: React.FC<SubmitDeliverableModalProps> = ({
 
     setIsSubmitting(true);
     const sellerWallet = activePersona.walletAddress;
+
+    // ── Cleanverse CVI Verification Gate: Check seller compliance BEFORE allowing deliverable submission ──
+    showInfo('Running Cleanverse CVI compliance check...');
+    const compliance = await checkCompliance(
+      sellerWallet,
+      deal?.escrowAddress || '',
+      process.env.NEXT_PUBLIC_FACTORY_ADDRESS || '',
+      'monad-testnet',
+      deal?.minTier,
+      deal?.prohibitedCountries
+    );
+
+    if (!compliance.allowed) {
+      setIsSubmitting(false);
+      showError(`Compliance Rejection: ${compliance.reason || 'Cleanverse A-Pass verification failed'}`);
+      return;
+    }
 
     let submitTxHash: string | undefined = undefined;
 

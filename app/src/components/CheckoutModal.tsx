@@ -64,6 +64,23 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
     setStep('verifying');
 
+    // ── Cleanverse CVI Verification Gate: Check buyer compliance BEFORE allowing funding ──
+    showInfo('Running Cleanverse CVI compliance check for buyer...');
+    const compliance = await checkCompliance(
+      activePersona.walletAddress,
+      deal.escrowAddress || '',
+      FACTORY_ADDRESS,
+      'monad-testnet',
+      deal.minTier,
+      deal.prohibitedCountries
+    );
+
+    if (!compliance.allowed) {
+      setStep('review');
+      showError(`Compliance Rejection: ${compliance.reason || 'Cleanverse A-Pass verification failed'}`);
+      return;
+    }
+
     // ── PRODUCTION MODE: Real Monad Testnet On-Chain Transactions ──────────────
     // For Service Listings, the BUYER must deploy a new escrow contract so that
     // the buyer = on-chain client (who funds), and the service creator = freelancer

@@ -6,6 +6,7 @@ import { useWriteContract } from 'wagmi';
 import { parseUnits } from 'viem';
 import { usePersona } from '../context/PersonaContext';
 import { useToast } from '../context/ToastContext';
+import { useCleanverse } from '../hooks/useCleanverse';
 import { FACTORY_ADDRESS, CATKN_ADDRESS, ESCROW_FACTORY_ABI, ESCROW_ABI, CATKN_ABI, CATKN_DECIMALS } from '../lib/contracts';
 import { Deal, MARKETPLACE_CATEGORIES } from '../types/deal';
 
@@ -18,6 +19,7 @@ interface PostJobModalProps {
 export const PostJobModal: React.FC<PostJobModalProps> = ({ isOpen, onClose, onJobCreated }) => {
   const { activePersona, hasSufficientBalance, activeBalance, claimFaucet, deductBalance, appMode } = usePersona();
   const { showInfo, showSuccess, showError } = useToast();
+  const { checkCompliance } = useCleanverse();
   const { writeContractAsync } = useWriteContract();
 
   const [dealType, setDealType] = useState<'SERVICE_LISTING' | 'DIRECT_DEAL'>('SERVICE_LISTING');
@@ -58,9 +60,29 @@ export const PostJobModal: React.FC<PostJobModalProps> = ({ isOpen, onClose, onJ
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!activePersona.isVerified) return;
+    if (!activePersona.isVerified) {
+      showError('Cleanverse A-Pass verification required to create deals.');
+      return;
+    }
 
     setIsSubmitting(true);
+
+    // ── Cleanverse CVI Verification Gate: Check creator compliance BEFORE allowing deal creation ──
+    showInfo('Running Cleanverse CVI compliance check for creator...');
+    const compliance = await checkCompliance(
+      activePersona.walletAddress,
+      '',
+      FACTORY_ADDRESS,
+      'monad-testnet',
+      parseInt(minTier) || 10,
+      prohibitedCountries
+    );
+
+    if (!compliance.allowed) {
+      setIsSubmitting(false);
+      showError(`Compliance Rejection: ${compliance.reason || 'Cleanverse A-Pass verification failed'}`);
+      return;
+    }
 
     // ── PRODUCTION MODE: Real On-Chain Contract Deployment via Web3 ──
     if (appMode === 'production') {
