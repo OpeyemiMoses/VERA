@@ -110,102 +110,127 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   }
 
   const txHistory: TxItem[] = [];
+  const activeWalletLower = activePersona.walletAddress.toLowerCase();
 
-  // 1. Transactions executed by the CREATOR of the deal (myCreatedDeals)
-  myCreatedDeals.forEach((d) => {
+  // Deduplicate and process all relevant deals for the active wallet
+  const allUserDeals = deals.filter((d) => {
+    const isInitiator = d.initiatorAddress.toLowerCase() === activeWalletLower;
+    const isClient = d.clientAddress && d.clientAddress.toLowerCase() === activeWalletLower;
+    const isFreelancer =
+      (d.freelancerAddress && d.freelancerAddress.toLowerCase() === activeWalletLower) ||
+      (d.deliverable?.senderAddress && d.deliverable.senderAddress.toLowerCase() === activeWalletLower) ||
+      (d.counterpartyAddress && d.counterpartyAddress.toLowerCase() === activeWalletLower);
+    const isParticipant = d.participantWallets && d.participantWallets.some((w) => w.toLowerCase() === activeWalletLower);
+
+    return isInitiator || isClient || isFreelancer || isParticipant;
+  });
+
+  const processedDealIds = new Set<string>();
+
+  allUserDeals.forEach((d) => {
+    if (processedDealIds.has(d.id)) return;
+    processedDealIds.add(d.id);
+
     const baseTs = typeof d.createdAt === 'number' ? d.createdAt : new Date(d.createdAt).getTime();
+    const isInitiator = d.initiatorAddress.toLowerCase() === activeWalletLower;
 
-    // Creator deployed the escrow contract
-    if (d.creationTxHash) {
+    // Seller is the provider receiving payout (initiator of SERVICE_LISTING or deliverable sender/freelancer)
+    const isSeller =
+      (d.type === 'SERVICE_LISTING' && isInitiator) ||
+      (d.deliverable?.senderAddress && d.deliverable.senderAddress.toLowerCase() === activeWalletLower) ||
+      (d.freelancerAddress && d.freelancerAddress.toLowerCase() === activeWalletLower);
+
+    // Buyer is the client funding the escrow
+    const isBuyer =
+      (d.type === 'SERVICE_LISTING' && !isInitiator) ||
+      (d.clientAddress && d.clientAddress.toLowerCase() === activeWalletLower) ||
+      (!isSeller && d.counterpartyAddress && d.counterpartyAddress.toLowerCase() === activeWalletLower);
+
+    // 1. Escrow Contract Deployment (Costs 0 tokens, gas only)
+    if (d.creationTxHash && isInitiator) {
       txHistory.push({
         id: `create-${d.id}`,
         type: 'CREATE',
         txHash: d.creationTxHash,
         title: `Escrow Contract Deployed`,
         subtitle: `${d.title} · Factory 0xC068...9334`,
-        amount: `${d.price} ${d.currency}`,
+        amount: `0 ${d.currency}`,
         timestamp: baseTs,
         status: 'CONFIRMED',
         deal: d,
       });
     }
 
+    // 2. Escrow Funding
     if (d.depositTxHash) {
-      txHistory.push({
-        id: `deposit-${d.id}`,
-        type: 'FUND',
-        txHash: d.depositTxHash,
-        title: `Escrow Pool Funded`,
-        subtitle: `Locked in Escrow Smart Contract (${d.title})`,
-        amount: `-${d.price} ${d.currency}`,
-        timestamp: baseTs + 30000,
-        status: 'CONFIRMED',
-        deal: d,
-      });
+      if (isBuyer) {
+        txHistory.push({
+          id: `fund-buyer-${d.id}`,
+          type: 'FUND',
+          txHash: d.depositTxHash,
+          title: `Escrow Payment Deposited`,
+          subtitle: `Locked in Escrow Smart Contract (${d.title})`,
+          amount: `-${d.price} ${d.currency}`,
+          timestamp: baseTs + 30000,
+          status: 'CONFIRMED',
+          deal: d,
+        });
+      } else {
+        txHistory.push({
+          id: `fund-seller-${d.id}`,
+          type: 'FUND',
+          txHash: d.depositTxHash,
+          title: `Escrow Secured by Buyer`,
+          subtitle: `Buyer locked funds in Escrow Vault (${d.title})`,
+          amount: `+${d.price} ${d.currency} (Secured)`,
+          timestamp: baseTs + 30000,
+          status: 'CONFIRMED',
+          deal: d,
+        });
+      }
     }
 
-    // ONLY show release in creator history if the CREATOR released payout to freelancer
-    if (d.releaseTxHash) {
-      txHistory.push({
-        id: `release-${d.id}`,
-        type: 'RELEASE',
-        txHash: d.releaseTxHash,
-        title: `Escrow Payout Released`,
-        subtitle: `Released payout to freelancer & exported Travel Rule report`,
-        amount: `-${d.price} ${d.currency}`,
-        timestamp: baseTs + 180000,
-        status: 'SETTLED',
-        deal: d,
-      });
-    }
-  });
-
-  // 2. Transactions performed or received by the BUYER / FREELANCER (myPurchasedDeals)
-  myPurchasedDeals.forEach((d) => {
-    const baseTs = typeof d.createdAt === 'number' ? d.createdAt : new Date(d.createdAt).getTime();
-
-    // ONLY show deposit in buyer history if the BUYER deposited it (i.e. SERVICE_LISTING purchase)
-    if (d.depositTxHash && d.type === 'SERVICE_LISTING') {
-      txHistory.push({
-        id: `buy-fund-${d.id}`,
-        type: 'FUND',
-        txHash: d.depositTxHash,
-        title: `Escrow Payment Deposited`,
-        subtitle: `Purchased Service Listing: ${d.title}`,
-        amount: `-${d.price} ${d.currency}`,
-        timestamp: baseTs,
-        status: 'CONFIRMED',
-        deal: d,
-      });
-    }
-
-    // Freelancer accepted job on-chain with Cleanverse ECDSA attestation
-    if (d.attestationTxHash) {
+    // 3. Cleanverse ECDSA Attestation
+    if (d.attestationTxHash && (isSeller || isInitiator)) {
       txHistory.push({
         id: `attest-${d.id}`,
         type: 'ATTESTATION',
         txHash: d.attestationTxHash,
-        title: `Cleanverse ECDSA Attestation Submitted`,
-        subtitle: `Submitted A-Pass Verification On-Chain (${d.title})`,
+        title: `Cleanverse ECDSA Attestation Verified`,
+        subtitle: `Submitted A-Pass Attestation On-Chain (${d.title})`,
         timestamp: baseTs + 90000,
         status: 'VERIFIED',
         deal: d,
       });
     }
 
-    // Freelancer RECEIVED payout into their wallet
+    // 4. Escrow Payout Release
     if (d.releaseTxHash) {
-      txHistory.push({
-        id: `work-payout-${d.id}`,
-        type: 'RELEASE',
-        txHash: d.releaseTxHash,
-        title: `Escrow Payout Received`,
-        subtitle: `Payout received into wallet for completed work (${d.title})`,
-        amount: `+${d.price} ${d.currency}`,
-        timestamp: baseTs + 240000,
-        status: 'SETTLED',
-        deal: d,
-      });
+      if (isSeller) {
+        txHistory.push({
+          id: `release-seller-${d.id}`,
+          type: 'RELEASE',
+          txHash: d.releaseTxHash,
+          title: `Escrow Payout Received`,
+          subtitle: `Payout credited to wallet for completed work (${d.title})`,
+          amount: `+${d.price} ${d.currency}`,
+          timestamp: baseTs + 180000,
+          status: 'SETTLED',
+          deal: d,
+        });
+      } else {
+        txHistory.push({
+          id: `release-buyer-${d.id}`,
+          type: 'RELEASE',
+          txHash: d.releaseTxHash,
+          title: `Escrow Payout Released`,
+          subtitle: `Released payout to freelancer & exported Travel Rule report`,
+          amount: `-${d.price} ${d.currency}`,
+          timestamp: baseTs + 180000,
+          status: 'SETTLED',
+          deal: d,
+        });
+      }
     }
   });
 
