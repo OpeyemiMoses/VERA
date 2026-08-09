@@ -17,8 +17,40 @@ interface DealsContextType {
   isFetchingOnChain: boolean;
 }
 
-const STORAGE_KEY = 'vera_deals_v700_clean';
+const STATUS_RANK: Record<string, number> = {
+  'OPEN': 1,
+  'FUNDED': 2,
+  'ACCEPTED': 3,
+  'DELIVERED': 4,
+  'RELEASED': 5,
+  'COMPLETED': 5,
+  'DISPUTED': 6,
+  'REJECTED': 2,
+  'REFUNDED': 6,
+  'CANCELLED': 6,
+};
 
+function mergeDealObjects(d1: Deal, d2: Deal): Deal {
+  const r1 = STATUS_RANK[d1.status] ?? 1;
+  const r2 = STATUS_RANK[d2.status] ?? 1;
+
+  const advanced = r2 >= r1 ? d2 : d1;
+  const secondary = r2 >= r1 ? d1 : d2;
+
+  return {
+    ...secondary,
+    ...advanced,
+    escrowAddress: advanced.escrowAddress || secondary.escrowAddress,
+    depositTxHash: advanced.depositTxHash || secondary.depositTxHash,
+    attestationTxHash: advanced.attestationTxHash || secondary.attestationTxHash,
+    releaseTxHash: advanced.releaseTxHash || secondary.releaseTxHash,
+    deliverable: advanced.deliverable || secondary.deliverable,
+    counterpartyAddress: advanced.counterpartyAddress || secondary.counterpartyAddress,
+    counterpartyName: advanced.counterpartyName || secondary.counterpartyName,
+  };
+}
+
+const STORAGE_KEY = 'vera_deals_v700_clean';
 const DealsContext = createContext<DealsContextType | undefined>(undefined);
 
 export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -70,7 +102,7 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   // Fetch deals on mount + whenever wallet or mode changes
   useEffect(() => {
     refreshOnChainDeals();
-    const interval = setInterval(refreshOnChainDeals, 5_000); // refresh every 5s for fast multi-wallet sync
+    const interval = setInterval(refreshOnChainDeals, 4_000); // refresh every 4s for fast multi-wallet sync
     return () => clearInterval(interval);
   }, [refreshOnChainDeals]);
 
@@ -81,8 +113,15 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     // 1. Add shared API deals
     sharedApiDeals.forEach((d) => combinedPoolMap.set(d.id, d));
 
-    // 2. Add local deals (overrides API defaults if updated locally)
-    deals.forEach((d) => combinedPoolMap.set(d.id, d));
+    // 2. Add local deals (merge with API using status rank hierarchy)
+    deals.forEach((d) => {
+      const existing = combinedPoolMap.get(d.id);
+      if (existing) {
+        combinedPoolMap.set(d.id, mergeDealObjects(existing, d));
+      } else {
+        combinedPoolMap.set(d.id, d);
+      }
+    });
 
     // 3. Enrich existing registered deals with live on-chain status from Monad Testnet
     const pool = Array.from(combinedPoolMap.values()).map((deal) => {
@@ -93,7 +132,7 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       if (!onChainMatch) return deal;
       return {
         ...deal,
-        status: onChainMatch.status,
+        status: mergeDealObjects(deal, onChainMatch).status,
         statusLabel: onChainMatch.statusLabel,
         counterpartyAddress: onChainMatch.counterpartyAddress || deal.counterpartyAddress,
         counterpartyName: onChainMatch.counterpartyName || deal.counterpartyName,
