@@ -410,27 +410,36 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
       try {
         showNotice('Releasing Escrow Payout on Monad Testnet... Please confirm in Web3 wallet.');
         let txHash: `0x${string}`;
-        if (recipientWallet && recipientWallet.startsWith('0x') && recipientWallet !== '0x0000000000000000000000000000000000000000') {
-          try {
-            txHash = await writeContractAsync({
-              address: currentDeal.escrowAddress as `0x${string}`,
-              abi: ESCROW_ABI,
-              functionName: 'releaseTo',
-              args: [recipientWallet as `0x${string}`],
-            });
-          } catch (relToErr) {
-            console.warn('[RELEASE] releaseTo failed, falling back to release():', relToErr);
-            txHash = await writeContractAsync({
-              address: currentDeal.escrowAddress as `0x${string}`,
-              abi: ESCROW_ABI,
-              functionName: 'release',
-            });
-          }
-        } else {
+        // Ensure targetSeller is a valid 42-char hex address for the seller
+        const targetSeller = (recipientWallet && recipientWallet.startsWith('0x') && recipientWallet.length === 42)
+          ? recipientWallet
+          : ((currentDeal.initiatorAddress && currentDeal.initiatorAddress.startsWith('0x') && currentDeal.initiatorAddress.length === 42) ? currentDeal.initiatorAddress : activePersona.walletAddress);
+
+        try {
+          // Attempt 1: Call releaseTo(targetSeller) directly
           txHash = await writeContractAsync({
             address: currentDeal.escrowAddress as `0x${string}`,
             abi: ESCROW_ABI,
-            functionName: 'release',
+            functionName: 'releaseTo',
+            args: [targetSeller as `0x${string}`],
+          });
+        } catch (relToErr: any) {
+          console.warn('[RELEASE] releaseTo initial attempt failed, setting freelancer on-chain first:', relToErr);
+          try {
+            await writeContractAsync({
+              address: currentDeal.escrowAddress as `0x${string}`,
+              abi: ESCROW_ABI,
+              functionName: 'setFreelancer',
+              args: [targetSeller as `0x${string}`],
+            });
+          } catch (setErr) {
+            console.warn('[RELEASE] setFreelancer note:', setErr);
+          }
+          txHash = await writeContractAsync({
+            address: currentDeal.escrowAddress as `0x${string}`,
+            abi: ESCROW_ABI,
+            functionName: 'releaseTo',
+            args: [targetSeller as `0x${string}`],
           });
         }
 
