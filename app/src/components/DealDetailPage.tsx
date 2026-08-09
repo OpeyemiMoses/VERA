@@ -1475,87 +1475,47 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
             </div>
           )}
 
-          {/* Case 6a: 1-on-1 Direct Deal — INITIATOR / CLIENT deposits funds into escrow */}
-          {isInitiator && currentDeal.type === 'DIRECT_DEAL' && currentDeal.status !== 'DELIVERED' && currentDeal.status !== 'RELEASED' && (currentDeal.status === 'OPEN' || !currentDeal.depositTxHash) && (
+          {/* Case 6: 1-on-1 Direct Deal — Single Pay & Deposit in Escrow action */}
+          {currentDeal.type === 'DIRECT_DEAL' && currentDeal.status !== 'DELIVERED' && currentDeal.status !== 'RELEASED' && (
             <div className="space-y-3">
-              <div className="p-4 rounded-2xl bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-300/40 dark:border-indigo-500/20">
-                <p className="text-xs font-semibold text-indigo-800 dark:text-indigo-300 leading-relaxed">
-                  You created this 1-on-1 Escrow Deal. Deposit <span className="font-extrabold text-indigo-700 dark:text-indigo-400">{currentDeal.price} {currentDeal.currency}</span> into the Escrow Vault so the counterparty can verify their Cleanverse A-Pass, accept, and begin work.
-                </p>
-              </div>
-              <button
-                onClick={() => openCheckout(currentDeal)}
-                disabled={isProcessing || escrowLoading}
-                className="w-full font-extrabold py-4 px-6 rounded-2xl text-sm transition-all shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white"
-              >
-                <Wallet className="h-5 w-5" />
-                <span>Deposit & Fund Escrow ({currentDeal.price} {currentDeal.currency})</span>
-              </button>
-            </div>
-          )}
-
-          {/* Case 6b: 1-on-1 Direct Deal — INITIATOR / CLIENT waiting for counterparty acceptance after funding */}
-          {isInitiator && currentDeal.type === 'DIRECT_DEAL' && currentDeal.status === 'FUNDED' && !hasCounterpartyAssigned && (
-            <div className="neu-inset p-5 text-center space-y-1 border-2 border-indigo-500/30">
-              <h4 className="text-xs font-extrabold text-indigo-600 dark:text-indigo-400 flex items-center justify-center gap-1.5">
-                <CheckCircle2 className="h-4 w-4 text-indigo-500" /> Escrow Vault Funded ({currentDeal.price} {currentDeal.currency})
-              </h4>
-              <p className="text-xs font-medium text-slate-800 dark:text-slate-200">
-                Waiting for counterparty to verify Cleanverse A-Pass and accept the deal.
-              </p>
-            </div>
-          )}
-
-          {/* Case 6c: 1-on-1 Direct Deal — Counterparty Action Options (Pay Escrow OR Accept as Provider) */}
-          {!isInitiator && currentDeal.type === 'DIRECT_DEAL' && meetsTier && currentDeal.status !== 'DELIVERED' && currentDeal.status !== 'RELEASED' && !currentDeal.attestationTxHash && (
-            <div className="space-y-3">
-              <div className="p-4 rounded-2xl bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-300/40 dark:border-indigo-500/20">
-                <p className="text-xs font-semibold text-indigo-800 dark:text-indigo-300 leading-relaxed">
-                  <span className="font-extrabold text-indigo-700 dark:text-indigo-400">{currentDeal.initiatorName}</span> created this 1-on-1 Escrow Deal for <span className="font-bold">{currentDeal.price} {currentDeal.currency}</span>. Select your action below:
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {/* Primary Action: Pay & Deposit into Escrow (for Buyers/Payers) */}
-                <button
-                  onClick={() => openCheckout(currentDeal)}
-                  disabled={hasAlreadyFundedOrPurchased || currentDeal.status !== 'OPEN' || isProcessing || escrowLoading}
-                  className={`w-full font-extrabold py-4 px-5 rounded-2xl text-xs sm:text-sm transition-all shadow-lg flex items-center justify-center gap-2 ${
-                    hasAlreadyFundedOrPurchased || currentDeal.status !== 'OPEN'
-                      ? 'neu-inset text-slate-500 dark:text-slate-400 opacity-60 cursor-not-allowed border border-slate-300 dark:border-slate-800'
-                      : 'bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-indigo-500/20'
-                  }`}
-                >
-                  <Wallet className="h-4 w-4" />
-                  <span>
-                    {hasAlreadyFundedOrPurchased
-                      ? 'Already Paid & Escrow Secured'
-                      : currentDeal.status !== 'OPEN'
-                      ? 'Escrow Already Funded'
-                      : `Pay & Deposit ${currentDeal.price} ${currentDeal.currency} in Escrow`}
-                  </span>
-                </button>
-
-                {/* Secondary Action: Accept Deal as Service Provider / Freelancer */}
-                <button
-                  onClick={handleAcceptJob}
-                  disabled={hasAlreadyFundedOrPurchased || openSlots <= 0 || isProcessing || isChecking || escrowLoading}
-                  className={`w-full font-extrabold py-4 px-5 rounded-2xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2 ${
-                    hasAlreadyFundedOrPurchased || openSlots <= 0
-                      ? 'neu-inset text-slate-500 dark:text-slate-400 opacity-60 cursor-not-allowed border border-slate-300 dark:border-slate-800'
-                      : isProcessing
-                      ? 'bg-cyan-500 text-white cursor-wait'
-                      : 'neu-card hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-white border border-indigo-300 dark:border-indigo-800'
-                  }`}
-                >
-                  <ShieldCheck className="h-4 w-4 text-indigo-500 dark:text-indigo-400" />
-                  <span>
-                    {isProcessing
-                      ? 'Verifying A-Pass...'
-                      : 'Accept as Provider & Verify A-Pass'}
-                  </span>
-                </button>
-              </div>
+              {currentDeal.status === 'OPEN' ? (
+                <>
+                  <div className="p-4 rounded-2xl bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-300/40 dark:border-indigo-500/20">
+                    <p className="text-xs font-semibold text-indigo-800 dark:text-indigo-300 leading-relaxed">
+                      {isInitiator ? (
+                        <>You created this 1-on-1 Escrow Deal for <span className="font-bold">{currentDeal.price} {currentDeal.currency}</span>. Deposit funds into the escrow vault to activate the deal on-chain.</>
+                      ) : (
+                        <><span className="font-extrabold text-indigo-700 dark:text-indigo-400">{currentDeal.initiatorName}</span> created this 1-on-1 Escrow Deal for <span className="font-bold">{currentDeal.price} {currentDeal.currency}</span>. Deposit funds into the escrow vault to lock the payment on-chain.</>
+                      )}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => openCheckout(currentDeal)}
+                    disabled={hasAlreadyFundedOrPurchased || isProcessing || escrowLoading}
+                    className={`w-full font-extrabold py-4 px-6 rounded-2xl text-sm transition-all shadow-lg flex items-center justify-center gap-2 ${
+                      hasAlreadyFundedOrPurchased
+                        ? 'neu-inset text-slate-500 dark:text-slate-400 opacity-60 cursor-not-allowed border border-slate-300 dark:border-slate-800'
+                        : 'bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-indigo-500/20'
+                    }`}
+                  >
+                    <Wallet className="h-5 w-5" />
+                    <span>
+                      {hasAlreadyFundedOrPurchased
+                        ? 'Already Paid & Escrow Secured'
+                        : `Pay & Deposit ${currentDeal.price} ${currentDeal.currency} in Escrow`}
+                    </span>
+                  </button>
+                </>
+              ) : (
+                <div className="neu-inset p-5 text-center space-y-1 border-2 border-indigo-500/30">
+                  <h4 className="text-xs font-extrabold text-indigo-600 dark:text-indigo-400 flex items-center justify-center gap-1.5">
+                    <CheckCircle2 className="h-4 w-4 text-indigo-500" /> Escrow Vault Funded ({currentDeal.price} {currentDeal.currency})
+                  </h4>
+                  <p className="text-xs font-medium text-slate-800 dark:text-slate-200">
+                    Payment locked on-chain in Monad Testnet Escrow contract.
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
