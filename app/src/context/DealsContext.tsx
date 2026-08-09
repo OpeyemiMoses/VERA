@@ -387,22 +387,32 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       deals.find((d) => (d.id === dealId || d.id.startsWith(`${baseId}-`)) && d.counterpartyAddress && d.counterpartyAddress !== '0x0000000000000000000000000000000000000000') ||
       sharedApiDeals.find((d) => (d.id === dealId || d.id.startsWith(`${baseId}-`)) && d.counterpartyAddress && d.counterpartyAddress !== '0x0000000000000000000000000000000000000000');
 
-    const buyerWallet = knownBuyerDeal?.counterpartyAddress || knownBuyerDeal?.clientAddress;
-    const buyerName = knownBuyerDeal?.counterpartyName;
+    const makeDelivered = (d: Deal): Deal => {
+      const initAddr = d.initiatorAddress.toLowerCase();
+      const realBuyerWallet =
+        (d.clientAddress && d.clientAddress.toLowerCase() !== initAddr ? d.clientAddress : undefined) ||
+        (d.counterpartyAddress && d.counterpartyAddress.toLowerCase() !== initAddr ? d.counterpartyAddress : undefined) ||
+        (knownBuyerDeal?.clientAddress && knownBuyerDeal.clientAddress.toLowerCase() !== initAddr ? knownBuyerDeal.clientAddress : undefined) ||
+        (knownBuyerDeal?.counterpartyAddress && knownBuyerDeal.counterpartyAddress.toLowerCase() !== initAddr ? knownBuyerDeal.counterpartyAddress : undefined);
 
-    const makeDelivered = (d: Deal): Deal => ({
-      ...d,
-      status: 'DELIVERED' as const,
-      deliverable: deliverableWithSender,
-      deliverableUrl: deliverableWithSender.url,
-      deliverableNotes: deliverableWithSender.instructions,
-      attestationTxHash: attestHash || d.attestationTxHash || (appMode === 'production' ? undefined : generateMockTxHash()),
-      counterpartyAddress: d.counterpartyAddress || buyerWallet,
-      counterpartyName: d.counterpartyName || buyerName,
-      clientAddress: d.clientAddress || buyerWallet,
-      rejectionReason: undefined,
-      rejectedAt: undefined,
-    });
+      const realBuyerName =
+        (d.counterpartyName && !d.counterpartyName.toLowerCase().includes(d.initiatorName.toLowerCase().split(' ')[0]) ? d.counterpartyName : undefined) ||
+        (knownBuyerDeal?.counterpartyName && !knownBuyerDeal.counterpartyName.toLowerCase().includes(d.initiatorName.toLowerCase().split(' ')[0]) ? knownBuyerDeal.counterpartyName : undefined);
+
+      return {
+        ...d,
+        status: 'DELIVERED' as const,
+        deliverable: deliverableWithSender,
+        deliverableUrl: deliverableWithSender.url,
+        deliverableNotes: deliverableWithSender.instructions,
+        attestationTxHash: attestHash || d.attestationTxHash || (appMode === 'production' ? undefined : generateMockTxHash()),
+        clientAddress: realBuyerWallet || (d.clientAddress !== initAddr ? d.clientAddress : undefined),
+        counterpartyAddress: realBuyerWallet || (d.counterpartyAddress !== initAddr ? d.counterpartyAddress : undefined),
+        counterpartyName: realBuyerName || d.counterpartyName,
+        rejectionReason: undefined,
+        rejectedAt: undefined,
+      };
+    };
 
     const updatedLocally: Deal[] = [];
 
