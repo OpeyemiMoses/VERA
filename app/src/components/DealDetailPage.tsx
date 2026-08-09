@@ -1506,34 +1506,56 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
             </div>
           )}
 
-          {/* Case 6c: 1-on-1 Direct Deal — COUNTERPARTY accepts and verifies A-Pass */}
+          {/* Case 6c: 1-on-1 Direct Deal — Counterparty Action Options (Pay Escrow OR Accept as Provider) */}
           {!isInitiator && currentDeal.type === 'DIRECT_DEAL' && meetsTier && currentDeal.status !== 'DELIVERED' && currentDeal.status !== 'RELEASED' && !currentDeal.attestationTxHash && (
             <div className="space-y-3">
               <div className="p-4 rounded-2xl bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-300/40 dark:border-indigo-500/20">
                 <p className="text-xs font-semibold text-indigo-800 dark:text-indigo-300 leading-relaxed">
-                  <span className="font-extrabold text-indigo-700 dark:text-indigo-400">{currentDeal.initiatorName}</span> has created this 1-on-1 Escrow Deal for <span className="font-bold">{currentDeal.price} {currentDeal.currency}</span>. Verify your Cleanverse A-Pass to accept and begin work.
+                  <span className="font-extrabold text-indigo-700 dark:text-indigo-400">{currentDeal.initiatorName}</span> created this 1-on-1 Escrow Deal for <span className="font-bold">{currentDeal.price} {currentDeal.currency}</span>. Select your action below:
                 </p>
               </div>
-              <button
-                onClick={handleAcceptJob}
-                disabled={hasAlreadyFundedOrPurchased || openSlots <= 0 || isProcessing || isChecking || escrowLoading}
-                className={`w-full font-extrabold py-4 px-6 rounded-2xl text-sm transition-all shadow-lg flex items-center justify-center gap-2 ${
-                  hasAlreadyFundedOrPurchased || openSlots <= 0
-                    ? 'neu-inset text-slate-500 dark:text-slate-400 opacity-60 cursor-not-allowed border border-slate-300 dark:border-slate-800'
-                    : isProcessing
-                    ? 'bg-cyan-500 text-white cursor-wait'
-                    : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white'
-                }`}
-              >
-                <ShieldCheck className="h-5 w-5" />
-                <span>
-                  {hasAlreadyFundedOrPurchased
-                    ? 'Deal Active & Escrow Secured'
-                    : isProcessing
-                    ? 'Verifying A-Pass & Confirming...'
-                    : 'Accept Deal & Verify Cleanverse A-Pass'}
-                </span>
-              </button>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Primary Action: Pay & Deposit into Escrow (for Buyers/Payers) */}
+                <button
+                  onClick={() => openCheckout(currentDeal)}
+                  disabled={hasAlreadyFundedOrPurchased || currentDeal.status !== 'OPEN' || isProcessing || escrowLoading}
+                  className={`w-full font-extrabold py-4 px-5 rounded-2xl text-xs sm:text-sm transition-all shadow-lg flex items-center justify-center gap-2 ${
+                    hasAlreadyFundedOrPurchased || currentDeal.status !== 'OPEN'
+                      ? 'neu-inset text-slate-500 dark:text-slate-400 opacity-60 cursor-not-allowed border border-slate-300 dark:border-slate-800'
+                      : 'bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-indigo-500/20'
+                  }`}
+                >
+                  <Wallet className="h-4 w-4" />
+                  <span>
+                    {hasAlreadyFundedOrPurchased
+                      ? 'Already Paid & Escrow Secured'
+                      : currentDeal.status !== 'OPEN'
+                      ? 'Escrow Already Funded'
+                      : `Pay & Deposit ${currentDeal.price} ${currentDeal.currency} in Escrow`}
+                  </span>
+                </button>
+
+                {/* Secondary Action: Accept Deal as Service Provider / Freelancer */}
+                <button
+                  onClick={handleAcceptJob}
+                  disabled={hasAlreadyFundedOrPurchased || openSlots <= 0 || isProcessing || isChecking || escrowLoading}
+                  className={`w-full font-extrabold py-4 px-5 rounded-2xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2 ${
+                    hasAlreadyFundedOrPurchased || openSlots <= 0
+                      ? 'neu-inset text-slate-500 dark:text-slate-400 opacity-60 cursor-not-allowed border border-slate-300 dark:border-slate-800'
+                      : isProcessing
+                      ? 'bg-cyan-500 text-white cursor-wait'
+                      : 'neu-card hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-white border border-indigo-300 dark:border-indigo-800'
+                  }`}
+                >
+                  <ShieldCheck className="h-4 w-4 text-indigo-500 dark:text-indigo-400" />
+                  <span>
+                    {isProcessing
+                      ? 'Verifying A-Pass...'
+                      : 'Accept as Provider & Verify A-Pass'}
+                  </span>
+                </button>
+              </div>
             </div>
           )}
 
