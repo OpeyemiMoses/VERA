@@ -3,6 +3,7 @@
 > **Cleanverse Verified Finance Hackathon — DeFi & Infrastructure Track**  
 > **Network:** Monad Testnet (`Chain ID 10143`)  
 > **Core Compliance Primitives:** Cleanverse CVI (Verification Infrastructure) & CVA (Verification Attestation)  
+> **Format Timing:** **15-Minute Full Presentation** (12 Mins Live Spoken Demo + 3 Mins Judge Q&A) | Option for **3-5 Min Condensed Video**  
 > **Tone & Style:** Conversational, Natural, Founder-Led, and High-Impact (No Mock Personas / Web3 Wallet Connected)
 
 ---
