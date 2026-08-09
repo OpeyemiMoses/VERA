@@ -1,106 +1,80 @@
 # VERA PROTOCOL
-### *The Compliant On-Chain Escrow Primitive for Global Web3 Commerce*
+### The Compliant On-Chain Escrow Primitive for Global Web3 Commerce
 
-**Track:** Cleanverse Verified Finance Hackathon — DeFi & Infrastructure Track
+**Track:** Cleanverse Verified Finance Hackathon — DeFi & Infrastructure
 **Network:** Monad Testnet (Chain ID 10143)
 **Live dApp:** vera-escrow.vercel.app
 **Repository:** github.com/OpeyemiMoses/VERA
 
 ---
 
-## Executive Summary
+## 1. The Opportunity
 
-VERA Protocol is a reusable, identity-gated, compliant Web3 escrow settlement layer built natively on Monad Testnet. It gives buyers, sellers, freelancers, and Web3 agencies a way to structure, fund, and settle high-value transactions trustlessly on-chain, backed by real-time compliance screening, zero-knowledge identity gating, and cryptographic attestation proofs.
+Independent, contract-based work is no longer a side economy — it is a mainstream labor model. Roughly 1.57 billion people now do freelance or independent work worldwide, close to half of the global workforce, and the freelance-platform market itself is valued at roughly $8–10 billion in 2026, on track to more than double by the early 2030s as enterprises increasingly route specialized, cross-border work through platform-mediated talent. A meaningful and fast-growing share of that work — smart contract audits, protocol engineering, tokenomics design, ZK development — is native to Web3, denominated in crypto, and settled peer-to-peer with no institutional intermediary at all.
 
-By combining the fast execution of Monad Testnet, the zero-knowledge identity and sanctions layer of Cleanverse CVI (Verification Infrastructure), and on-chain ECDSA attestation validation via Cleanverse CVA (Verification Attestation), VERA makes Web3 commerce as simple as sharing a payment link — while keeping every transaction compliant behind the scenes.
+That last point is the opportunity and the danger at once. On-chain commerce has no default trust layer, and the cost of that gap is now measurable at national scale: the FBI's IC3 recorded $11.4 billion in reported U.S. crypto fraud losses in 2025 alone, a 22% jump year-over-year, while Chainalysis puts global on-chain scam losses closer to $17 billion — and consumer-advocacy estimates that account for underreporting put the true figure several times higher. Every one of those dollars represents a transaction that had no compliant, trust-minimized settlement rail to run through. VERA is built to be that rail.
 
----
+## 2. The Problem: A Three-Sided Dilemma
 
-## The Problem
+Today, a Web3 freelance or service transaction is forced to pick its poison:
 
-Global freelancing, software auditing, and peer-to-peer Web3 commerce represent a multi-billion dollar economy. Yet transactions conducted today face a persistent three-sided dilemma:
+- **DM-native deals invite counterparty fraud.** Most engagements still start in a Telegram or X DM. Sellers want payment up front because they have no recourse if a buyer disappears; buyers hesitate because they have no recourse if a seller never delivers. Both sides are negotiating blind.
+- **Centralized escrow is slow, expensive, and custodial.** Legacy platforms charge 15–20% in fees, hold funds for days before release, can freeze accounts unilaterally, and require handing sensitive KYC documents to a centralized database that becomes a single point of failure and a breach target.
+- **Anonymous on-chain escrow is a compliance time bomb.** A smart contract that locks funds with no identity layer at all is exactly the profile regulators are targeting. It exposes both counterparties to OFAC and sanctions liability, offers zero AML defensibility, and gives either party no recourse if the other is a bad actor operating from a prohibited jurisdiction.
 
-- **DM Insecurity & Counterparty Fraud** — most Web3 deals begin in direct messages on Telegram, WhatsApp, or Twitter/X. Sellers want payment upfront; buyers fear non-delivery or an exit scam.
-- **The Cost & Friction of Web2 Escrow** — centralized platforms charge steep fees (15–20%), take days to settle payouts, impose arbitrary account freezes, and require centralized-database KYC.
-- **The Regulatory Risk of Anonymous Web3 Escrow** — purely anonymous smart contract escrows expose participants to OFAC sanctions and AML liability, with zero identity recourse if something goes wrong.
+No existing primitive resolves all three failure modes simultaneously — deals are either unsafe, uncompetitive, or non-compliant. VERA is designed to be all three solved at once: trust-minimized, cost-competitive, and provably compliant, without asking users to sacrifice the privacy Web3 was built on.
 
----
+## 3. The Solution
 
-## The Solution
+VERA is a reusable, identity-gated escrow settlement layer deployed natively on Monad Testnet. Instead of a single escrow contract, VERA is infrastructure: any marketplace, DAO, or freelance platform can plug into it to originate compliant, shareable, on-chain deals in minutes.
 
-VERA resolves this trilemma with a frictionless, compliant, and shareable escrow layer:
+- **Identity-Gated Smart Vaults** — every deal deploys as its own isolated `Escrow.sol` vault via `EscrowFactory.sol`, so one counterparty's dispute or default never touches another user's funds.
+- **Cleanverse CVI Compliance Layer** — real-time sanctions and geofencing screening, zero-knowledge A-Pass identity verification, and a 0–100 risk-tier score computed off-chain, without ever exposing raw PII on-chain.
+- **Cleanverse CVA On-Chain Attestation** — the cryptographic bridge from that off-chain check to the contract: once a wallet clears CVI, the Cleanverse Attestor signs an EIP-712 digest binding the escrow address, the user's wallet, and a deadline. `Escrow.sol` recovers the signer on-chain via ECDSA and requires an exact match against the registered attestor address before any state transition executes. Compliance isn't a UI checkbox here — it's a require() statement the funds cannot move past.
+- **Shareable Deal Distribution** — every deal gets an instant 2×2 share suite (copy link, downloadable QR/SVG, WhatsApp and Telegram deep links), turning "send me your wallet address" into a single, trustworthy link.
+- **FATF Travel Rule Exports** — one click generates an institutional-grade PDF with sender/receiver addresses, CVI scores, transaction hashes, and Monad block timestamps, giving both individual freelancers and platforms an audit trail they can hand to an accountant or a regulator without extra work.
 
-- **Identity-Gated Smart Vaults** — escrows deploy as isolated smart contract vaults on Monad Testnet (`Escrow.sol`).
-- **Cleanverse CVI Compliance** — real-time sanctions geofencing, zero-knowledge A-Pass verification, and risk-tier rating before any funds move.
-- **Cleanverse CVA Attestations** — ECDSA signatures verified directly inside Monad smart contracts before any state transition.
-- **Shareable Payment Suite** — a 2×2 share card for instant deal distribution via URL, QR code, WhatsApp, or Telegram.
-- **FATF Travel Rule Exports** — one-click PDF generation providing immutable proof of payment and compliance timestamps.
+## 4. The 5-Gate Escrow Lifecycle
 
----
-
-## How Compliance Works: CVI & CVA
-
-### Cleanverse Verification Infrastructure (CVI)
-
-CVI handles off-chain identity verification and risk assessment. It validates user credentials using zero-knowledge proofs to preserve Web3 privacy, screens counterparty wallets against OFAC, EU, and custom prohibited-country lists, and assigns each wallet a compliance tier from 0–100 that determines deal limits, collateral requirements, and fee discounts.
-
-### Cleanverse Verification Attestation (CVA)
-
-CVA is the cryptographic bridge between that off-chain identity check and the on-chain contract. Once a wallet passes CVI verification, the Cleanverse Attestor wallet signs a cryptographic digest binding the escrow address, the user's wallet, and a deadline. The `Escrow.sol` contract then recovers the signer from that signature on-chain and requires it to match the registered compliance attestor before allowing the state transition to proceed — meaning compliance is enforced at the contract level, not just in the UI.
-
----
-
-## The 5-Gate Escrow Lifecycle
-
-VERA enforces five mandatory compliance gates across the full lifecycle of a deal — from creation through payout. Any wallet that fails a check at any gate is blocked, and funds already deposited remain safely locked in the vault.
+Compliance is enforced at every touchpoint of a deal, not just at onboarding. A wallet that fails a check at any gate is blocked outright; funds already in the vault stay locked rather than being exposed.
 
 | # | Touchpoint | Enforced Check | If Non-Compliant |
 |---|---|---|---|
-| 1 | **Deal Creation** | Screens creator wallet; enforces minimum tier before deploying the Escrow Vault. | Vault deployment aborted |
-| 2 | **Escrow Funding** | Verifies buyer identity and sanctions status before cATKN deposit. | Funding rejected |
-| 3 | **Job Acceptance** | Verifies seller CVI tier; requires a valid CVA ECDSA signature. | Acceptance rejected |
-| 4 | **Deliverable Submission** | Verifies seller CVI status; registers seller on-chain (`setFreelancer`). | Submission rejected |
-| 5 | **Payout Release** | Verifies buyer CVI status before `releaseTo(seller)` executes. | Funds stay locked in vault |
+| 1 | Deal Creation | Screens creator wallet, enforces minimum CVI tier before vault deployment | Vault deployment aborted |
+| 2 | Escrow Funding | Verifies buyer identity and sanctions status before cATKN deposit | Funding rejected |
+| 3 | Job Acceptance | Verifies seller CVI tier; requires a valid CVA ECDSA signature | Acceptance rejected |
+| 4 | Deliverable Submission | Verifies seller CVI status; registers seller on-chain (`setFreelancer`) | Submission rejected |
+| 5 | Payout Release | Verifies buyer CVI status before `releaseTo(seller)` executes | Funds stay locked in vault |
 
----
+## 5. Dynamic Trust-Adjusted Fee Engine
 
-## Dynamic Trust-Adjusted Fee Engine
-
-Platform fees scale automatically with a participant's trust score (0–100), rewarding verified, high-completion-rate users with lower fees:
+Rather than a flat platform cut, fees scale inversely with a participant's on-chain trust score — rewarding verified, high-completion-rate users and giving every user a direct, compounding incentive to build reputation on the protocol instead of starting a new anonymous wallet for every deal.
 
 | Trust Tier | Score Range | Platform Fee |
 |---|---|---|
-| Low | 0 – 29 | 3.0% |
-| Mid | 30 – 69 | 1.5% |
-| High | 70 – 100 | 0.5% |
+| Low | 0–29 | 3.0% |
+| Mid | 30–69 | 1.5% |
+| High | 70–100 | 0.5% |
 
----
+This single mechanic is what lets VERA undercut the 15–20% fees of centralized escrow incumbents while *increasing* the compliance guarantees a transaction carries — the opposite trade-off Web2 platforms force users to make today.
 
-## Key Features & Capabilities
+## 6. Product Surface
 
-**1. Public Service Marketplace**
-Creators list fixed-price services across six Web3 categories — Smart Contract Audits, Full-Stack Web3 & Frontend, DeFi & Yield Protocols, ZKP & Identity Security, Tokenomics & Governance, and Web3 Design & Branding. Each listing sets a service capacity (e.g. five audit slots); claiming a slot deploys an isolated escrow contract and tracks remaining availability.
+- **Public Service Marketplace** across six Web3-native categories (Smart Contract Audits, Full-Stack Web3/Frontend, DeFi & Yield Protocols, ZKP & Identity Security, Tokenomics & Governance, Web3 Design & Branding), with per-listing capacity — e.g. five audit slots — so claiming a slot deploys an isolated escrow and decrements availability automatically.
+- **Private 1-on-1 Deals** that never touch the public marketplace, for counterparties who need commercial confidentiality but still want compliant settlement.
+- **Full On-Chain Transparency** — every deal exposes its four milestone transactions (factory deployment, cATKN deposit, acceptance/attestation, payout release), each linked straight to the Monad block explorer, so any party — or auditor — can independently verify the entire lifecycle without trusting VERA's own UI.
 
-**2. Private 1-on-1 Deals & Social Share Suite**
-Custom bilateral deals stay unlisted from the public marketplace for commercial privacy, and share instantly via a 2×2 suite: copy link, a scannable QR code with SVG download, and direct WhatsApp or Telegram share buttons.
+## 7. Technical Architecture
 
-**3. Transparent On-Chain Verification**
-Every escrow logs four milestone transactions, each linked to the Monad Testnet block explorer: the factory deployment, the cATKN deposit, the acceptance/attestation transaction, and the final payout release.
+| Contract | Role |
+|---|---|
+| `EscrowFactory.sol` | Deploys and indexes every isolated escrow vault created on Monad Testnet |
+| `Escrow.sol` | Holds deposited cATKN, enforces the Funded → Accepted → Completed/Disputed state machine, verifies CVA ECDSA signatures on-chain before any transition |
+| `MockAToken.sol` (cATKN) | ERC-20 settlement token with a built-in 10,000-token test faucet for judges and testers |
 
-**4. FATF Travel Rule PDF Exporter**
-Generates institutional-grade compliance reports containing sender/receiver wallet addresses, CVI verification scores, cryptographic transaction hashes, and Monad block timestamps — ready for corporate accounting.
+**Stack:** Solidity 0.8.20 + OpenZeppelin + Hardhat on the contract layer; Next.js 14 (App Router), React 18, and TypeScript on the frontend; Wagmi v2, Viem, and Ethers.js v6 for chain interaction; TailwindCSS with a neumorphic glass UI system; PDF-Lib/jsPDF for compliance-report generation.
 
----
-
-## Monad Testnet Smart Contracts
-
-- **`EscrowFactory.sol`** — factory contract that deploys isolated `Escrow.sol` vaults and tracks every escrow created on Monad Testnet.
-- **`Escrow.sol`** — individual vault holding deposited cATKN tokens, enforcing state transitions (Funded, Accepted, Completed, Disputed), and verifying Cleanverse CVA signatures.
-- **`MockAToken.sol` (cATKN)** — the ERC-20 compliance token used for funding and settlement, with a built-in 10,000-token test faucet.
-
----
-
-## Live Production Deployments
+## 8. Live Deployment (Verifiable Today)
 
 | Resource | Address / Endpoint | Network |
 |---|---|---|
@@ -109,19 +83,14 @@ Generates institutional-grade compliance reports containing sender/receiver wall
 | cATKN Token (MockAToken) | `0x505B3F7C...4467a91Ce03` | Monad Testnet |
 | Cleanverse Attestor | `0x4070E534...96d165dEedaC39f58` | EIP-712 Signer |
 
----
+This is not a mockup or a slide-deck concept — it is a working, funded, testable system on Monad Testnet today, with every claim above independently checkable on-chain by a judge in under five minutes.
 
-## Technology Stack
+## 9. Why VERA Fits the Cleanverse Brief
 
-- **Blockchain & Network** — Monad Testnet (Chain ID 10143)
-- **Smart Contracts** — Solidity 0.8.20, OpenZeppelin Contracts, Hardhat
-- **Frontend** — Next.js 14 (App Router), React 18, TypeScript
-- **Web3 Integration** — Wagmi v2, Viem, Ethers.js v6, ConnectKit / RainbowKit
-- **Styling & UI** — TailwindCSS with a neumorphic glass design system, Lucide Icons
-- **PDF Generation** — PDF-Lib / jsPDF for the FATF Travel Rule report exporter
+Most hackathon "compliance" integrations bolt a KYC widget onto an unrelated app. VERA does the opposite: compliance is the load-bearing wall of the product, not a feature flag. CVI and CVA aren't called once at signup — they gate every one of the five lifecycle transitions, meaning the *only* way funds move is through a path that has already been sanctions-screened and cryptographically attested. That is the difference between "we added Cleanverse" and "we could not function without Cleanverse" — and it is the standard we built to.
 
----
+## 10. Roadmap
 
-## Why It Matters
-
-VERA Protocol turns three unresolved frictions in Web3 commerce — counterparty risk, expensive centralized escrow, and unregulated anonymous settlement — into a single compliant primitive. Built on Monad for speed and Cleanverse for identity, it lets any DAO, marketplace, or freelance platform integrate compliant, shareable escrow today, without trading away speed or privacy.
+- **Near-term:** dispute-resolution module with arbitrator staking; mainnet deployment path; multi-token settlement beyond cATKN.
+- **Mid-term:** SDK/API so third-party marketplaces and DAOs can white-label VERA's escrow + compliance layer instead of building their own.
+- **Long-term:** cross-chain vault deployment so the same identity attestation travels with a user across every network VERA supports.
