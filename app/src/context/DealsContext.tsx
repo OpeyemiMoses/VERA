@@ -359,64 +359,76 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   const submitDeliverable = (dealId: string, deliverable: DeliverableData, customAttestationTxHash?: string) => {
     const baseId = dealId.split('-slot-')[0].split('-order-')[0].split('-accepted-')[0];
-    let updatedObj: Deal | undefined;
+    const attestHash = customAttestationTxHash || deliverable.signature || (deliverable.payloadHash?.startsWith('0x') ? deliverable.payloadHash : undefined);
+
+    const makeDelivered = (d: Deal): Deal => ({
+      ...d,
+      status: 'DELIVERED' as const,
+      deliverable,
+      deliverableUrl: deliverable.url,
+      deliverableNotes: deliverable.instructions,
+      attestationTxHash: attestHash || d.attestationTxHash || (appMode === 'production' ? undefined : generateMockTxHash()),
+      rejectionReason: undefined,
+      rejectedAt: undefined,
+    });
+
+    // Track ALL locally updated deals so we can POST each one
+    const updatedLocally: Deal[] = [];
+
     setDeals((prev) =>
       prev.map((d) => {
         const isMatch = d.id === dealId || d.id === baseId || d.id.startsWith(`${baseId}-`);
         if (isMatch) {
-          const updated = {
-            ...d,
-            status: 'DELIVERED' as const,
-            deliverable,
-            deliverableUrl: deliverable.url,
-            deliverableNotes: deliverable.instructions,
-            attestationTxHash: customAttestationTxHash || deliverable.signature || (deliverable.payloadHash?.startsWith('0x') ? deliverable.payloadHash : undefined) || d.attestationTxHash || (appMode === 'production' ? undefined : generateMockTxHash()),
-            rejectionReason: undefined,
-            rejectedAt: undefined,
-          };
-          updatedObj = updated;
+          const updated = makeDelivered(d);
+          updatedLocally.push(updated);
           return updated;
         }
         return d;
       })
     );
 
-    if (updatedObj) {
+    // POST every locally matched deal to the server
+    updatedLocally.forEach((u) => {
       fetch('/api/deals', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedObj),
+        body: JSON.stringify(u),
       }).catch(() => {});
-    }
+    });
+
+    // Cross-device fix: also POST updates for any related deals found in sharedApiDeals
+    // (the buyer's sub-order may exist only on the server, not in the seller's local state)
+    const relatedFromServer = sharedApiDeals.filter(
+      (d) => (d.id === dealId || d.id === baseId || d.id.startsWith(`${baseId}-`)) &&
+        !updatedLocally.find((u) => u.id === d.id)
+    );
+    relatedFromServer.forEach((d) => {
+      const updated = makeDelivered(d);
+      fetch('/api/deals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updated),
+      }).catch(() => {});
+    });
   };
 
   const rejectDeliverable = (dealId: string, reason: string) => {
     const baseId = dealId.split('-slot-')[0].split('-order-')[0].split('-accepted-')[0];
-    let updatedObj: Deal | undefined;
+    const makeRejected = (d: Deal): Deal => ({ ...d, status: 'REJECTED' as const, rejectionReason: reason, rejectedAt: Date.now() });
+    const updatedLocally: Deal[] = [];
+
     setDeals((prev) =>
       prev.map((d) => {
         const isMatch = d.id === dealId || d.id === baseId || d.id.startsWith(`${baseId}-`);
-        if (isMatch) {
-          const updated = {
-            ...d,
-            status: 'REJECTED' as const,
-            rejectionReason: reason,
-            rejectedAt: Date.now(),
-          };
-          updatedObj = updated;
-          return updated;
-        }
+        if (isMatch) { const u = makeRejected(d); updatedLocally.push(u); return u; }
         return d;
       })
     );
 
-    if (updatedObj) {
-      fetch('/api/deals', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedObj),
-      }).catch(() => {});
-    }
+    updatedLocally.forEach((u) => fetch('/api/deals', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(u) }).catch(() => {}));
+    sharedApiDeals
+      .filter((d) => (d.id === dealId || d.id === baseId || d.id.startsWith(`${baseId}-`)) && !updatedLocally.find((u) => u.id === d.id))
+      .forEach((d) => fetch('/api/deals', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(makeRejected(d)) }).catch(() => {}));
   };
 
   const updateDealStatus = (
@@ -427,32 +439,34 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     releaseTxHash?: string
   ) => {
     const baseId = dealId.split('-slot-')[0].split('-order-')[0].split('-accepted-')[0];
-    let updatedObj: Deal | undefined;
+
+    const makeUpdated = (d: Deal): Deal => {
+      const newReleaseHash = releaseTxHash || d.releaseTxHash || (newStatus === 'RELEASED' ? (appMode === 'production' ? undefined : generateMockTxHash()) : undefined);
+      return {
+        ...d,
+        status: newStatus,
+        counterpartyName: counterpartyName || d.counterpartyName,
+        counterpartyAddress: counterpartyWallet || d.counterpartyAddress,
+        releaseTxHash: newReleaseHash,
+        autoTravelRuleGenerated: newStatus === 'RELEASED' ? true : d.autoTravelRuleGenerated,
+      };
+    };
+
+    const updatedLocally: Deal[] = [];
     setDeals((prev) =>
       prev.map((d) => {
         const isMatch = d.id === dealId || d.id === baseId || d.id.startsWith(`${baseId}-`);
         if (!isMatch) return d;
-        const newReleaseHash = releaseTxHash || d.releaseTxHash || (newStatus === 'RELEASED' ? (appMode === 'production' ? undefined : generateMockTxHash()) : undefined);
-        const updated = {
-          ...d,
-          status: newStatus,
-          counterpartyName: counterpartyName || d.counterpartyName,
-          counterpartyAddress: counterpartyWallet || d.counterpartyAddress,
-          releaseTxHash: newReleaseHash,
-          autoTravelRuleGenerated: newStatus === 'RELEASED' ? true : d.autoTravelRuleGenerated,
-        };
-        updatedObj = updated;
-        return updated;
+        const u = makeUpdated(d);
+        updatedLocally.push(u);
+        return u;
       })
     );
 
-    if (updatedObj) {
-      fetch('/api/deals', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedObj),
-      }).catch(() => {});
-    }
+    updatedLocally.forEach((u) => fetch('/api/deals', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(u) }).catch(() => {}));
+    sharedApiDeals
+      .filter((d) => (d.id === dealId || d.id === baseId || d.id.startsWith(`${baseId}-`)) && !updatedLocally.find((u) => u.id === d.id))
+      .forEach((d) => fetch('/api/deals', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(makeUpdated(d)) }).catch(() => {}));
   };
 
   const resetDeals = () => {
