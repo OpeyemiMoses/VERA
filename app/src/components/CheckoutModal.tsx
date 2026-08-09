@@ -124,6 +124,21 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           functionName: 'fund',
         });
 
+        // Set the Seller (deal initiator) as the on-chain freelancer recipient
+        const sellerAddress = deal.initiatorAddress;
+        if (sellerAddress && sellerAddress.startsWith('0x') && sellerAddress.length === 42 && sellerAddress.toLowerCase() !== activePersona.walletAddress.toLowerCase()) {
+          try {
+            await writeContractAsync({
+              address: escrowAddr as `0x${string}`,
+              abi: ESCROW_ABI,
+              functionName: 'setFreelancer',
+              args: [sellerAddress as `0x${string}`],
+            });
+          } catch (setErr) {
+            console.warn('[CHECKOUT] setFreelancer on-chain note:', setErr);
+          }
+        }
+
         setTxHash(fundTx);
         setStep('funded');
         // Pass the new escrow address back so the deal record is updated
