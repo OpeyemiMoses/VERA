@@ -103,21 +103,44 @@ export default function Home() {
   const [auditTxHash, setAuditTxHash] = useState<string>('');
   const [pendingDealId, setPendingDealId] = useState<string | null>(null);
 
-  // Check URL query parameters for ?deal=deal-xxx shareable links
+  // Check URL query parameters for ?deal=deal-xxx shareable links (Mobile & Desktop)
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      const dealIdParam = params.get('deal');
-      if (dealIdParam) {
-        const found = deals.find(
-          (d) => d.id === dealIdParam || (d.escrowAddress && d.escrowAddress.toLowerCase() === dealIdParam.toLowerCase())
-        );
-        if (found) {
-          setSelectedDetailDeal(found);
-          setActiveTabState('home');
-        }
-      }
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const dealIdParam = params.get('deal');
+    if (!dealIdParam) return;
+
+    // Immediately switch off landing page to home view on mobile & desktop
+    setActiveTabState('home');
+
+    // 1. Check local deals state
+    const foundLocal = deals.find(
+      (d) => d.id === dealIdParam || (d.escrowAddress && d.escrowAddress.toLowerCase() === dealIdParam.toLowerCase())
+    );
+
+    if (foundLocal) {
+      setSelectedDetailDeal(foundLocal);
+      return;
     }
+
+    // 2. Fetch directly from global API endpoint if not yet loaded in local state
+    let isMounted = true;
+    fetch('/api/deals')
+      .then((res) => res.json())
+      .then((json) => {
+        if (!isMounted || !json.success || !Array.isArray(json.deals)) return;
+        const foundApi = json.deals.find(
+          (d: Deal) => d.id === dealIdParam || (d.escrowAddress && d.escrowAddress.toLowerCase() === dealIdParam.toLowerCase())
+        );
+        if (foundApi) {
+          setSelectedDetailDeal(foundApi);
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      isMounted = false;
+    };
   }, [deals]);
 
   // Auto-sync selectedDetailDeal with latest global deals state

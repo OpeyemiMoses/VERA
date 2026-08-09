@@ -300,11 +300,12 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   const submitDeliverable = (dealId: string, deliverable: DeliverableData, customAttestationTxHash?: string) => {
     const baseId = dealId.split('-slot-')[0].split('-order-')[0].split('-accepted-')[0];
+    let updatedObj: Deal | undefined;
     setDeals((prev) =>
       prev.map((d) => {
         const isMatch = d.id === dealId || d.id === baseId || d.id.startsWith(`${baseId}-`);
         if (isMatch) {
-          return {
+          const updated = {
             ...d,
             status: 'DELIVERED' as const,
             deliverable,
@@ -314,28 +315,49 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             rejectionReason: undefined,
             rejectedAt: undefined,
           };
+          updatedObj = updated;
+          return updated;
         }
         return d;
       })
     );
+
+    if (updatedObj) {
+      fetch('/api/deals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedObj),
+      }).catch(() => {});
+    }
   };
 
   const rejectDeliverable = (dealId: string, reason: string) => {
     const baseId = dealId.split('-slot-')[0].split('-order-')[0].split('-accepted-')[0];
+    let updatedObj: Deal | undefined;
     setDeals((prev) =>
       prev.map((d) => {
         const isMatch = d.id === dealId || d.id === baseId || d.id.startsWith(`${baseId}-`);
         if (isMatch) {
-          return {
+          const updated = {
             ...d,
             status: 'REJECTED' as const,
             rejectionReason: reason,
             rejectedAt: Date.now(),
           };
+          updatedObj = updated;
+          return updated;
         }
         return d;
       })
     );
+
+    if (updatedObj) {
+      fetch('/api/deals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedObj),
+      }).catch(() => {});
+    }
   };
 
   const updateDealStatus = (
@@ -346,12 +368,13 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     releaseTxHash?: string
   ) => {
     const baseId = dealId.split('-slot-')[0].split('-order-')[0].split('-accepted-')[0];
+    let updatedObj: Deal | undefined;
     setDeals((prev) =>
       prev.map((d) => {
         const isMatch = d.id === dealId || d.id === baseId || d.id.startsWith(`${baseId}-`);
         if (!isMatch) return d;
         const newReleaseHash = releaseTxHash || d.releaseTxHash || (newStatus === 'RELEASED' ? (appMode === 'production' ? undefined : generateMockTxHash()) : undefined);
-        return {
+        const updated = {
           ...d,
           status: newStatus,
           counterpartyName: counterpartyName || d.counterpartyName,
@@ -359,8 +382,18 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           releaseTxHash: newReleaseHash,
           autoTravelRuleGenerated: newStatus === 'RELEASED' ? true : d.autoTravelRuleGenerated,
         };
+        updatedObj = updated;
+        return updated;
       })
     );
+
+    if (updatedObj) {
+      fetch('/api/deals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedObj),
+      }).catch(() => {});
+    }
   };
 
   const resetDeals = () => {

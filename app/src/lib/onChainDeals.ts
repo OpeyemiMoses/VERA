@@ -26,12 +26,12 @@ export function getPublicClient(): PublicClient {
 function escrowStateToStatus(stateNum: number): Deal['status'] {
   const map: Record<number, Deal['status']> = {
     0: 'OPEN',       // Created
-    1: 'OPEN',       // Funded (awaiting acceptance)
+    1: 'FUNDED',     // Funded on-chain
     2: 'ACCEPTED',   // Accepted by freelancer
-    3: 'COMPLETED',  // Released to freelancer
+    3: 'RELEASED',   // Released to freelancer
     4: 'CANCELLED',  // Cancelled
     5: 'DISPUTED',   // Disputed
-    6: 'COMPLETED',  // Resolved
+    6: 'RELEASED',   // Resolved
   };
   return map[stateNum] ?? 'OPEN';
 }
