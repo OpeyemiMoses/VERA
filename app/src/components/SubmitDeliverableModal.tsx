@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { Deal, DeliverableData, DeliverableFormat } from '../types/deal';
 import { validateDeliverableFile } from '../utils/fileValidation';
+import { usePersona } from '../context/PersonaContext';
 
 interface SubmitDeliverableModalProps {
   isOpen: boolean;
@@ -34,6 +35,7 @@ export const SubmitDeliverableModal: React.FC<SubmitDeliverableModalProps> = ({
   deal,
   onSubmitDeliverable,
 }) => {
+  const { activePersona } = usePersona();
   const [format, setFormat] = useState<DeliverableFormat>('FILE');
 
   // Format 1: URL
@@ -125,6 +127,7 @@ export const SubmitDeliverableModal: React.FC<SubmitDeliverableModalProps> = ({
         textCredentials: format === 'CREDENTIALS' ? textCredentials : undefined,
         instructions,
         submittedAt: Date.now(),
+        senderAddress: activePersona.walletAddress,
       };
 
       onSubmitDeliverable(deal.id, deliverableData);

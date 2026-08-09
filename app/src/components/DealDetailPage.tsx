@@ -374,12 +374,13 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
   const handleReleaseFunds = async () => {
     setIsProcessing(true);
 
-    // The caller clicking release is the Buyer.
-    // The payout recipient MUST BE the Seller (the other party), NEVER the caller!
     const callerAddress = activePersona.walletAddress.toLowerCase();
     let recipientWallet = '';
 
-    if (currentDeal.initiatorAddress && currentDeal.initiatorAddress.toLowerCase() !== callerAddress) {
+    // Priority 1: The wallet that signed & submitted the deliverable is unequivocally the payout recipient!
+    if (currentDeal.deliverable?.senderAddress && currentDeal.deliverable.senderAddress.startsWith('0x') && currentDeal.deliverable.senderAddress.length === 42) {
+      recipientWallet = currentDeal.deliverable.senderAddress;
+    } else if (currentDeal.initiatorAddress && currentDeal.initiatorAddress.toLowerCase() !== callerAddress) {
       // If caller is NOT initiator, then initiator is the SELLER!
       recipientWallet = currentDeal.initiatorAddress;
     } else if (currentDeal.freelancerAddress && currentDeal.freelancerAddress.toLowerCase() !== callerAddress) {

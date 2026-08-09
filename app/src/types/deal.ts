@@ -26,6 +26,8 @@ export interface DeliverableData {
   textCredentials?: string;
   instructions?: string;
   submittedAt: number;
+  senderAddress?: string;       // Wallet address of the seller who submitted the deliverable
+  signature?: string;           // Cryptographic attestation signature
 }
 
 export interface Deal {
