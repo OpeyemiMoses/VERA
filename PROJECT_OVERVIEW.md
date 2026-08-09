@@ -47,14 +47,14 @@ VERA solves this trilemma by providing a **frictionless, compliant, shareable es
 
 ```mermaid
 flowchart TD
-    A["👤 User / Web3 Wallet"] --> B["🆔 Cleanverse CVI Check (/api/cleanverse/verify)"]
-    B -->|Screening & ZKP Tier Rating| C{"Passes CVI Criteria?"}
-    C -->|No| D["❌ BLOCKED: Action Rejected (Sanctions / Low Tier)"]
-    C -->|Yes| E["🔑 CVA: Cryptographic ECDSA Signature Issued"]
-    E --> F["📜 Monad Testnet Escrow.sol Smart Contract"]
-    F -->|Solidity: ethSignedHash.recover(sig)| G{"recoveredSigner == complianceAttestor?"}
-    G -->|Yes| H["✅ On-Chain State Transition & Payout Release"]
-    G -->|No| I["❌ On-Chain Revert: Invalid compliance attestation"]
+    A["User / Web3 Wallet"] --> B["Cleanverse CVI Check"]
+    B -->|"Screening & ZKP Tier Rating"| C{"Passes CVI Criteria?"}
+    C -->|No| D["BLOCKED: Action Rejected"]
+    C -->|Yes| E["CVA: Cryptographic ECDSA Signature Issued"]
+    E --> F["Monad Testnet Escrow.sol Contract"]
+    F -->|"Solidity Signature Verification"| G{"Attestor Signature Valid?"}
+    G -->|Yes| H["On-Chain State Transition & Payout Release"]
+    G -->|No| I["On-Chain Revert: Invalid Attestation"]
 ```
 
 ### 1. Cleanverse Verification Infrastructure (CVI)
@@ -83,23 +83,23 @@ VERA enforces **5 mandatory compliance gates** across the entire lifecycle of an
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Creator as 👤 Creator / Client
-    actor Provider as 🧑‍💻 Service Provider
-    participant CVI as 🆔 Cleanverse CVI / CVA
-    participant Factory as 🏭 EscrowFactory.sol
-    participant Vault as 📜 Escrow.sol Vault
+    actor Creator as Client
+    actor Provider as Provider
+    participant CVI as Cleanverse CVI / CVA
+    participant Factory as EscrowFactory.sol
+    participant Vault as Escrow.sol Vault
 
-    Creator->>CVI: Gate 1: Check Creator Compliance
-    Creator->>Factory: Deploy Escrow.sol Vault on Monad Testnet
-    Creator->>CVI: Gate 2: Check Buyer Deposit Sanctions
-    Creator->>Vault: Pay & Deposit cATKN Tokens (Slot 1 & 2 Logged)
-    Provider->>CVI: Gate 3: Check Provider CVI Tier
-    CVI-->>Provider: Issue ECDSA CVA Attestation Signature
-    Provider->>Vault: Gate 4: acceptWithAttestation() & setFreelancer() (Slot 3 Logged)
-    Provider->>Vault: Upload Deliverables & Payload Hash
-    Creator->>CVI: Gate 5: Check Payout Release Compliance
-    Creator->>Vault: releaseTo(Provider's Wallet)
-    Vault-->>Provider: cATKN Payout Transferred directly to Provider (Slot 4 Logged)
+    Creator->>CVI: 1. Gate 1: Check Creator Compliance
+    Creator->>Factory: 2. Deploy Escrow.sol Vault on Monad Testnet
+    Creator->>CVI: 3. Gate 2: Check Buyer Deposit Sanctions
+    Creator->>Vault: 4. Pay and Deposit cATKN Tokens
+    Provider->>CVI: 5. Gate 3: Check Provider CVI Tier
+    CVI-->>Provider: 6. Issue ECDSA CVA Attestation Signature
+    Provider->>Vault: 7. Gate 4: acceptWithAttestation and setFreelancer
+    Provider->>Vault: 8. Upload Deliverables and Payload Hash
+    Creator->>CVI: 9. Gate 5: Check Payout Release Compliance
+    Creator->>Vault: 10. releaseTo Provider Wallet
+    Vault-->>Provider: 11. cATKN Payout Transferred to Provider
 ```
 
 | # | Action Touchpoint | Enforced CVI / CVA Check | Result If Non-Compliant |

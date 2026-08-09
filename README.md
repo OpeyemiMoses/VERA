@@ -108,14 +108,14 @@ The live production MVP on Monad Testnet features:
 
 ```mermaid
 flowchart TD
-    A["User / Web3 Wallet"] --> B["Cleanverse CVI Check (/api/cleanverse/verify)"]
-    B -->|Screening & ZKP Tier Rating| C{"Passes CVI Criteria?"}
-    C -->|No| D["BLOCKED: Action Rejected (Sanctions / Low Tier)"]
+    A["User / Web3 Wallet"] --> B["Cleanverse CVI Check"]
+    B -->|"Screening & ZKP Tier Rating"| C{"Passes CVI Criteria?"}
+    C -->|No| D["BLOCKED: Action Rejected"]
     C -->|Yes| E["CVA: Cryptographic ECDSA Signature Issued"]
-    E --> F["Monad Testnet Escrow.sol Smart Contract"]
-    F -->|Solidity: ethSignedHash.recover(sig)| G{"recoveredSigner == complianceAttestor?"}
+    E --> F["Monad Testnet Escrow.sol Contract"]
+    F -->|"Solidity Signature Verification"| G{"Attestor Signature Valid?"}
     G -->|Yes| H["On-Chain State Transition & Payout Release"]
-    G -->|No| I["On-Chain Revert: Invalid compliance attestation"]
+    G -->|No| I["On-Chain Revert: Invalid Attestation"]
 ```
 
 ---
@@ -143,8 +143,8 @@ flowchart TD
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Creator as Creator / Client
-    actor Provider as Service Provider
+    actor Creator as Client
+    actor Provider as Provider
     participant CVI as Cleanverse CVI / CVA
     participant Factory as EscrowFactory.sol
     participant Vault as Escrow.sol Vault
@@ -152,14 +152,14 @@ sequenceDiagram
     Creator->>CVI: 1. Gate 1: Check Creator Compliance
     Creator->>Factory: 2. Deploy Escrow.sol Vault on Monad Testnet
     Creator->>CVI: 3. Gate 2: Check Buyer Deposit Sanctions
-    Creator->>Vault: 4. Pay & Deposit cATKN Tokens (Slot 1 & 2 Logged)
+    Creator->>Vault: 4. Pay and Deposit cATKN Tokens
     Provider->>CVI: 5. Gate 3: Check Provider CVI Tier
     CVI-->>Provider: 6. Issue ECDSA CVA Attestation Signature
-    Provider->>Vault: 7. Gate 4: acceptWithAttestation() & setFreelancer() (Slot 3 Logged)
-    Provider->>Vault: 8. Upload Deliverables & Payload Hash
+    Provider->>Vault: 7. Gate 4: acceptWithAttestation and setFreelancer
+    Provider->>Vault: 8. Upload Deliverables and Payload Hash
     Creator->>CVI: 9. Gate 5: Check Payout Release Compliance
-    Creator->>Vault: 10. releaseTo(Provider's Wallet)
-    Vault-->>Provider: 11. cATKN Payout Transferred directly to Provider (Slot 4 Logged)
+    Creator->>Vault: 10. releaseTo Provider Wallet
+    Vault-->>Provider: 11. cATKN Payout Transferred to Provider
 ```
 
 1. **Gate 1 (Deal Creation):** Screens creator wallet & enforces minimum CVI tier before vault deployment.
