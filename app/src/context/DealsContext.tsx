@@ -82,7 +82,15 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       const res = await fetch('/api/deals');
       const json = await res.json();
       if (json.success && Array.isArray(json.deals)) {
-        setSharedApiDeals(json.deals);
+        setSharedApiDeals((prev) => {
+          const map = new Map<string, Deal>();
+          prev.forEach((d) => map.set(d.id, d));
+          json.deals.forEach((d: Deal) => {
+            const existing = map.get(d.id);
+            map.set(d.id, existing ? mergeDealObjects(existing, d) : d);
+          });
+          return Array.from(map.values());
+        });
       }
 
       // 2. Fetch on-chain escrows from Monad Testnet RPC if in production mode
