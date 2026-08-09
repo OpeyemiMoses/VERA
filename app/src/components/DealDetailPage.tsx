@@ -438,7 +438,7 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
         }
 
         currentDeal.releaseTxHash = txHash;
-        onUpdateDealStatus(currentDeal.id, 'RELEASED', undefined, recipientWallet, txHash);
+        onUpdateDealStatus(currentDeal.id, 'RELEASED', undefined, undefined, txHash);
         if (recipientWallet && netPayout > 0) {
           addBalance(netPayout, currentDeal.currency, recipientWallet);
         }
