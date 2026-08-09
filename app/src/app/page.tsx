@@ -23,7 +23,7 @@ import { useToast } from '../context/ToastContext';
 import { useEscrow } from '../hooks/useEscrow';
 import { useCleanverse, PERSONA_KEYS } from '../hooks/useCleanverse';
 import { useScrollRise } from '../hooks/useScrollRise';
-import { Deal, DealType, MARKETPLACE_CATEGORIES } from '../types/deal';
+import { Deal, DealType, MARKETPLACE_CATEGORIES, getDealRole } from '../types/deal';
 import {
   ShieldCheck,
   Plus,
@@ -785,17 +785,16 @@ export default function Home() {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {filteredDeals.map((deal) => {
-                    const isUserInitiator =
-                      activePersona.walletAddress.toLowerCase() === deal.initiatorAddress.toLowerCase() ||
-                      activePersona.name.toLowerCase().includes(deal.initiatorName.toLowerCase()) ||
-                      deal.initiatorName.toLowerCase().includes(activePersona.name.toLowerCase());
+                    const userRole = getDealRole(deal, activePersona.walletAddress);
+                    const isProvider = userRole === 'PROVIDER';
+                    const isClient = userRole === 'CLIENT';
+                    const isUserInitiator = activePersona.walletAddress.toLowerCase() === deal.initiatorAddress.toLowerCase();
                     const meetsTier = activePersona.isVerified && activePersona.tier >= deal.minTier;
                     const userAlreadyParticipated = hasUserParticipated(deal);
 
                     const totalSlots = deal.totalSlots ?? (deal.quantity !== undefined ? deal.quantity : 1);
                     const acceptedCount = deal.acceptedCount ?? ((deal.status !== 'OPEN' && deal.status !== 'FUNDED') ? 1 : 0);
                     const openSlots = Math.max(0, totalSlots - acceptedCount);
-                    // A freelancer is only truly assigned when counterpartyAddress is set and non-zero
                     const hasCounterpartyAssigned = !!deal.counterpartyAddress && deal.counterpartyAddress !== '0x0000000000000000000000000000000000000000';
 
                     return (
@@ -907,7 +906,7 @@ export default function Home() {
                           </button>
 
                           {/* Disabled Tier Indicator if Persona Tier is insufficient */}
-                          {!isUserInitiator && !meetsTier && (
+                          {isClient && !meetsTier && (
                             <div className="w-full bg-rose-500/10 text-rose-600 dark:text-rose-400 font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-1 border border-rose-500/30">
                               <Lock className="h-3.5 w-3.5 text-rose-500" />
                               <span>Requires Tier {deal.minTier}+ (Your Tier: {activePersona.tier})</span>
@@ -915,7 +914,7 @@ export default function Home() {
                           )}
 
                           {/* Buyer Checkout Button for Service Listings */}
-                          {!isUserInitiator && meetsTier && deal.type === 'SERVICE_LISTING' && deal.status === 'OPEN' && (
+                          {isClient && meetsTier && deal.type === 'SERVICE_LISTING' && deal.status === 'OPEN' && (
                             <button
                               onClick={() => setSelectedCheckoutDeal(deal)}
                               disabled={userAlreadyParticipated}
@@ -930,8 +929,8 @@ export default function Home() {
                             </button>
                           )}
 
-                          {/* Send Deliverable Button: creator/provider sends deliverable once escrow is secured */}
-                          {(deal.status === 'FUNDED' || (deal.status as string) === 'ACCEPTED') && isUserInitiator && !deal.deliverableUrl && (
+                          {/* Send Deliverable Button: ONLY Provider sees this when escrow is secured */}
+                          {(deal.status === 'FUNDED' || (deal.status as string) === 'ACCEPTED') && isProvider && !deal.deliverableUrl && !deal.deliverable && (
                             <button
                               onClick={() => setSelectedSubmitDeliverableDeal(deal)}
                               className="w-full bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white font-bold py-2.5 px-4 rounded-2xl text-xs transition-all flex items-center justify-center gap-1.5 shadow-md shadow-cyan-500/20"
@@ -941,15 +940,23 @@ export default function Home() {
                             </button>
                           )}
 
+                          {/* Client Awaiting Deliverable Badge */}
+                          {(deal.status === 'FUNDED' || (deal.status as string) === 'ACCEPTED') && isClient && !deal.deliverableUrl && !deal.deliverable && (
+                            <div className="w-full bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-1 border border-amber-500/30 font-mono">
+                              <Clock className="h-3.5 w-3.5 text-amber-500" />
+                              <span>Escrow Secured · Awaiting Deliverable</span>
+                            </div>
+                          )}
+
                           {/* Buyer Payout Release Button when Deliverable is received */}
-                          {deal.status === 'DELIVERED' && !isUserInitiator && (
+                          {deal.status === 'DELIVERED' && isClient && (
                             <button
                               onClick={() => handleReleaseEscrow(deal)}
                               disabled={pendingDealId === deal.id}
                               className="w-full bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white font-bold py-2.5 px-4 rounded-2xl text-xs transition-all flex items-center justify-center gap-1.5 shadow-md shadow-cyan-500/20"
                             >
                               <CheckCircle2 className="h-4 w-4" />
-                              <span>Confirm Deliverable & Release Payout</span>
+                              <span>Inspect Deliverable & Release Payout</span>
                             </button>
                           )}
                         </div>

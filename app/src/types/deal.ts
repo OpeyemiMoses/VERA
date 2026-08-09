@@ -92,3 +92,26 @@ export interface Deal {
   freelancerAddress?: string;     // Freelancer wallet address (from on-chain, if set)
   tags?: string[];                // Category/display tags
 }
+
+export function getDealRole(deal: Deal, userWallet: string): 'PROVIDER' | 'CLIENT' {
+  const w = (userWallet || '').toLowerCase();
+  const initW = (deal.initiatorAddress || '').toLowerCase();
+  const clientW = (deal.clientAddress || '').toLowerCase();
+  const freeW = (deal.freelancerAddress || '').toLowerCase();
+  const cpW = (deal.counterpartyAddress || '').toLowerCase();
+  const senderW = (deal.deliverable?.senderAddress || '').toLowerCase();
+
+  if (deal.type === 'SERVICE_LISTING') {
+    // Service Listing: Creator (initiator) or deliverable sender is PROVIDER (Seller), Buyer is CLIENT
+    if (w === initW || (freeW && w === freeW) || (senderW && w === senderW)) {
+      return 'PROVIDER';
+    }
+    return 'CLIENT';
+  } else {
+    // Job Listing / Direct Deal: Creator (initiator) is CLIENT (Buyer), Freelancer is PROVIDER
+    if (w === freeW || (senderW && w === senderW) || (cpW && w === cpW && w !== initW)) {
+      return 'PROVIDER';
+    }
+    return 'CLIENT';
+  }
+}

@@ -434,6 +434,36 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           body: JSON.stringify(u),
         }).catch(() => {});
       });
+
+      // ─── GUARANTEE: Fetch the server directly and update ALL related deals ───
+      // This catches buyer sub-orders (deal-123-slot-1) that the seller hasn't
+      // polled into sharedApiDeals yet, ensuring the CLIENT always sees DELIVERED.
+      fetch('/api/deals')
+        .then((res) => res.json())
+        .then((json) => {
+          if (!json.success || !Array.isArray(json.deals)) return;
+          const serverRelated: Deal[] = json.deals.filter(
+            (d: Deal) =>
+              (d.id === dealId || d.id === baseId || d.id.startsWith(`${baseId}-`)) &&
+              d.status !== 'DELIVERED' &&
+              !updatedLocally.find((u) => u.id === d.id)
+          );
+          serverRelated.forEach((d) => {
+            const delivered = makeDelivered(d);
+            fetch('/api/deals', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(delivered),
+            }).catch(() => {});
+            // Also add to local sharedApiDeals so selector picks it up immediately
+            setSharedApiDeals((prev) => {
+              const map = new Map(prev.map((x) => [x.id, x]));
+              map.set(delivered.id, delivered);
+              return Array.from(map.values());
+            });
+          });
+        })
+        .catch(() => {});
     }, 50);
   };
 

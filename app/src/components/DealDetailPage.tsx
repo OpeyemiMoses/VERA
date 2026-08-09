@@ -32,7 +32,7 @@ import {
   Link,
   QrCode,
 } from 'lucide-react';
-import { Deal } from '../types/deal';
+import { Deal, getDealRole } from '../types/deal';
 import { usePersona, MOCK_PERSONAS } from '../context/PersonaContext';
 import { useDeals } from '../context/DealsContext';
 import { useToast } from '../context/ToastContext';
@@ -195,13 +195,9 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
   const hasCounterpartyAssigned = !!displayCounterpartyAddress && displayCounterpartyAddress !== '0x0000000000000000000000000000000000000000';
   const meetsTier = activePersona.isVerified && activePersona.tier >= currentDeal.minTier;
 
-  // For Service Listings, Initiator (Seller) is Provider, Client (Buyer) is Receiver
-  // For Job Listings, Freelancer is Provider, Initiator (Client) is Receiver
-  const isProvider = currentDeal.type === 'SERVICE_LISTING'
-    ? userWallet === currentDeal.initiatorAddress.toLowerCase() || (currentDeal.freelancerAddress && userWallet === currentDeal.freelancerAddress.toLowerCase())
-    : (currentDeal.freelancerAddress && userWallet === currentDeal.freelancerAddress.toLowerCase()) || (userWallet !== currentDeal.initiatorAddress.toLowerCase() && isCounterparty);
-
-  const isReceiver = !isProvider;
+  const userRole = getDealRole(currentDeal, activePersona.walletAddress);
+  const isProvider = userRole === 'PROVIDER';
+  const isReceiver = userRole === 'CLIENT';
 
   const totalSlots = currentDeal.totalSlots ?? (currentDeal.quantity !== undefined ? currentDeal.quantity : 1);
   const acceptedCount = currentDeal.acceptedCount ?? ((currentDeal.status !== 'OPEN' && currentDeal.status !== 'FUNDED') ? 1 : 0);
