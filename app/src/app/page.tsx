@@ -384,13 +384,23 @@ export default function Home() {
       (d) => d.id === deal.id || d.id === baseId || d.id.startsWith(`${baseId}-`)
     );
 
-    const matchWithDeliverable = relatedDeals.find((d) => d.deliverable || d.deliverableUrl);
+    // Step 1: Find the user's OWN sub-order (their specific slot as buyer or the base as seller)
     const userSubOrder = relatedDeals.find(
-      (d) => (d.clientAddress && d.clientAddress.toLowerCase() === userWallet) ||
-             (d.counterpartyAddress && d.counterpartyAddress.toLowerCase() === userWallet)
+      (d) =>
+        (d.clientAddress && d.clientAddress.toLowerCase() === userWallet && d.initiatorAddress.toLowerCase() !== userWallet) ||
+        (d.counterpartyAddress && d.counterpartyAddress.toLowerCase() === userWallet && d.initiatorAddress.toLowerCase() !== userWallet)
     );
 
-    const best = matchWithDeliverable || userSubOrder || deal;
+    // Step 2: If user is the seller/initiator, find the funded/delivered sub-order to show
+    const sellerSubOrder = !userSubOrder && relatedDeals.find(
+      (d) => d.initiatorAddress.toLowerCase() === userWallet &&
+        (d.status === 'FUNDED' || d.status === 'DELIVERED' || d.status === 'RELEASED')
+    );
+
+    // Step 3: If deliverable exists on user's sub-order use that, else pick user's sub-order, else seller's base deal
+    const userDeliverableDeal = userSubOrder && (userSubOrder.deliverable || userSubOrder.deliverableUrl) ? userSubOrder : undefined;
+
+    const best = userDeliverableDeal || userSubOrder || sellerSubOrder || deal;
     setSelectedDetailDeal(best);
   };
 
@@ -477,7 +487,7 @@ export default function Home() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   const getFilteredDeals = () => {
-    return deals.filter((deal) => {
+    return activeDealList.filter((deal) => {
       const matchesSearch =
         deal.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         deal.category.toLowerCase().includes(searchQuery.toLowerCase());
