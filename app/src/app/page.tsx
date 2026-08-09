@@ -366,7 +366,13 @@ export default function Home() {
               functionName: 'releaseTo',
               args: [recipient as `0x${string}`],
             });
-          } catch (relToErr) {
+          } catch (relToErr: any) {
+            const errStr = (relToErr?.shortMessage || relToErr?.message || '').toLowerCase();
+            if (relToErr?.code === 4001 || errStr.includes('user rejected') || errStr.includes('user denied')) {
+              showNotice('Payout release cancelled in wallet.');
+              setPendingDealId(null);
+              return;
+            }
             console.warn('[RELEASE] releaseTo failed, falling back to release():', relToErr);
             txHash = await writeContractAsync({
               address: deal.escrowAddress as `0x${string}`,
@@ -394,7 +400,12 @@ export default function Home() {
         updateDealStatusContext(deal.id, 'RELEASED', undefined, undefined, txHash);
         showNotice(`Payout Released On-Chain (${txHash.slice(0, 10)}...).`);
       } catch (err: any) {
-        showNotice(`On-chain payout release failed: ${err?.shortMessage || err?.message}`);
+        const errStr = (err?.shortMessage || err?.message || '').toLowerCase();
+        if (err?.code === 4001 || errStr.includes('user rejected') || errStr.includes('user denied')) {
+          showNotice('Payout release cancelled in wallet.');
+        } else {
+          showNotice(`On-chain payout release failed: ${err?.shortMessage || err?.message}`);
+        }
       } finally {
         setPendingDealId(null);
       }

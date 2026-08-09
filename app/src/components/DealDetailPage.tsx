@@ -465,22 +465,17 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
             args: [targetSeller as `0x${string}`],
           });
         } catch (relToErr: any) {
-          console.warn('[RELEASE] releaseTo initial attempt failed, setting freelancer on-chain first:', relToErr);
-          try {
-            await writeContractAsync({
-              address: currentDeal.escrowAddress as `0x${string}`,
-              abi: ESCROW_ABI,
-              functionName: 'setFreelancer',
-              args: [targetSeller as `0x${string}`],
-            });
-          } catch (setErr) {
-            console.warn('[RELEASE] setFreelancer note:', setErr);
+          const errStr = (relToErr?.shortMessage || relToErr?.message || '').toLowerCase();
+          if (relToErr?.code === 4001 || errStr.includes('user rejected') || errStr.includes('user denied')) {
+            showNotice('Payout release cancelled in wallet.');
+            setIsProcessing(false);
+            return;
           }
+          console.warn('[RELEASE] releaseTo fallback to release():', relToErr);
           txHash = await writeContractAsync({
             address: currentDeal.escrowAddress as `0x${string}`,
             abi: ESCROW_ABI,
-            functionName: 'releaseTo',
-            args: [targetSeller as `0x${string}`],
+            functionName: 'release',
           });
         }
 
@@ -500,7 +495,12 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
         }
         showNotice(`Payout Released On-Chain (${txHash.slice(0, 10)}...): ${netPayout} ${currentDeal.currency} to provider · ${feeAmount} ${currentDeal.currency} protocol fee.`);
       } catch (err: any) {
-        showNotice(`On-chain payout release failed: ${err?.shortMessage || err?.message}`);
+        const errStr = (err?.shortMessage || err?.message || '').toLowerCase();
+        if (err?.code === 4001 || errStr.includes('user rejected') || errStr.includes('user denied')) {
+          showNotice('Payout release cancelled in wallet.');
+        } else {
+          showNotice(`On-chain payout release failed: ${err?.shortMessage || err?.message}`);
+        }
       } finally {
         setIsProcessing(false);
       }
