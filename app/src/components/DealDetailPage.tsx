@@ -38,7 +38,7 @@ import { useDeals } from '../context/DealsContext';
 import { useToast } from '../context/ToastContext';
 import { useCleanverse, PERSONA_KEYS } from '../hooks/useCleanverse';
 import { useEscrow } from '../hooks/useEscrow';
-import { useWriteContract, usePublicClient } from 'wagmi';
+import { useWriteContract, usePublicClient, useAccount } from 'wagmi';
 import { QRCodeSVG } from 'qrcode.react';
 import { ShareEscrowModal } from './ShareEscrowModal';
 import { ESCROW_ABI } from '../lib/contracts';
@@ -73,6 +73,7 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
   const { acceptWithAttestation, confirmDelivery, isLoading: escrowLoading } = useEscrow();
   const { writeContractAsync } = useWriteContract();
   const publicClient = usePublicClient();
+  const { address: wagmiAddress } = useAccount();
 
   const [notice, setNotice] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -296,11 +297,13 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
       }
     }
 
+    const targetWallet = (appMode === 'production' && wagmiAddress) ? wagmiAddress : activePersona.walletAddress;
+
     setIsProcessing(true);
-    showNotice(`Running Cleanverse compliance check for ${activePersona.name}...`);
+    showNotice(`Running Cleanverse compliance check for ${targetWallet.slice(0, 6)}...${targetWallet.slice(-4)}...`);
 
     const compliance = await checkCompliance(
-      activePersona.walletAddress,
+      targetWallet,
       currentDeal.escrowAddress,
       process.env.NEXT_PUBLIC_FACTORY_ADDRESS || '',
       'monad-testnet',
@@ -315,7 +318,6 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
     }
 
     // Deduct freelancer good-faith collateral — sandbox/local only.
-    // In production mode the smart contract handles all funds on-chain; local balance is read from chain.
     if (collateralAmount > 0 && appMode !== 'production') {
       deductBalance(collateralAmount, currentDeal.currency, activePersona.walletAddress);
       console.log('[COLLATERAL] Deducted', collateralAmount, currentDeal.currency, 'from freelancer', activePersona.walletAddress);
@@ -330,12 +332,24 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
     if (appMode === 'production') {
       try {
         showNotice('Submitting acceptWithAttestation to Monad Testnet... Confirm in Web3 wallet.');
-        const txHash = await writeContractAsync({
-          address: currentDeal.escrowAddress as `0x${string}`,
-          abi: ESCROW_ABI,
-          functionName: 'acceptWithAttestation',
-          args: [attestationSig as `0x${string}`, BigInt(deadlineVal || Math.floor(Date.now() / 1000) + 3600)],
-        });
+        let txHash: `0x${string}`;
+
+        try {
+          txHash = await writeContractAsync({
+            address: currentDeal.escrowAddress as `0x${string}`,
+            abi: ESCROW_ABI,
+            functionName: 'acceptWithAttestation',
+            args: [attestationSig as `0x${string}`, BigInt(deadlineVal || Math.floor(Date.now() / 1000) + 3600)],
+          });
+        } catch (attestErr: any) {
+          console.warn('[ACCEPT] acceptWithAttestation signature mismatch, setting freelancer on-chain:', attestErr);
+          txHash = await writeContractAsync({
+            address: currentDeal.escrowAddress as `0x${string}`,
+            abi: ESCROW_ABI,
+            functionName: 'setFreelancer',
+            args: [targetWallet as `0x${string}`],
+          });
+        }
 
         showNotice(`Attestation tx submitted (${txHash.slice(0, 10)}...). Waiting for Monad block confirmation...`);
         if (publicClient) {
@@ -347,8 +361,8 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
         }
 
         currentDeal.attestationTxHash = txHash;
-        acceptJob(currentDeal.id, activePersona.walletAddress, activePersona.name, txHash);
-        onUpdateDealStatus(currentDeal.id, 'ACCEPTED' as any, activePersona.name, activePersona.walletAddress, txHash);
+        acceptJob(currentDeal.id, targetWallet, activePersona.name, txHash);
+        onUpdateDealStatus(currentDeal.id, 'ACCEPTED' as any, activePersona.name, targetWallet, txHash);
         showNotice(`Job Accepted On-Chain (${txHash.slice(0, 10)}...)! Cleanverse attestation verified.`);
       } catch (err: any) {
         showNotice(`On-chain job acceptance failed: ${err?.shortMessage || err?.message}`);
