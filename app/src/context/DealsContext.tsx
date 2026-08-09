@@ -27,27 +27,16 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [deals, setDeals] = useState<Deal[]>(() => {
     if (typeof window !== 'undefined') {
       try {
-        for (let i = 1; i <= 50; i++) {
-          localStorage.removeItem(`vera_deals_v${i}`);
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) return parsed;
         }
-        localStorage.removeItem(STORAGE_KEY);
-        fetch('/api/deals', { method: 'DELETE' }).catch(() => {});
       } catch (e) {
-        console.error('Failed to clear deals from localStorage:', e);
+        console.error('Failed to load deals from localStorage:', e);
       }
     }
     return [];
-  });
-
-  const [resetTimestamp, setResetTimestamp] = useState<number>(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('vera_reset_timestamp_v1');
-      if (stored) return Number(stored);
-      const now = Date.now();
-      localStorage.setItem('vera_reset_timestamp_v1', String(now));
-      return now;
-    }
-    return Date.now();
   });
 
   // On-chain & Shared API deals for Production Mode
@@ -56,60 +45,47 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [isFetchingOnChain, setIsFetchingOnChain] = useState(false);
 
   const refreshOnChainDeals = useCallback(async () => {
-    if (appMode !== 'production' || !prodWalletAddress) return;
-    setIsFetchingOnChain(true);
     try {
-      // 1. Fetch on-chain escrows from Monad Testnet RPC
-      const fetchedOnChain = await fetchDealsForWallet(prodWalletAddress);
-      setOnChainDeals(fetchedOnChain);
-
-      // 2. Fetch shared deal metadata from global server API registry
+      // 1. Fetch shared deal metadata from global server API registry
       const res = await fetch('/api/deals');
       const json = await res.json();
       if (json.success && Array.isArray(json.deals)) {
         setSharedApiDeals(json.deals);
       }
+
+      // 2. Fetch on-chain escrows from Monad Testnet RPC if in production mode
+      if (appMode === 'production' && prodWalletAddress) {
+        setIsFetchingOnChain(true);
+        const fetchedOnChain = await fetchDealsForWallet(prodWalletAddress);
+        setOnChainDeals(fetchedOnChain);
+      }
     } catch (err) {
-      console.error('[DealsContext] Failed to fetch on-chain deals:', err);
+      console.error('[DealsContext] Failed to fetch deals:', err);
     } finally {
       setIsFetchingOnChain(false);
     }
   }, [appMode, prodWalletAddress]);
 
-  // Fetch on-chain deals on mount + whenever wallet or mode changes
+  // Fetch deals on mount + whenever wallet or mode changes
   useEffect(() => {
-    if (appMode === 'production' && prodWalletAddress) {
-      refreshOnChainDeals();
-      const interval = setInterval(refreshOnChainDeals, 5_000); // refresh every 5s for fast multi-wallet sync
-      return () => clearInterval(interval);
-    }
-  }, [appMode, prodWalletAddress, refreshOnChainDeals]);
+    refreshOnChainDeals();
+    const interval = setInterval(refreshOnChainDeals, 5_000); // refresh every 5s for fast multi-wallet sync
+    return () => clearInterval(interval);
+  }, [refreshOnChainDeals]);
 
-  // In Production Mode, merge: local deals + shared API registry deals + on-chain Monad escrows
+  // Merge deals: local deals + shared API registry deals + on-chain Monad escrows
   const activeDealList = useMemo(() => {
-    let pool: Deal[] = [];
+    const combinedPoolMap = new Map<string, Deal>();
+    const w = prodWalletAddress?.toLowerCase() ?? '';
 
-    if (appMode !== 'production') {
-      pool = deals;
-    } else {
-      const combinedPoolMap = new Map<string, Deal>();
-      const w = prodWalletAddress?.toLowerCase() ?? '';
+    // 1. Add shared API deals
+    sharedApiDeals.forEach((d) => combinedPoolMap.set(d.id, d));
 
-      // 1. Add shared API deals
-      sharedApiDeals
-        .filter((d) => {
-          const isInitiator = d.initiatorAddress?.toLowerCase() === w;
-          const isCounterparty = d.counterpartyAddress?.toLowerCase() === w;
-          const isParticipant = d.participantWallets?.some((pw: string) => pw.toLowerCase() === w);
-          const isOpenDeal = (d.type === 'DIRECT_DEAL' || d.type === 'SERVICE_LISTING') && d.status === 'OPEN' && !d.counterpartyAddress;
-          return isInitiator || isCounterparty || isParticipant || isOpenDeal;
-        })
-        .forEach((d) => combinedPoolMap.set(d.id, d));
+    // 2. Add local deals (overrides API defaults if updated locally)
+    deals.forEach((d) => combinedPoolMap.set(d.id, d));
 
-      // 2. Add local deals
-      deals.forEach((d) => combinedPoolMap.set(d.id, d));
-
-      // 3. Add raw on-chain deals
+    // 3. Add raw on-chain deals in Production Mode
+    if (appMode === 'production') {
       onChainDeals.forEach((oc) => {
         const existingKey = Array.from(combinedPoolMap.keys()).find((k) => {
           const item = combinedPoolMap.get(k);
@@ -119,30 +95,26 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           combinedPoolMap.set(oc.id, oc);
         }
       });
-
-      pool = Array.from(combinedPoolMap.values()).map((deal) => {
-        if (!deal.escrowAddress) return deal;
-        const onChainMatch = onChainDeals.find(
-          (oc) => oc.escrowAddress && oc.escrowAddress.toLowerCase() === deal.escrowAddress.toLowerCase()
-        );
-        if (!onChainMatch) return deal;
-        return {
-          ...deal,
-          status: onChainMatch.status,
-          statusLabel: onChainMatch.statusLabel,
-          counterpartyAddress: onChainMatch.counterpartyAddress || deal.counterpartyAddress,
-          counterpartyName: onChainMatch.counterpartyName || deal.counterpartyName,
-          acceptedCount: onChainMatch.acceptedCount ?? deal.acceptedCount,
-        };
-      });
     }
 
-    if (resetTimestamp) {
-      pool = pool.filter((d) => typeof d.createdAt === 'number' && d.createdAt > resetTimestamp);
-    }
+    const pool = Array.from(combinedPoolMap.values()).map((deal) => {
+      if (!deal.escrowAddress || appMode !== 'production') return deal;
+      const onChainMatch = onChainDeals.find(
+        (oc) => oc.escrowAddress && oc.escrowAddress.toLowerCase() === deal.escrowAddress.toLowerCase()
+      );
+      if (!onChainMatch) return deal;
+      return {
+        ...deal,
+        status: onChainMatch.status,
+        statusLabel: onChainMatch.statusLabel,
+        counterpartyAddress: onChainMatch.counterpartyAddress || deal.counterpartyAddress,
+        counterpartyName: onChainMatch.counterpartyName || deal.counterpartyName,
+        acceptedCount: onChainMatch.acceptedCount ?? deal.acceptedCount,
+      };
+    });
 
     return pool;
-  }, [deals, sharedApiDeals, onChainDeals, appMode, prodWalletAddress, resetTimestamp]);
+  }, [deals, sharedApiDeals, onChainDeals, appMode, prodWalletAddress]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -377,17 +349,11 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   };
 
   const resetDeals = () => {
-    const now = Date.now();
-    setResetTimestamp(now);
     setDeals([]);
     setOnChainDeals([]);
     setSharedApiDeals([]);
     if (typeof window !== 'undefined') {
       try {
-        localStorage.setItem('vera_reset_timestamp_v1', String(now));
-        for (let i = 1; i <= 50; i++) {
-          localStorage.removeItem(`vera_deals_v${i}`);
-        }
         localStorage.removeItem(STORAGE_KEY);
       } catch (e) {}
       fetch('/api/deals', { method: 'DELETE' }).catch(() => {});
