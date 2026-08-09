@@ -45,8 +45,14 @@ function mergeDealObjects(d1: Deal, d2: Deal): Deal {
     attestationTxHash: advanced.attestationTxHash || secondary.attestationTxHash,
     releaseTxHash: advanced.releaseTxHash || secondary.releaseTxHash,
     deliverable: advanced.deliverable || secondary.deliverable,
+    deliverableUrl: advanced.deliverableUrl || secondary.deliverableUrl,
+    deliverableNotes: advanced.deliverableNotes || secondary.deliverableNotes,
     counterpartyAddress: advanced.counterpartyAddress || secondary.counterpartyAddress,
     counterpartyName: advanced.counterpartyName || secondary.counterpartyName,
+    clientAddress: advanced.clientAddress || secondary.clientAddress,
+    freelancerAddress: advanced.freelancerAddress || secondary.freelancerAddress,
+    rejectionReason: advanced.rejectionReason || secondary.rejectionReason,
+    rejectedAt: advanced.rejectedAt || secondary.rejectedAt,
   };
 }
 
@@ -110,7 +116,7 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   // Fetch deals on mount + whenever wallet or mode changes
   useEffect(() => {
     refreshOnChainDeals();
-    const interval = setInterval(refreshOnChainDeals, 4_000); // refresh every 4s for fast multi-wallet sync
+    const interval = setInterval(refreshOnChainDeals, 2_000); // refresh every 2s for instant multi-device sync
     return () => clearInterval(interval);
   }, [refreshOnChainDeals]);
 
@@ -326,6 +332,12 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         return d;
       }),
     ]);
+
+    fetch('/api/deals', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newAcceptedJob),
+    }).catch(() => {});
   };
 
   const submitDeliverable = (dealId: string, deliverable: DeliverableData, customAttestationTxHash?: string) => {

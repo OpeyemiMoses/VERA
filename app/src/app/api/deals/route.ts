@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid deal data' }, { status: 400 });
     }
 
-    const existingIdx = globalDealsRegistry.findIndex((d) => d.id === dealData.id || (d.escrowAddress && d.escrowAddress.toLowerCase() === dealData.escrowAddress?.toLowerCase()));
+    const existingIdx = globalDealsRegistry.findIndex((d) => d.id === dealData.id);
     if (existingIdx >= 0) {
       globalDealsRegistry[existingIdx] = { ...globalDealsRegistry[existingIdx], ...dealData };
     } else {
