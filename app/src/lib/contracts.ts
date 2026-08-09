@@ -181,8 +181,8 @@ export const ESCROW_STATE_MAP: Record<number, string> = {
   0: 'CREATED',
   1: 'FUNDED',
   2: 'ACCEPTED',
-  3: 'RELEASED',
-  4: 'CANCELLED',
-  5: 'DISPUTED',
-  6: 'RESOLVED',
+  3: 'COMPLETED',
+  4: 'DISPUTED',
+  5: 'RESOLVED',
+  6: 'CANCELLED',
 };

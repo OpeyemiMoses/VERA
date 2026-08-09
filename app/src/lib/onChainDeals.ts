@@ -28,10 +28,10 @@ function escrowStateToStatus(stateNum: number): Deal['status'] {
     0: 'OPEN',       // Created
     1: 'FUNDED',     // Funded on-chain
     2: 'ACCEPTED',   // Accepted by freelancer
-    3: 'RELEASED',   // Released to freelancer
-    4: 'CANCELLED',  // Cancelled
-    5: 'DISPUTED',   // Disputed
-    6: 'RELEASED',   // Resolved
+    3: 'RELEASED',   // Completed
+    4: 'DISPUTED',   // Disputed
+    5: 'RELEASED',   // Resolved
+    6: 'CANCELLED',  // Cancelled
   };
   return map[stateNum] ?? 'OPEN';
 }
@@ -42,9 +42,9 @@ function escrowStateToLabel(stateNum: number): string {
     1: 'Awaiting Acceptance',
     2: 'In Progress',
     3: 'Completed',
-    4: 'Cancelled',
-    5: 'In Dispute',
-    6: 'Resolved',
+    4: 'In Dispute',
+    5: 'Resolved',
+    6: 'Cancelled',
   };
   return map[stateNum] ?? 'Unknown';
 }

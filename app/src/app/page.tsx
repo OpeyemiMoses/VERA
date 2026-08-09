@@ -414,10 +414,11 @@ export default function Home() {
   const handleOpenDealDetail = (targetDeal: Deal) => {
     const userOrderInstance = deals.find(
       (d) =>
-        (d.id.startsWith(`${targetDeal.id}-order-`) || d.id.startsWith(`${targetDeal.id}-accepted-`) || d.id === targetDeal.id) &&
-        d.status !== 'OPEN' &&
-        ((d.counterpartyAddress && d.counterpartyAddress.toLowerCase() === activePersona.walletAddress.toLowerCase()) ||
-         (d.participantWallets && d.participantWallets.some((w) => w.toLowerCase() === activePersona.walletAddress.toLowerCase())))
+        (d.id.startsWith(`${targetDeal.id}-order-`) ||
+         d.id.startsWith(`${targetDeal.id}-accepted-`) ||
+         d.id.startsWith(`${targetDeal.id}-slot-`) ||
+         d.id === targetDeal.id) &&
+        d.status !== 'OPEN'
     );
     setSelectedDetailDeal(userOrderInstance || targetDeal);
   };
