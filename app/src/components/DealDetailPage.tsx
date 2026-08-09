@@ -1475,37 +1475,55 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
             </div>
           )}
 
-          {/* Case 6: 1-on-1 Direct Deal — Single Pay & Deposit in Escrow action */}
+          {/* Case 6: 1-on-1 Direct Deal */}
           {currentDeal.type === 'DIRECT_DEAL' && currentDeal.status !== 'DELIVERED' && currentDeal.status !== 'RELEASED' && (
             <div className="space-y-3">
               {currentDeal.status === 'OPEN' ? (
-                <>
-                  <div className="p-4 rounded-2xl bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-300/40 dark:border-indigo-500/20">
-                    <p className="text-xs font-semibold text-indigo-800 dark:text-indigo-300 leading-relaxed">
-                      {isInitiator ? (
-                        <>You created this 1-on-1 Escrow Deal for <span className="font-bold">{currentDeal.price} {currentDeal.currency}</span>. Deposit funds into the escrow vault to activate the deal on-chain.</>
-                      ) : (
-                        <><span className="font-extrabold text-indigo-700 dark:text-indigo-400">{currentDeal.initiatorName}</span> created this 1-on-1 Escrow Deal for <span className="font-bold">{currentDeal.price} {currentDeal.currency}</span>. Deposit funds into the escrow vault to lock the payment on-chain.</>
-                      )}
-                    </p>
+                isInitiator ? (
+                  /* Seller / Creator created the deal link and is waiting for Counterparty (Buyer) to fund it */
+                  <div className="space-y-3">
+                    <div className="p-4 rounded-2xl bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-300/40 dark:border-indigo-500/20 text-center space-y-1">
+                      <h4 className="text-xs font-extrabold text-indigo-700 dark:text-indigo-400">
+                        1-on-1 Escrow Deal Created ({currentDeal.price} {currentDeal.currency})
+                      </h4>
+                      <p className="text-xs text-slate-600 dark:text-slate-300 font-medium">
+                        Waiting for counterparty (Buyer) to deposit funds into the Escrow Vault. Share this deal link with your buyer so they can complete the payment on-chain.
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setIsShareModalOpen(true)}
+                      className="w-full neu-btn-primary py-4 px-6 rounded-2xl text-sm font-extrabold flex items-center justify-center gap-2"
+                    >
+                      <Share2 className="h-4 w-4" />
+                      <span>Copy & Share Deal Link with Buyer</span>
+                    </button>
                   </div>
-                  <button
-                    onClick={() => openCheckout(currentDeal)}
-                    disabled={hasAlreadyFundedOrPurchased || isProcessing || escrowLoading}
-                    className={`w-full font-extrabold py-4 px-6 rounded-2xl text-sm transition-all shadow-lg flex items-center justify-center gap-2 ${
-                      hasAlreadyFundedOrPurchased
-                        ? 'neu-inset text-slate-500 dark:text-slate-400 opacity-60 cursor-not-allowed border border-slate-300 dark:border-slate-800'
-                        : 'bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-indigo-500/20'
-                    }`}
-                  >
-                    <Wallet className="h-5 w-5" />
-                    <span>
-                      {hasAlreadyFundedOrPurchased
-                        ? 'Already Paid & Escrow Secured'
-                        : `Pay & Deposit ${currentDeal.price} ${currentDeal.currency} in Escrow`}
-                    </span>
-                  </button>
-                </>
+                ) : (
+                  /* Counterparty (Buyer) opened the seller's deal link and pays into escrow */
+                  <div className="space-y-3">
+                    <div className="p-4 rounded-2xl bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-300/40 dark:border-indigo-500/20">
+                      <p className="text-xs font-semibold text-indigo-800 dark:text-indigo-300 leading-relaxed">
+                        <span className="font-extrabold text-indigo-700 dark:text-indigo-400">{currentDeal.initiatorName}</span> created this 1-on-1 Escrow Deal for <span className="font-bold">{currentDeal.price} {currentDeal.currency}</span>. Deposit funds into the escrow vault to lock the payment on-chain and activate the deal.
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => openCheckout(currentDeal)}
+                      disabled={hasAlreadyFundedOrPurchased || isProcessing || escrowLoading}
+                      className={`w-full font-extrabold py-4 px-6 rounded-2xl text-sm transition-all shadow-lg flex items-center justify-center gap-2 ${
+                        hasAlreadyFundedOrPurchased
+                          ? 'neu-inset text-slate-500 dark:text-slate-400 opacity-60 cursor-not-allowed border border-slate-300 dark:border-slate-800'
+                          : 'bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-indigo-500/20'
+                      }`}
+                    >
+                      <Wallet className="h-5 w-5" />
+                      <span>
+                        {hasAlreadyFundedOrPurchased
+                          ? 'Already Paid & Escrow Secured'
+                          : `Pay & Deposit ${currentDeal.price} ${currentDeal.currency} in Escrow`}
+                      </span>
+                    </button>
+                  </div>
+                )
               ) : (
                 <div className="neu-inset p-5 text-center space-y-1 border-2 border-indigo-500/30">
                   <h4 className="text-xs font-extrabold text-indigo-600 dark:text-indigo-400 flex items-center justify-center gap-1.5">
