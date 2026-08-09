@@ -207,14 +207,19 @@ export default function Home() {
     }
 
     submitDeliverableContext(dealId, deliverable, customAttestationHash);
-    const updated = deals.find((d) => d.id === dealId);
-    if (selectedDetailDeal && (selectedDetailDeal.id === dealId || selectedDetailDeal.id.startsWith(dealId))) {
+    const baseId = dealId.split('-slot-')[0].split('-order-')[0].split('-accepted-')[0];
+    const updated = deals.find((d) => d.id === dealId || d.id === baseId || d.id.startsWith(`${baseId}-`));
+    if (selectedDetailDeal && (selectedDetailDeal.id === dealId || selectedDetailDeal.id.startsWith(dealId) || selectedDetailDeal.id.startsWith(baseId))) {
+      const buyerName = updated?.counterpartyName || selectedDetailDeal.counterpartyName;
+      const buyerAddr = updated?.counterpartyAddress || selectedDetailDeal.counterpartyAddress;
       setSelectedDetailDeal({
         ...(updated || selectedDetailDeal),
         status: 'DELIVERED',
         deliverable,
         deliverableUrl: deliverable.url,
         deliverableNotes: deliverable.instructions,
+        counterpartyName: buyerName && buyerName !== 'Buyer' ? buyerName : selectedDetailDeal.counterpartyName,
+        counterpartyAddress: buyerAddr && buyerAddr !== '0x0000000000000000000000000000000000000000' ? buyerAddr : selectedDetailDeal.counterpartyAddress,
         attestationTxHash: customAttestationHash || deliverable.signature || (deliverable.payloadHash?.startsWith('0x') ? deliverable.payloadHash : undefined) || selectedDetailDeal.attestationTxHash,
       });
     }

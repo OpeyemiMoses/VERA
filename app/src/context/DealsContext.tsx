@@ -361,6 +361,14 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     const baseId = dealId.split('-slot-')[0].split('-order-')[0].split('-accepted-')[0];
     const attestHash = customAttestationTxHash || deliverable.signature || (deliverable.payloadHash?.startsWith('0x') ? deliverable.payloadHash : undefined);
 
+    // Find any buyer info from local state or shared server state
+    const knownBuyerDeal =
+      deals.find((d) => (d.id === dealId || d.id.startsWith(`${baseId}-`)) && d.counterpartyAddress && d.counterpartyAddress !== '0x0000000000000000000000000000000000000000') ||
+      sharedApiDeals.find((d) => (d.id === dealId || d.id.startsWith(`${baseId}-`)) && d.counterpartyAddress && d.counterpartyAddress !== '0x0000000000000000000000000000000000000000');
+
+    const buyerWallet = knownBuyerDeal?.counterpartyAddress || knownBuyerDeal?.clientAddress;
+    const buyerName = knownBuyerDeal?.counterpartyName;
+
     const makeDelivered = (d: Deal): Deal => ({
       ...d,
       status: 'DELIVERED' as const,
@@ -368,15 +376,17 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       deliverableUrl: deliverable.url,
       deliverableNotes: deliverable.instructions,
       attestationTxHash: attestHash || d.attestationTxHash || (appMode === 'production' ? undefined : generateMockTxHash()),
+      counterpartyAddress: d.counterpartyAddress || buyerWallet,
+      counterpartyName: d.counterpartyName || buyerName,
+      clientAddress: d.clientAddress || buyerWallet,
       rejectionReason: undefined,
       rejectedAt: undefined,
     });
 
-    // Track ALL locally updated deals so we can POST each one
     const updatedLocally: Deal[] = [];
 
-    setDeals((prev) =>
-      prev.map((d) => {
+    setDeals((prev) => {
+      const updatedPrev = prev.map((d) => {
         const isMatch = d.id === dealId || d.id === baseId || d.id.startsWith(`${baseId}-`);
         if (isMatch) {
           const updated = makeDelivered(d);
@@ -384,32 +394,31 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           return updated;
         }
         return d;
-      })
-    );
+      });
 
-    // POST every locally matched deal to the server
-    updatedLocally.forEach((u) => {
-      fetch('/api/deals', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(u),
-      }).catch(() => {});
+      const missingFromServer = sharedApiDeals.filter(
+        (d) => (d.id === dealId || d.id === baseId || d.id.startsWith(`${baseId}-`)) &&
+          !updatedPrev.some((u) => u.id === d.id)
+      );
+
+      const deliveredServerDeals = missingFromServer.map((d) => {
+        const updated = makeDelivered(d);
+        updatedLocally.push(updated);
+        return updated;
+      });
+
+      return [...deliveredServerDeals, ...updatedPrev];
     });
 
-    // Cross-device fix: also POST updates for any related deals found in sharedApiDeals
-    // (the buyer's sub-order may exist only on the server, not in the seller's local state)
-    const relatedFromServer = sharedApiDeals.filter(
-      (d) => (d.id === dealId || d.id === baseId || d.id.startsWith(`${baseId}-`)) &&
-        !updatedLocally.find((u) => u.id === d.id)
-    );
-    relatedFromServer.forEach((d) => {
-      const updated = makeDelivered(d);
-      fetch('/api/deals', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updated),
-      }).catch(() => {});
-    });
+    setTimeout(() => {
+      updatedLocally.forEach((u) => {
+        fetch('/api/deals', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(u),
+        }).catch(() => {});
+      });
+    }, 50);
   };
 
   const rejectDeliverable = (dealId: string, reason: string) => {
