@@ -374,23 +374,35 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
   const handleReleaseFunds = async () => {
     setIsProcessing(true);
 
-    // Determine recipient BEFORE any async calls: ALWAYS the seller / provider who sent deliverables!
-    let recipientWallet: string;
-    if (currentDeal.freelancerAddress && currentDeal.freelancerAddress !== '0x0000000000000000000000000000000000000000' && currentDeal.freelancerAddress.toLowerCase() !== currentDeal.initiatorAddress.toLowerCase()) {
-      recipientWallet = currentDeal.freelancerAddress;
-    } else if (currentDeal.clientAddress && currentDeal.clientAddress.toLowerCase() !== currentDeal.initiatorAddress.toLowerCase()) {
-      // If clientAddress (the buyer who funded) is different from initiatorAddress (creator), initiatorAddress is the SELLER!
+    // The caller clicking release is the Buyer.
+    // The payout recipient MUST BE the Seller (the other party), NEVER the caller!
+    const callerAddress = activePersona.walletAddress.toLowerCase();
+    let recipientWallet = '';
+
+    if (currentDeal.initiatorAddress && currentDeal.initiatorAddress.toLowerCase() !== callerAddress) {
+      // If caller is NOT initiator, then initiator is the SELLER!
       recipientWallet = currentDeal.initiatorAddress;
-    } else if (currentDeal.clientAddress && currentDeal.counterpartyAddress && currentDeal.counterpartyAddress.toLowerCase() !== currentDeal.clientAddress.toLowerCase()) {
-      // If clientAddress is the initiator (buyer), counterpartyAddress is the SELLER!
+    } else if (currentDeal.freelancerAddress && currentDeal.freelancerAddress.toLowerCase() !== callerAddress) {
+      // If freelancerAddress is set and NOT caller, freelancer is the SELLER!
+      recipientWallet = currentDeal.freelancerAddress;
+    } else if (currentDeal.counterpartyAddress && currentDeal.counterpartyAddress.toLowerCase() !== callerAddress) {
+      // If counterpartyAddress is set and NOT caller, counterparty is the SELLER!
       recipientWallet = currentDeal.counterpartyAddress;
     } else {
-      // Default fallback: initiatorAddress for seller-created deals
-      recipientWallet = currentDeal.initiatorAddress;
+      // Fallback: check participantWallets for the other participant
+      const otherWallet = currentDeal.participantWallets?.find(
+        (w) => w.toLowerCase() !== callerAddress && w.startsWith('0x')
+      );
+      recipientWallet = otherWallet || currentDeal.counterpartyAddress || currentDeal.freelancerAddress || currentDeal.initiatorAddress;
     }
 
+    // Ensure targetSeller is a valid 42-char hex address for the SELLER (never the caller)
+    const targetSeller = (recipientWallet && recipientWallet.startsWith('0x') && recipientWallet.length === 42)
+      ? recipientWallet
+      : (currentDeal.counterpartyAddress || currentDeal.freelancerAddress || currentDeal.initiatorAddress);
+
     // Compute trust-adjusted platform fee from the RECIPIENT's Trust Score
-    const recipientTrust = getPersonaTrustScore(recipientWallet);
+    const recipientTrust = getPersonaTrustScore(targetSeller);
     const feePct = currentDeal.platformFeePct ?? recipientTrust.feePct;
     const isMon = currentDeal.currency === 'MON';
     const rawFee = (currentDeal.price * feePct) / 100;
@@ -398,7 +410,8 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
     const netPayout = isMon ? parseFloat((currentDeal.price - feeAmount).toFixed(4)) : (currentDeal.price - feeAmount);
 
     console.log('[ESCROW RELEASE] Deal type:', currentDeal.type);
-    console.log('[ESCROW RELEASE] Recipient wallet:', recipientWallet);
+    console.log('[ESCROW RELEASE] Caller (Buyer):', callerAddress);
+    console.log('[ESCROW RELEASE] Target Seller (Recipient):', targetSeller);
     console.log('[ESCROW RELEASE] Gross Amount:', currentDeal.price, currentDeal.currency);
     console.log('[ESCROW RELEASE] Trust Score:', recipientTrust.score, '→ Fee:', feePct + '%', '=', feeAmount, currentDeal.currency);
     console.log('[ESCROW RELEASE] Net Payout:', netPayout, currentDeal.currency);
@@ -410,10 +423,6 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
       try {
         showNotice('Releasing Escrow Payout on Monad Testnet... Please confirm in Web3 wallet.');
         let txHash: `0x${string}`;
-        // Ensure targetSeller is a valid 42-char hex address for the seller
-        const targetSeller = (recipientWallet && recipientWallet.startsWith('0x') && recipientWallet.length === 42)
-          ? recipientWallet
-          : ((currentDeal.initiatorAddress && currentDeal.initiatorAddress.startsWith('0x') && currentDeal.initiatorAddress.length === 42) ? currentDeal.initiatorAddress : activePersona.walletAddress);
 
         try {
           // Attempt 1: Call releaseTo(targetSeller) directly
