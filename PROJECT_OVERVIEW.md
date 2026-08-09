@@ -122,6 +122,7 @@ Creators can list fixed-price Web3 services across 6 domain categories:
 - 🔑 **ZKP & Identity Security**
 - 🪙 **Tokenomics & Governance**
 - 🎨 **Web3 Design & Branding**
+- 📦 **Other (Custom Web3 Services & Digital Deliverables)**
 
 *Service Capacity Limits:* Creators set total available service slots (e.g., max 5 audit slots). Claiming a slot deploys an isolated escrow contract while tracking remaining slot availability.
 

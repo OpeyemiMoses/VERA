@@ -75,7 +75,7 @@
 ## 4. Public Marketplace & Private 1-on-1 Deals (4:00 - 6:00)
 
 ### On-Screen Action:
-1. Browse the **Public Service Marketplace** and click through category chips (*Smart Contract Audits*, *Full-Stack Web3*, *DeFi*, *ZKP*, *Tokenomics*, *Design*).
+1. Browse the **Public Service Marketplace** and click through category chips (*Smart Contract Audits*, *Full-Stack Web3*, *DeFi*, *ZKP*, *Tokenomics*, *Design*, *Other*).
 2. Click **Deploy Escrow Vault** → Select **1-on-1 Custom Escrow Deal**.
 3. Enter title `Private Audit & Escrow Agreement`, set price `1,500 cATKN`, and set minimum CVI Tier requirement (e.g. `Tier 10`).
 4. Click **Deploy Escrow Vault** → Web3 wallet popup triggers contract creation on Monad Testnet!

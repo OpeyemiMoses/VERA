@@ -10,6 +10,7 @@ export const MARKETPLACE_CATEGORIES = [
   'ZKP & Identity Security',
   'Tokenomics & Governance',
   'Web3 Design & Branding',
+  'Other',
 ] as const;
 
 export interface DeliverableData {

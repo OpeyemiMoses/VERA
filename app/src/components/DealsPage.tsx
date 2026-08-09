@@ -263,6 +263,7 @@ export const DealsPage: React.FC<DealsPageProps> = ({ onBackToHome, onDealCreate
     { id: 'ZKP & Identity Security', label: 'ZKP & Identity', icon: Lock },
     { id: 'Tokenomics & Governance', label: 'Tokenomics', icon: Layers },
     { id: 'Web3 Design & Branding', label: 'Web3 Design', icon: Sparkles },
+    { id: 'Other', label: 'Other', icon: Layers },
   ];
 
   return (
