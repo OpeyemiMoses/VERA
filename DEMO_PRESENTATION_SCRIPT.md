@@ -2,168 +2,163 @@
 
 > **Cleanverse Verified Finance Hackathon — DeFi & Infrastructure Track**  
 > **Network:** Monad Testnet (`Chain ID 10143`)  
-> **Tone & Style:** Conversational, Natural, Professional, and Founder-Led (No Robotic Jargon)
+> **Core Compliance Primitives:** Cleanverse CVI (Verification Infrastructure) & CVA (Verification Attestation)  
+> **Tone & Style:** Conversational, Natural, Founder-Led, and High-Impact (No Mock Personas / Web3 Wallet Connected)
 
 ---
 
 ## Presenter Guidelines: How to Give a Winning Demo
 
-1. **Speak like a Founder, not a Code Reader:** Focus on *who* uses the app, *why* it solves a painful problem, and *how smooth* the user experience feels.
-2. **Show, Don't Just Tell:** Keep moving through the UI as you talk. Click buttons, show the QR code, share links, and highlight live balances.
-3. **Keep it Natural:** Feel free to adjust the words to match your personal speaking style.
+1. **Founder-Led Product Pitch:** Focus on *why* VERA solves a massive Web3 friction point, *how* CVI and CVA guarantee compliance on-chain, and *how smooth* real wallet interactions feel on Monad Testnet.
+2. **Real Web3 Wallet Interactions (No Personas / No Sandbox):** Connect your real Web3 wallet (MetaMask) on Monad Testnet. All actions — vault deployment, token approval, CVA attestation, and payout release — trigger real Web3 wallet transactions!
+3. **Highlight the Self-Assigned CVI Demo Feature:** Demonstrate how easy it is for hackathon judges and testers to self-issue a CVI A-Pass credential in 1 click via **"Issue CVI A-Pass"**.
 
 ---
 
-## 1. The Story: Why We Built Vera Protocol (0:00 - 1:30)
+## 1. The Story & Core Concept (0:00 - 1:30)
 
 ### On-Screen Action:
-- Start on the **Landing Page** (`http://localhost:3005`).
-- Scroll smoothly past the hero section down to the 4 feature cards.
+- Start on the **Vera Protocol Landing Page** (`https://vera-escrow.vercel.app`).
+- Scroll past the hero section down to the core protocol architecture cards.
 
 ### What to Say (Human Voiceover):
-> *"Hey everyone! Thanks for having us today.*
+> *"Hey everyone! Welcome to **Vera Protocol** — the Compliant On-Chain Escrow Protocol built natively on **Monad Testnet** for the Cleanverse Hackathon.*
 >
-> *"If you’ve ever hired an auditor, developer, or designer in Web3, you know how most deals actually start: in DMs on Telegram, WhatsApp, or Twitter.*
+> *"If you’ve ever hired an auditor, developer, or designer in Web3, you know the painful dilemma: deals happen in Telegram or WhatsApp DMs, and then comes the million-dollar question: **Who pays first?***
 >
-> *"Someone sends a message saying, 'Hey, I can build your dApp for $2,000.' But then comes the awkward part: **Who pays first?***
+> *"Sending funds upfront to an anonymous wallet is a recipe for counterparty fraud. But legacy Web2 escrows charge 20% middleman fees, freeze funds arbitrarily, and force users through centralized databases.*
 >
-> *"Sending funds upfront to an anonymous wallet is risky. But legacy escrows are clunky, hard to use, and completely ignore compliance and identity verification.*
+> *"Conversely, anonymous Web3 escrows expose buyers and sellers to OFAC sanctions liabilities and AML violations.*
 >
-> *"That’s why we built **Vera Protocol** — an identity-gated, shareable escrow layer on **Monad Testnet**. It makes buying, selling, and settling Web3 deals as easy as sharing a payment link, while keeping every dollar safe and fully compliant behind the scenes."*
+> *"That’s why we built **Vera Protocol**. It introduces a trustless, shareable escrow layer where every transaction is gated by **Cleanverse CVI** and **CVA**, ensuring 100% compliant settlements on Monad Testnet with zero compromise on Web3 privacy!"*
 
 ---
 
-## 2. Setting Up Your Wallet in Seconds (1:30 - 2:30)
+## 2. Deep-Dive: CVI, CVA & Self-Assigned Demo CVI (1:30 - 3:00)
+
+### On-Screen Action:
+- Hover over the **CVI Tier** and **CVA Score** badges in the header bar.
+- Point out the **Issue CVI A-Pass** button.
+
+### What to Say:
+> *"Let’s break down how Vera Protocol achieves compliant Web3 settlement using two core primitives:*
+>
+> 1. **Cleanverse Verification Infrastructure (CVI):**  
+>    CVI provides zero-knowledge identity screening, regional sanctions geofencing, and assigns an **A-Pass Compliance Tier (0–100)** to user wallets.
+>
+> 2. **Cleanverse Verification Attestation (CVA):**  
+>    CVA is the cryptographic bridge to Monad Testnet smart contracts. When a user passes CVI verification, an ECDSA attestation signature is issued. Monad Testnet smart contracts (`Escrow.sol`) execute `acceptWithAttestation(bytes signature, uint256 deadline)` and verify `ethSignedHash.recover(signature) == complianceAttestor` on-chain before allowing state transitions!
+>
+> **The Self-Assigned CVI Demo Feature:**  
+> *"To make testing effortless for judges, we integrated a **Self-Assigned CVI Credential Generator**! Anyone testing the dApp can click **'Issue CVI A-Pass'** in the header. This calls `/api/cleanverse/apass/generate_apass` to self-issue a verified CVI credential (e.g. Tier 30, US Region) directly to their connected wallet!"*
+
+---
+
+## 3. Web3 Wallet Connection & Test Tokens (3:00 - 4:00)
 
 ### On-Screen Action:
 1. Click **Launch App** to enter the main dashboard.
-2. Click **Connect Wallet** in the top right → Select your Web3 wallet on **Monad Testnet**.
-3. Highlight the live balance pill in the top header showing your **cATKN** and **MON** balances.
-4. Click **Claim Faucet (+10,000 cATKN)** → Show the instant confirmation notification.
+2. Click **Connect Wallet** in the top right → Select Web3 wallet (MetaMask) on **Monad Testnet**.
+3. Highlight the header balance pill showing **cATKN** (Cleanverse Token) and **MON** balances.
+4. Click **Claim Faucet (+10,000 cATKN)** → Show instant confirmation notification.
 
 ### What to Say:
-> *"Let’s hop right into the app.*
+> *"Connecting your Web3 wallet takes 1 click on Monad Testnet.*
 >
-> *"Connecting your Web3 wallet takes 1 click. Up here in the header, you can see your live balance — both your native MON for gas and your **cATKN** tokens for escrow settlements.*
+> *"Here in the header, you can see your live balances — native MON for gas and **cATKN** tokens for escrow settlements.*
 >
-> *"If you need test tokens to try it out, just hit **Claim Faucet**, and 10,000 cATKN land right in your wallet."*
+> *"If you need test tokens, hit **Claim Faucet**, and 10,000 cATKN tokens drop directly into your connected wallet!"*
 
 ---
 
-## 3. Public Marketplace & Web3 Categories (2:30 - 4:30)
+## 4. Public Marketplace & Private 1-on-1 Deals (4:00 - 6:00)
 
 ### On-Screen Action:
-1. Scroll through the **Public Service Marketplace**.
-2. Click through the 6 category chips:
-   - *Smart Contract Audits*
-   - *Full-Stack Web3 & Frontend*
-   - *DeFi & Yield Protocols*
-   - *ZKP & Identity Security*
-   - *Tokenomics & Governance*
-   - *Web3 Design & Branding*
-3. Hover over a service listing card showing fixed pricing and remaining capacity (e.g. `2 / 5 Slots Claimed`).
+1. Browse the **Public Service Marketplace** and click through category chips (*Smart Contract Audits*, *Full-Stack Web3*, *DeFi*, *ZKP*, *Tokenomics*, *Design*).
+2. Click **Deploy Escrow Vault** → Select **1-on-1 Custom Escrow Deal**.
+3. Enter title `Private Audit & Escrow Agreement`, set price `1,500 cATKN`, and set minimum CVI Tier requirement (e.g. `Tier 10`).
+4. Click **Deploy Escrow Vault** → Web3 wallet popup triggers contract creation on Monad Testnet!
+5. Demonstrate the **Payment Link Share Card** (Copy Link, QR Code, WhatsApp, Telegram buttons).
 
 ### What to Say:
-> *"Vera Protocol gives creators two ways to do business.*
+> *"Vera Protocol supports both public services and private deals.*
 >
-> *"The first is our **Public Marketplace**. If you’re a Web3 agency or freelancer offering fixed-price services — like a Smart Contract Audit or a dApp Frontend build — you can list your service under specialized categories.*
+> *"If you're a Web3 agency offering fixed-price services — like a Smart Contract Audit — you can list on our Public Marketplace with fixed slot capacity.*
 >
-> *"Creators set a **Service Capacity** — say, 5 available audit slots. Clients can browse the marketplace, pick a category, and claim a slot with complete peace of mind."*
+> *"For custom deals negotiated over Telegram DMs, you deploy a **Private 1-on-1 Escrow Deal**. It is unlisted from the marketplace for privacy.*
+>
+> *"Sharing it with your client is effortless via our 2x2 Payment Link Share Suite: copy the link in 1 tap, generate a QR Code, or hit Telegram/WhatsApp to send the escrow link directly into your DM!"*
 
 ---
 
-## 4. Private 1-on-1 Deals & Instant Social Sharing (4:30 - 6:30)
+## 5. Live On-Chain Flow & 5 CVI Verification Gates (6:00 - 9:30)
 
 ### On-Screen Action:
-1. Click **Deploy Escrow Vault** → Select **1-on-1 Custom Escrow Deal**.
-2. Type in a custom title: `Private Smart Contract Audit & Security Review` → Set price to `1,500 cATKN`.
-3. Click **Submit & Deploy Escrow**.
-4. Show the newly created Deal Detail Page.
-   - Point out that this deal is **unlisted from the public marketplace** (strictly private between buyer and seller).
-   - Point out that **public marketplace service listings do NOT have a share card** — the payment link share suite is exclusively built for private 1-on-1 deals!
-5. Walk through the **Payment Link Share Card** (2x2 Grid):
-   - Click `[ Copy Link ]` (toast confirms link copied).
-   - Click `[ Show QR ]` (QR code modal opens with download button).
-   - Point out the direct `[ WhatsApp ]` and `[ Telegram ]` share buttons.
+1. Open the escrow deal detail page.
+2. Show the **5 Mandatory CVI Verification Gates** active on the deal:
+   - Gate 1: **Deal Creation / Vault Deployment**
+   - Gate 2: **Buyer Funding & Token Deposit** (populates Slot 1: Deployment Tx & Slot 2: Deposit Tx)
+   - Gate 3: **Seller Job Acceptance** via CVA Attestation (`acceptWithAttestation`)
+   - Gate 4: **Deliverable Submission** via on-chain `setFreelancer` (populates Slot 3: **Attestation Tx**)
+   - Gate 5: **On-Chain Payout Release** (`releaseTo`) (populates Slot 4: **Payout Release Tx**)
+3. Perform **Pay & Deposit Escrow**:
+   - Approve `cATKN` token spending in MetaMask.
+   - Deposit into Monad Testnet Escrow Vault.
+4. Perform **Submit Deliverable**:
+   - Attach deliverable files and instructions.
+   - Confirm Web3 wallet transaction executing `setFreelancer` on Monad Testnet.
+   - Show Slot 3 (**Attestation Tx**) updating with live Monad block explorer link!
+5. Inspect deliverable in **Sandbox Inspection Modal** → Click **Confirm Deliverable & Release Payout**:
+   - CVI verifies caller.
+   - `releaseTo(sellerAddress)` executes on Monad Testnet.
+   - Slot 4 (**Payout Release Tx**) displays the final payout receipt, and `cATKN` tokens transfer directly to the provider's wallet!
 
 ### What to Say:
-> *"Now, what if you negotiated a custom deal in Telegram DMs and want to keep it private?*
+> *"Notice what happens during the escrow execution:*
 >
-> *"That’s where **Private 1-on-1 Deals** come in. You create a custom escrow agreement in 30 seconds. It’s completely unlisted from the marketplace so no one else sees your deal details.*
+> *"Every step is guarded by Cleanverse CVI gates. If an unverified or sanctioned wallet attempts any step, Vera Protocol immediately **BLOCKS** the action.*
 >
-> *"Sharing it with your client is effortless thanks to our share card:*
-> - You can copy the link in 1 tap.
-> - Pop open a **QR Code** for scanning.
-> - Or hit **WhatsApp** or **Telegram** to send the payment link directly into your DM chat!"*
+> *"When the buyer deposits funds, the tokens lock securely inside the Monad Testnet smart contract vault. Slots #1 and #2 log the deployment and deposit hashes.*
+>
+> *"When the seller accepts and submits deliverables, a Web3 transaction executes `setFreelancer` and `acceptWithAttestation` on-chain. Look at Slot #3 (**Attestation Tx**) — it logs the live Monad Testnet attestation receipt!*
+>
+> *"Finally, after inspecting the deliverable, the buyer clicks **Release Payout**. The contract executes `releaseTo`, transferring net funds directly to the seller's wallet and routing the trust-adjusted fee to treasury. Slot #4 (**Payout Release Tx**) completes the on-chain audit trail!"*
 
 ---
 
-## 5. Smooth Identity Gating & Compliance (6:30 - 8:30)
-
-### On-Screen Action:
-1. Open the share link as the buyer → Click **Fund / Accept Deal**.
-2. Point out the quick compliance check modal:
-   - Cleanverse A-Pass identity check.
-   - Regional sanctions check.
-3. Click **Confirm & Deposit Escrow Funds**.
-4. Show status toast: `"Escrow Funded & Locked on Monad Testnet."*
-
-### What to Say:
-> *"When the buyer opens your link and clicks **Fund Deal**, Vera Protocol works its magic behind the scenes.*
->
-> *"It checks Cleanverse identity passes and makes sure neither party is on any sanctions blacklist. There are no confusing forms or paperwork — it verifies identity automatically and locks the funds safely inside the smart contract on Monad."*
-
----
-
-## 6. Inspecting Deliverables & Releasing Payout (8:30 - 11:00)
-
-### On-Screen Action:
-1. Switch to Seller → Click **Submit Deliverable** → Attach code audit report payload → Click **Submit**.
-2. Switch to Buyer → Open Deal Detail Page.
-   - Show the **Deliverable Inspector** previewing the code submission.
-3. Scroll down to the **Trust-Adjusted Escrow Terms** box:
-   - Point out the seller's **Trust Score** and dynamic fee discount (e.g. `1.5% fee`).
-4. Click **Release Payout**.
-   - Show notice toast: `"Payout Released: 1,477.5 cATKN net to provider · 22.5 cATKN protocol fee to treasury."*
-   - Show recipient balance updating instantly.
-
-### What to Say:
-> *"Once the freelancer finishes the work, they upload their deliverable.*
->
-> *"The client gets a clean **Deliverable Inspector** view where they can review the work before any money changes hands.*
->
-> *"Notice our **Trust Engine** right here: Because this seller has a high Trust Score, they get a dynamic fee discount — paying just 1.5% instead of standard fees.*
->
-> *"When the client clicks **Release Payout**, the funds split automatically: the freelancer gets their net payout instantly, and the platform fee is routed on-chain to the treasury."*
-
----
-
-## 7. Audit Reports & Proof of Payment (11:00 - 13:00)
+## 6. FATF Travel Rule PDF & Compliance Audit Log (9:30 - 11:00)
 
 ### On-Screen Action:
 1. Open **User Profile Modal** → Click **Transaction History & Audit Ledger**.
-   - Highlight the recorded transaction card with EVM Transaction Hash (`0x...`) and Monad Explorer link.
-2. Click **Download FATF Travel Rule PDF Report** → Show downloaded PDF report preview.
+2. Show the immutable ledger cards with live Monad Explorer links.
+3. Click **Download FATF Travel Rule PDF Report** → Show downloaded PDF report preview.
 
 ### What to Say:
-> *"For institutional clients and teams that need formal records for accounting, every completed escrow generates an immutable audit log with real Monad Explorer transaction links.*
+> *"For institutional clients, funds, and corporate teams that require formal compliance documentation, Vera Protocol automatically generates an immutable audit ledger.*
 >
-> *"You can even download an official **FATF Travel Rule Compliance Report** as a PDF with cryptographic proof of sender, receiver, and transaction timestamps."*
+> *"With 1 click, users can download an official **FATF Travel Rule Compliance PDF Report** containing cryptographic transaction hashes, sender/receiver wallet addresses, CVI verification scores, and Monad block timestamps."*
 
 ---
 
-## 8. Closing & Why Vera Protocol Wins (13:00 - 15:00)
+## 7. Closing Statement & Why Vera Wins (11:00 - 12:00)
 
 ### On-Screen Action:
 - Return to main dashboard view.
-- Shrink browser window slightly to show full mobile responsiveness and bottom navigation.
+- Show responsive layout and final verified balance.
 
 ### What to Say:
-> *"To wrap up:*
+> *"To summarize:*
 >
-> *"Vera Protocol takes the pain out of Web3 payments. It combines the speed of **Monad**, the identity layer of **Cleanverse**, and the dead-simple user experience of shareable payment links.*
+> 1. **Monad Performance:** Lightning-fast escrow state transitions with minimal gas fees.
+> 2. **Cleanverse CVI & CVA:** Zero-knowledge identity, sanctions geofencing, and on-chain ECDSA attestation signatures.
+> 3. **Seamless UX:** Shareable payment links for Telegram/WhatsApp DMs, self-assigned demo credentials, and 1-click FATF PDF reports.
 >
-> *"Whether you're selling public Web3 services or settling private 1-on-1 deals over Telegram, Vera Protocol makes commerce safe, fast, and compliant.*
+> *"Vera Protocol makes global Web3 commerce safe, fast, and 100% compliant.*
 >
-> *"Thank you so much for your time, and we'd love to take any questions!"*
+> *"Thank you so much, and we'd love to answer any questions!"*
 
+---
+
+> [!TIP]
+> **Live App**: [vera-escrow.vercel.app](https://vera-escrow.vercel.app)  
+> **Repository**: [github.com/OpeyemiMoses/VERA](https://github.com/OpeyemiMoses/VERA)
