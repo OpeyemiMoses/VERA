@@ -332,24 +332,12 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
     if (appMode === 'production') {
       try {
         showNotice('Submitting acceptWithAttestation to Monad Testnet... Confirm in Web3 wallet.');
-        let txHash: `0x${string}`;
-
-        try {
-          txHash = await writeContractAsync({
-            address: currentDeal.escrowAddress as `0x${string}`,
-            abi: ESCROW_ABI,
-            functionName: 'acceptWithAttestation',
-            args: [attestationSig as `0x${string}`, BigInt(deadlineVal || Math.floor(Date.now() / 1000) + 3600)],
-          });
-        } catch (attestErr: any) {
-          console.warn('[ACCEPT] acceptWithAttestation signature mismatch, setting freelancer on-chain:', attestErr);
-          txHash = await writeContractAsync({
-            address: currentDeal.escrowAddress as `0x${string}`,
-            abi: ESCROW_ABI,
-            functionName: 'setFreelancer',
-            args: [targetWallet as `0x${string}`],
-          });
-        }
+        const txHash = await writeContractAsync({
+          address: currentDeal.escrowAddress as `0x${string}`,
+          abi: ESCROW_ABI,
+          functionName: 'acceptWithAttestation',
+          args: [attestationSig as `0x${string}`, BigInt(deadlineVal || Math.floor(Date.now() / 1000) + 3600)],
+        });
 
         showNotice(`Attestation tx submitted (${txHash.slice(0, 10)}...). Waiting for Monad block confirmation...`);
         if (publicClient) {
@@ -365,7 +353,12 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
         onUpdateDealStatus(currentDeal.id, 'ACCEPTED' as any, activePersona.name, targetWallet, txHash);
         showNotice(`Job Accepted On-Chain (${txHash.slice(0, 10)}...)! Cleanverse attestation verified.`);
       } catch (err: any) {
-        showNotice(`On-chain job acceptance failed: ${err?.shortMessage || err?.message}`);
+        const errStr = (err?.shortMessage || err?.message || '').toLowerCase();
+        if (err?.code === 4001 || errStr.includes('user rejected') || errStr.includes('user denied')) {
+          showNotice('On-chain acceptance cancelled in wallet.');
+        } else {
+          showNotice(`On-chain job acceptance failed: ${err?.shortMessage || err?.message}`);
+        }
       } finally {
         setIsProcessing(false);
       }
