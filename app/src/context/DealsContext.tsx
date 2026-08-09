@@ -192,7 +192,11 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     customEscrowAddress?: string
   ): Deal | undefined => {
     const baseId = originalDealId.split('-slot-')[0].split('-order-')[0].split('-accepted-')[0];
-    const parentDeal = deals.find((d) => d.id === baseId || d.id === originalDealId);
+    const parentDeal =
+      activeDealList.find((d) => d.id === baseId || d.id === originalDealId) ||
+      deals.find((d) => d.id === baseId || d.id === originalDealId) ||
+      sharedApiDeals.find((d) => d.id === baseId || d.id === originalDealId);
+
     if (!parentDeal) return undefined;
 
     let buyerWallet = rawBuyerWallet;
@@ -237,28 +241,41 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       rejectedAt: undefined,
     };
 
-    setDeals((prev) => [
-      newOrder,
-      ...prev.map((d) => {
-        if (d.id === parentDeal.id) {
-          return {
-            ...d,
-            escrowAddress: customEscrowAddress || d.escrowAddress,
+    setDeals((prev) => {
+      const parentInPrev = prev.find((d) => d.id === parentDeal.id || d.id === baseId);
+      const updatedParent = parentInPrev
+        ? {
+            ...parentInPrev,
+            escrowAddress: customEscrowAddress || parentInPrev.escrowAddress,
             quantity: newQty,
             acceptedCount: newAccepted,
             totalSlots: total,
             participantWallets: updatedWallets,
-            clientAddress: d.clientAddress || buyerWallet,
-            freelancerAddress: d.freelancerAddress || parentDeal.initiatorAddress,
-            counterpartyAddress: d.counterpartyAddress || buyerWallet,
-            counterpartyName: d.counterpartyName || buyerName,
+            clientAddress: parentInPrev.clientAddress || buyerWallet,
+            freelancerAddress: parentInPrev.freelancerAddress || parentDeal.initiatorAddress,
+            counterpartyAddress: parentInPrev.counterpartyAddress || buyerWallet,
+            counterpartyName: parentInPrev.counterpartyName || buyerName,
             status: 'FUNDED' as const,
-            depositTxHash: customDepositTxHash || d.depositTxHash,
+            depositTxHash: customDepositTxHash || parentInPrev.depositTxHash,
+          }
+        : {
+            ...parentDeal,
+            escrowAddress: customEscrowAddress || parentDeal.escrowAddress,
+            quantity: newQty,
+            acceptedCount: newAccepted,
+            totalSlots: total,
+            participantWallets: updatedWallets,
+            clientAddress: buyerWallet,
+            freelancerAddress: parentDeal.initiatorAddress,
+            counterpartyAddress: buyerWallet,
+            counterpartyName: buyerName,
+            status: 'FUNDED' as const,
+            depositTxHash: customDepositTxHash || parentDeal.depositTxHash,
           };
-        }
-        return d;
-      }),
-    ]);
+
+      const filteredPrev = prev.filter((d) => d.id !== parentDeal.id && d.id !== baseId && d.id !== newOrder.id);
+      return [newOrder, updatedParent, ...filteredPrev];
+    });
 
     fetch('/api/deals', {
       method: 'POST',
