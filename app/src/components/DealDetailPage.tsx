@@ -98,20 +98,22 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
   };
 
   // Find if active persona has a specific funded/accepted order instance for this deal
+  const userWalletAddr = activePersona.walletAddress.toLowerCase();
   const userOrderInstance = deals.find((d) => {
     const baseMatchId = deal.id.split('-slot-')[0].split('-order-')[0].split('-accepted-')[0];
     const isMatch =
       d.id === deal.id ||
-      d.id.startsWith(`${deal.id}-order-`) ||
-      d.id.startsWith(`${deal.id}-accepted-`) ||
-      d.id.startsWith(`${deal.id}-slot-`) ||
-      d.id === `${baseMatchId}-slot-1`;
-    if (!isMatch) return false;
-    const isUserPart =
-      (d.counterpartyAddress && d.counterpartyAddress.toLowerCase() === activePersona.walletAddress.toLowerCase()) ||
-      (d.participantWallets && d.participantWallets.some((w) => w.toLowerCase() === activePersona.walletAddress.toLowerCase())) ||
-      (d.initiatorAddress && d.initiatorAddress.toLowerCase() === activePersona.walletAddress.toLowerCase());
-    return isUserPart && d.status !== 'OPEN';
+      d.id.startsWith(`${baseMatchId}-slot-`) ||
+      d.id.startsWith(`${baseMatchId}-order-`) ||
+      d.id.startsWith(`${baseMatchId}-accepted-`);
+    if (!isMatch || d.status === 'OPEN') return false;
+
+    const isInitiatorMatch = d.initiatorAddress.toLowerCase() === userWalletAddr;
+    const isClientMatch =
+      (d.clientAddress && d.clientAddress.toLowerCase() === userWalletAddr) ||
+      (d.counterpartyAddress && d.counterpartyAddress.toLowerCase() === userWalletAddr && !isInitiatorMatch);
+
+    return isClientMatch || (isInitiatorMatch && d.id === deal.id);
   });
 
   const currentDeal = userOrderInstance || deal;

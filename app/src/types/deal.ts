@@ -102,14 +102,23 @@ export function getDealRole(deal: Deal, userWallet: string): 'PROVIDER' | 'CLIEN
   const senderW = (deal.deliverable?.senderAddress || '').toLowerCase();
 
   if (deal.type === 'SERVICE_LISTING') {
-    // Service Listing: Creator (initiator) or deliverable sender is PROVIDER (Seller), Buyer is CLIENT
+    // Service Listing: If connected user is the Client (buyer) on clientAddress / counterpartyAddress, they are strictly CLIENT!
+    if (clientW && w === clientW && w !== initW) {
+      return 'CLIENT';
+    }
+    if (cpW && w === cpW && w !== initW) {
+      return 'CLIENT';
+    }
     if (w === initW || (freeW && w === freeW) || (senderW && w === senderW)) {
       return 'PROVIDER';
     }
     return 'CLIENT';
   } else {
     // Job Listing / Direct Deal: Creator (initiator) is CLIENT (Buyer), Freelancer is PROVIDER
-    if (w === freeW || (senderW && w === senderW) || (cpW && w === cpW && w !== initW)) {
+    if (w === initW || (clientW && w === clientW && w !== freeW)) {
+      return 'CLIENT';
+    }
+    if ((freeW && w === freeW) || (senderW && w === senderW) || (cpW && w === cpW && w !== initW)) {
       return 'PROVIDER';
     }
     return 'CLIENT';
