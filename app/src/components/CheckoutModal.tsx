@@ -51,17 +51,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const handleFundEscrow = async () => {
     if (!sufficient) return;
 
-    // Deduct buyer's full deal price in local state (sandbox mode only)
-    if (appMode !== 'production') {
-      deductBalance(deal.price, deal.currency, activePersona.walletAddress);
-
-      // Deduct seller's good-faith collateral (sandbox mode only)
-      if (collateralAmount > 0) {
-        deductBalance(collateralAmount, deal.currency, deal.initiatorAddress);
-        console.log('[COLLATERAL] Deducted', collateralAmount, deal.currency, 'from seller', deal.initiatorAddress, `(Trust Score ${sellerTrust.score}/100 → ${sellerTrust.collateralPct}% collateral)`);
-      }
-    }
-
     setStep('verifying');
 
     // ── Cleanverse CVI Verification Gate: Check buyer compliance BEFORE allowing funding ──
@@ -79,6 +68,17 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       setStep('review');
       showError(`Compliance Rejection: ${compliance.reason || 'Cleanverse A-Pass verification failed'}`);
       return;
+    }
+
+    // Deduct buyer's full deal price in local state (sandbox mode only) AFTER compliance verification passes!
+    if (appMode !== 'production') {
+      deductBalance(deal.price, deal.currency, activePersona.walletAddress);
+
+      // Deduct seller's good-faith collateral (sandbox mode only)
+      if (collateralAmount > 0) {
+        deductBalance(collateralAmount, deal.currency, deal.initiatorAddress);
+        console.log('[COLLATERAL] Deducted', collateralAmount, deal.currency, 'from seller', deal.initiatorAddress, `(Trust Score ${sellerTrust.score}/100 → ${sellerTrust.collateralPct}% collateral)`);
+      }
     }
 
     // ── PRODUCTION MODE: Real Monad Testnet On-Chain Transactions ──────────────
