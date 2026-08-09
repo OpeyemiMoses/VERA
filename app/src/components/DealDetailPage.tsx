@@ -201,6 +201,22 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
   const isProvider = userRole === 'PROVIDER';
   const isReceiver = userRole === 'CLIENT';
 
+  // DEBUG: trace role resolution inputs
+  if (typeof window !== 'undefined') {
+    console.debug('[DealDetailPage] Role debug:', {
+      dealId: currentDeal.id,
+      activeWallet: activePersona.walletAddress,
+      initiatorAddress: currentDeal.initiatorAddress,
+      clientAddress: currentDeal.clientAddress,
+      counterpartyAddress: currentDeal.counterpartyAddress,
+      freelancerAddress: currentDeal.freelancerAddress,
+      deliverableSender: currentDeal.deliverable?.senderAddress,
+      resolvedRole: userRole,
+      status: currentDeal.status,
+    });
+  }
+
+
   const totalSlots = currentDeal.totalSlots ?? (currentDeal.quantity !== undefined ? currentDeal.quantity : 1);
   const acceptedCount = currentDeal.acceptedCount ?? ((currentDeal.status !== 'OPEN' && currentDeal.status !== 'FUNDED') ? 1 : 0);
   const openSlots = Math.max(0, totalSlots - acceptedCount);
