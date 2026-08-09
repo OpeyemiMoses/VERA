@@ -205,8 +205,15 @@ export default function Home() {
 
   const handlePurchaseService = (originalDealId: string, customDepositTxHash?: string, customEscrowAddress?: string) => {
     const fundedOrder = purchaseServiceContext(originalDealId, activePersona.walletAddress, activePersona.name, customDepositTxHash, customEscrowAddress);
-    if (fundedOrder) {
-      setSelectedDetailDeal(fundedOrder);
+    const targetDeal = fundedOrder || deals.find((d) => d.id === originalDealId || d.id.startsWith(originalDealId));
+    if (targetDeal) {
+      const finalFunded = {
+        ...targetDeal,
+        status: 'FUNDED' as const,
+        depositTxHash: customDepositTxHash || targetDeal.depositTxHash,
+        escrowAddress: customEscrowAddress || targetDeal.escrowAddress,
+      };
+      setSelectedDetailDeal(finalFunded);
     }
     showNotice(`Escrow Paid & Secured on Monad Testnet!`);
   };

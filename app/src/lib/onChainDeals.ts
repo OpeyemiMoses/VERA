@@ -106,14 +106,11 @@ export async function fetchDealsForWallet(
 
   if (!escrowAddresses || escrowAddresses.length === 0) return [];
 
-  // Reset Cutoff: Ignore past test escrows deployed prior to platform reset directive
-  const activeAddresses = escrowAddresses.slice(99999);
-
   // Read all escrows in parallel (batch of max 50 to avoid RPC timeout)
   const batchSize = 50;
   const allData: (OnChainEscrowData | null)[] = [];
-  for (let i = 0; i < activeAddresses.length; i += batchSize) {
-    const batch = activeAddresses.slice(i, i + batchSize);
+  for (let i = 0; i < escrowAddresses.length; i += batchSize) {
+    const batch = escrowAddresses.slice(i, i + batchSize);
     const results = await Promise.all(batch.map((addr) => readEscrowData(client, addr)));
     allData.push(...results);
   }

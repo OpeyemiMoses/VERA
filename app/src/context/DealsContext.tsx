@@ -224,6 +224,12 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       }),
     ]);
 
+    fetch('/api/deals', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newOrder),
+    }).catch(() => {});
+
     return newOrder;
   };
 
