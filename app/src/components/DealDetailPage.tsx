@@ -138,11 +138,9 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
   const isDirectDeal = currentDeal.type === 'DIRECT_DEAL' || deal.type === 'DIRECT_DEAL';
   const slotSubOrders = isDirectDeal ? [] : deals.filter((d) => d.id.startsWith(`${baseId}-slot-`));
 
-  // Derive role
+  // Derive role — wallet address is the only reliable truth (especially in production with live wallets)
   const isInitiator =
-    activePersona.walletAddress.toLowerCase() === currentDeal.initiatorAddress.toLowerCase() ||
-    activePersona.name.toLowerCase().includes(currentDeal.initiatorName.toLowerCase()) ||
-    currentDeal.initiatorName.toLowerCase().includes(activePersona.name.toLowerCase());
+    activePersona.walletAddress.toLowerCase() === currentDeal.initiatorAddress.toLowerCase();
 
   // Find counterparty details (filtering out self-counterparty match)
   const rawCounterpartyAddress =

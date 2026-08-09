@@ -497,14 +497,12 @@ export default function Home() {
       if (!matchesSearch || !matchesCategory) return false;
 
       const isUserInitiator =
-        activePersona.walletAddress.toLowerCase() === deal.initiatorAddress.toLowerCase() ||
-        activePersona.name.toLowerCase().includes(deal.initiatorName.toLowerCase()) ||
-        deal.initiatorName.toLowerCase().includes(activePersona.name.toLowerCase());
+        activePersona.walletAddress.toLowerCase() === deal.initiatorAddress.toLowerCase();
 
       const isUserCounterparty =
         (deal.counterpartyAddress && deal.counterpartyAddress.toLowerCase() === activePersona.walletAddress.toLowerCase()) ||
-        (deal.counterpartyName && (activePersona.name.toLowerCase().includes(deal.counterpartyName.toLowerCase()) || deal.counterpartyName.toLowerCase().includes(activePersona.name.toLowerCase()))) ||
-        (deal.participantWallets && deal.participantWallets.some((w) => w.toLowerCase() === activePersona.walletAddress.toLowerCase()));
+        (deal.clientAddress && deal.clientAddress.toLowerCase() === activePersona.walletAddress.toLowerCase()) ||
+        (deal.participantWallets && deal.participantWallets.some((w) => w.toLowerCase() === activePersona.walletAddress.toLowerCase() && w.toLowerCase() !== deal.initiatorAddress.toLowerCase()));
 
       const isChildInstance = deal.id.includes('-order-') || deal.id.includes('-accepted-') || deal.id.includes('-slot-');
 
