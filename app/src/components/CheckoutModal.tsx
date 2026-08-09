@@ -141,7 +141,21 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           functionName: 'fund',
         });
 
-        // Set the Seller (deal initiator) as the on-chain freelancer recipient
+        showInfo(`Deposit tx submitted (${fundTx.slice(0, 10)}...). Waiting for Monad block confirmation...`);
+        if (publicClient && fundTx) {
+          try {
+            await publicClient.waitForTransactionReceipt({ hash: fundTx });
+          } catch (rcptErr) {
+            console.warn('[RECEIPT] Proceeding after fund:', rcptErr);
+          }
+        }
+
+        // ── ESCROW PAYMENT IS COMPLETE ── Update modal step & notify app immediately
+        setTxHash(fundTx);
+        setStep('funded');
+        onPaymentComplete(deal.id, fundTx, escrowAddr);
+
+        // Optional: Set seller address on-chain if allowed
         const sellerAddress = deal.initiatorAddress;
         if (sellerAddress && sellerAddress.startsWith('0x') && sellerAddress.length === 42 && sellerAddress.toLowerCase() !== activePersona.walletAddress.toLowerCase()) {
           try {
@@ -152,17 +166,17 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               args: [sellerAddress as `0x${string}`],
             });
           } catch (setErr) {
-            console.warn('[CHECKOUT] setFreelancer on-chain note:', setErr);
+            console.warn('[CHECKOUT] Optional setFreelancer note:', setErr);
           }
         }
-
-        setTxHash(fundTx);
-        setStep('funded');
-        // Pass the new escrow address back so the deal record is updated
-        onPaymentComplete(deal.id, fundTx, escrowAddr);
       } catch (err: any) {
-        setStep('review');
-        showError(err?.shortMessage || err?.message || 'On-chain deposit failed or cancelled.');
+        setStep((currentStep) => (currentStep === 'funded' ? 'funded' : 'review'));
+        const errStr = (err?.shortMessage || err?.message || '').toLowerCase();
+        if (err?.code === 4001 || errStr.includes('user rejected') || errStr.includes('user denied')) {
+          showError('Payment cancelled in wallet.');
+        } else {
+          showError(err?.shortMessage || err?.message || 'On-chain deposit failed or cancelled.');
+        }
       }
       return;
     }
