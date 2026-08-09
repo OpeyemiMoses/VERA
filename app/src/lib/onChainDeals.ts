@@ -142,11 +142,12 @@ export async function fetchDealsForWallet(
         status: isUnclaimedJob && d.state <= 1 ? 'OPEN' : escrowStateToStatus(d.state),
         statusLabel: isUnclaimedJob && d.state <= 1 ? 'Awaiting Freelancer' : escrowStateToLabel(d.state),
         chain: 'monad' as const,
-        initiatorAddress: d.client,
-        initiatorName: `${d.client.slice(0, 6)}...${d.client.slice(-4)}`,
-        counterpartyAddress: d.freelancer !== '0x0000000000000000000000000000000000000000' ? d.freelancer : undefined,
-        counterpartyName: d.freelancer !== '0x0000000000000000000000000000000000000000'
-          ? `${d.freelancer.slice(0, 6)}...${d.freelancer.slice(-4)}` : undefined,
+        initiatorAddress: d.freelancer !== '0x0000000000000000000000000000000000000000' ? d.freelancer : d.client,
+        initiatorName: d.freelancer !== '0x0000000000000000000000000000000000000000'
+          ? `${d.freelancer.slice(0, 6)}...${d.freelancer.slice(-4)}`
+          : `${d.client.slice(0, 6)}...${d.client.slice(-4)}`,
+        counterpartyAddress: d.client,
+        counterpartyName: `${d.client.slice(0, 6)}...${d.client.slice(-4)}`,
         minTier: 0,
         deliveryTerms: 'On-chain delivery confirmation',
         refundTerms: 'Client may cancel before funding; dispute resolution after acceptance',

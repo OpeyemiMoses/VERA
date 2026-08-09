@@ -378,8 +378,14 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
     let recipientWallet: string;
     if (currentDeal.freelancerAddress && currentDeal.freelancerAddress !== '0x0000000000000000000000000000000000000000' && currentDeal.freelancerAddress.toLowerCase() !== currentDeal.initiatorAddress.toLowerCase()) {
       recipientWallet = currentDeal.freelancerAddress;
+    } else if (currentDeal.clientAddress && currentDeal.clientAddress.toLowerCase() !== currentDeal.initiatorAddress.toLowerCase()) {
+      // If clientAddress (the buyer who funded) is different from initiatorAddress (creator), initiatorAddress is the SELLER!
+      recipientWallet = currentDeal.initiatorAddress;
+    } else if (currentDeal.clientAddress && currentDeal.counterpartyAddress && currentDeal.counterpartyAddress.toLowerCase() !== currentDeal.clientAddress.toLowerCase()) {
+      // If clientAddress is the initiator (buyer), counterpartyAddress is the SELLER!
+      recipientWallet = currentDeal.counterpartyAddress;
     } else {
-      // In seller-created deals (DIRECT_DEAL or SERVICE_LISTING), initiator is the seller.
+      // Default fallback: initiatorAddress for seller-created deals
       recipientWallet = currentDeal.initiatorAddress;
     }
 
