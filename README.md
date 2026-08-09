@@ -7,9 +7,9 @@
 
 ## 1. Project Core Link (Vercel Link)
 
-- 🌐 **Live Production Web3 dApp:** [`https://vera-escrow.vercel.app`](https://vera-escrow.vercel.app)
-- 🐙 **GitHub Repository:** [`https://github.com/OpeyemiMoses/VERA`](https://github.com/OpeyemiMoses/VERA)
-- ⛓️ **Monad Testnet Network ID:** `10143` (RPC: `https://testnet-rpc.monad.xyz`)
+- **Live Production Web3 dApp:** [`https://vera-escrow.vercel.app`](https://vera-escrow.vercel.app)
+- **GitHub Repository:** [`https://github.com/OpeyemiMoses/VERA`](https://github.com/OpeyemiMoses/VERA)
+- **Monad Testnet Network ID:** `10143` (RPC: `https://testnet-rpc.monad.xyz`)
 
 ---
 
@@ -36,7 +36,7 @@ Instead of relying on centralized Web2 middlemen that charge 15–20% fees and a
 
 ## 4. Why Vera Protocol (Problems and Solutions)
 
-### 💥 The Problem
+### The Problem
 1. **Telegram/WhatsApp DM Insecurity:**  
    Most Web3 freelance deals start in direct messages. Sellers demand upfront payment; buyers fear non-delivery or exit scams.
 2. **High Web2 Middleman Fees & Account Freezes:**  
@@ -44,7 +44,7 @@ Instead of relying on centralized Web2 middlemen that charge 15–20% fees and a
 3. **AML & Regulatory Risk of Anonymous Web3 Escrows:**  
    Anonymous smart contract escrows leave participants vulnerable to OFAC sanctions, money laundering liabilities, and fraudulent counterparties.
 
-### 💡 The Solution: Vera Protocol
+### The Solution: Vera Protocol
 1. **Identity-Gated Smart Vaults:** Isolated smart contracts deployed per deal on Monad Testnet (`Escrow.sol`).
 2. **Automated CVI & CVA Compliance:** Real-time sanctions screening, zero-knowledge A-Pass tier verification, and cryptographic ECDSA attestation signatures before any state transition.
 3. **Shareable Payment Link Suite:** 2x2 social share suite for instant distribution via URL, QR Code, WhatsApp, or Telegram DMs.
@@ -108,14 +108,14 @@ The live production MVP on Monad Testnet features:
 
 ```mermaid
 flowchart TD
-    A["👤 User / Web3 Wallet"] --> B["🆔 Cleanverse CVI Check (/api/cleanverse/verify)"]
+    A["User / Web3 Wallet"] --> B["Cleanverse CVI Check (/api/cleanverse/verify)"]
     B -->|Screening & ZKP Tier Rating| C{"Passes CVI Criteria?"}
-    C -->|No| D["❌ BLOCKED: Action Rejected (Sanctions / Low Tier)"]
-    C -->|Yes| E["🔑 CVA: Cryptographic ECDSA Signature Issued"]
-    E --> F["📜 Monad Testnet Escrow.sol Smart Contract"]
+    C -->|No| D["BLOCKED: Action Rejected (Sanctions / Low Tier)"]
+    C -->|Yes| E["CVA: Cryptographic ECDSA Signature Issued"]
+    E --> F["Monad Testnet Escrow.sol Smart Contract"]
     F -->|Solidity: ethSignedHash.recover(sig)| G{"recoveredSigner == complianceAttestor?"}
-    G -->|Yes| H["✅ On-Chain State Transition & Payout Release"]
-    G -->|No| I["❌ On-Chain Revert: Invalid compliance attestation"]
+    G -->|Yes| H["On-Chain State Transition & Payout Release"]
+    G -->|No| I["On-Chain Revert: Invalid compliance attestation"]
 ```
 
 ---
@@ -143,11 +143,11 @@ flowchart TD
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Creator as 👤 Creator / Client
-    actor Provider as 🧑‍💻 Service Provider
-    participant CVI as 🆔 Cleanverse CVI / CVA
-    participant Factory as 🏭 EscrowFactory.sol
-    participant Vault as 📜 Escrow.sol Vault
+    actor Creator as Creator / Client
+    actor Provider as Service Provider
+    participant CVI as Cleanverse CVI / CVA
+    participant Factory as EscrowFactory.sol
+    participant Vault as Escrow.sol Vault
 
     Creator->>CVI: 1. Gate 1: Check Creator Compliance
     Creator->>Factory: 2. Deploy Escrow.sol Vault on Monad Testnet
@@ -275,4 +275,4 @@ VERA/
 
 ## 17. Licence
 
-Released under the [MIT License](LICENSE). Built with ❤️ for the Cleanverse Verified Finance Hackathon on Monad Testnet.
+Released under the [MIT License](LICENSE). Built for the Cleanverse Verified Finance Hackathon on Monad Testnet.
