@@ -703,15 +703,15 @@ export const DealDetailPage: React.FC<DealDetailPageProps> = ({
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
                 BUYER / PAYER
               </span>
-              {slotSubOrders.length > 0 && (
+              {slotSubOrders.length > 0 && isInitiator && (
                 <span className="text-[9px] font-mono font-bold text-purple-600 dark:text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20">
                   {slotSubOrders.length} ACTIVE SLOT INSTANCE{slotSubOrders.length > 1 ? 'S' : ''}
                 </span>
               )}
             </div>
 
-            {/* If there are multiple slot sub-orders and viewing parent deal or as creator */}
-            {slotSubOrders.length > 0 && (!currentDeal.id.includes('-slot-') && !currentDeal.id.includes('-order-') && !currentDeal.id.includes('-accepted-')) ? (
+            {/* If there are multiple slot sub-orders and user is the creator / seller */}
+            {slotSubOrders.length > 0 && isInitiator && (!currentDeal.id.includes('-slot-') && !currentDeal.id.includes('-order-') && !currentDeal.id.includes('-accepted-')) ? (
               <div className="space-y-1.5 pt-1">
                 {slotSubOrders.map((slotDeal, idx) => {
                   const slotBuyer = slotDeal.counterpartyName || 'Participant ' + (idx + 1);

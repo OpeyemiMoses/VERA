@@ -154,28 +154,26 @@ export default function Home() {
     if (!selectedDetailDeal) return;
     const baseId = selectedDetailDeal.id.split('-slot-')[0].split('-order-')[0].split('-accepted-')[0];
 
-    // 1. Look for an exact match (or escrow address match) in activeDealList (server+local merged)
+    const statusRank: Record<string, number> = { OPEN: 1, FUNDED: 2, ACCEPTED: 3, DELIVERED: 4, RELEASED: 5, COMPLETED: 5 };
+    const currentRank = statusRank[selectedDetailDeal.status] || 1;
+
+    // Look for a sub-order that has reached a more advanced status (e.g. RELEASED)
+    const higherStatusSubOrder = activeDealList.find(
+      (d) =>
+        (d.id.startsWith(`${baseId}-slot-`) || d.id.startsWith(`${baseId}-order-`)) &&
+        (statusRank[d.status] || 1) > currentRank
+    ) || sharedApiDeals.find(
+      (d) =>
+        (d.id.startsWith(`${baseId}-slot-`) || d.id.startsWith(`${baseId}-order-`)) &&
+        (statusRank[d.status] || 1) > currentRank
+    );
+
     const exactMatch = activeDealList.find(
       (d) => d.id === selectedDetailDeal.id ||
         (d.escrowAddress && selectedDetailDeal.escrowAddress && d.escrowAddress.toLowerCase() === selectedDetailDeal.escrowAddress.toLowerCase())
     );
 
-    // 2. If the creator is viewing an OPEN base deal, check if a funded sub-order now exists on the server
-    //    (e.g. creator has deal-123 OPEN, buyer created deal-123-slot-1 FUNDED on their device)
-    const fundedSubOrder = !exactMatch || exactMatch.status === 'OPEN'
-      ? activeDealList.find(
-          (d) => d.id !== selectedDetailDeal.id &&
-            (d.id.startsWith(`${baseId}-slot-`) || d.id.startsWith(`${baseId}-order-`)) &&
-            (d.status === 'FUNDED' || d.status === 'DELIVERED' || d.status === 'RELEASED')
-        ) ||
-        sharedApiDeals.find(
-          (d) => d.id !== selectedDetailDeal.id &&
-            (d.id.startsWith(`${baseId}-slot-`) || d.id.startsWith(`${baseId}-order-`)) &&
-            (d.status === 'FUNDED' || d.status === 'DELIVERED' || d.status === 'RELEASED')
-        )
-      : undefined;
-
-    const best = fundedSubOrder || exactMatch;
+    const best = higherStatusSubOrder || exactMatch;
     if (best && JSON.stringify(best) !== JSON.stringify(selectedDetailDeal)) {
       setSelectedDetailDeal(best);
     }
