@@ -81,10 +81,9 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     return () => clearInterval(interval);
   }, [refreshOnChainDeals]);
 
-  // Merge deals: local deals + shared API registry deals + on-chain Monad escrows
+  // Merge deals: local deals + shared API registry deals (enriched by on-chain Monad status)
   const activeDealList = useMemo(() => {
     const combinedPoolMap = new Map<string, Deal>();
-    const w = prodWalletAddress?.toLowerCase() ?? '';
 
     // 1. Add shared API deals
     sharedApiDeals.forEach((d) => combinedPoolMap.set(d.id, d));
@@ -92,19 +91,7 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     // 2. Add local deals (overrides API defaults if updated locally)
     deals.forEach((d) => combinedPoolMap.set(d.id, d));
 
-    // 3. Add raw on-chain deals in Production Mode
-    if (appMode === 'production') {
-      onChainDeals.forEach((oc) => {
-        const existingKey = Array.from(combinedPoolMap.keys()).find((k) => {
-          const item = combinedPoolMap.get(k);
-          return item?.escrowAddress && oc.escrowAddress && item.escrowAddress.toLowerCase() === oc.escrowAddress.toLowerCase();
-        });
-        if (!existingKey) {
-          combinedPoolMap.set(oc.id, oc);
-        }
-      });
-    }
-
+    // 3. Enrich existing registered deals with live on-chain status from Monad Testnet
     const pool = Array.from(combinedPoolMap.values()).map((deal) => {
       if (!deal.escrowAddress || appMode !== 'production') return deal;
       const onChainMatch = onChainDeals.find(
@@ -122,7 +109,7 @@ export const DealsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     });
 
     return pool;
-  }, [deals, sharedApiDeals, onChainDeals, appMode, prodWalletAddress]);
+  }, [deals, sharedApiDeals, onChainDeals, appMode]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
