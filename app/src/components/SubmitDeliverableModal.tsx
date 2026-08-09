@@ -18,9 +18,12 @@ import {
   ExternalLink,
   Lock,
 } from 'lucide-react';
+import { useWriteContract, usePublicClient } from 'wagmi';
 import { Deal, DeliverableData, DeliverableFormat } from '../types/deal';
 import { validateDeliverableFile } from '../utils/fileValidation';
 import { usePersona } from '../context/PersonaContext';
+import { useToast } from '../context/ToastContext';
+import { ESCROW_ABI } from '../lib/contracts';
 
 interface SubmitDeliverableModalProps {
   isOpen: boolean;
@@ -35,7 +38,10 @@ export const SubmitDeliverableModal: React.FC<SubmitDeliverableModalProps> = ({
   deal,
   onSubmitDeliverable,
 }) => {
-  const { activePersona } = usePersona();
+  const { activePersona, appMode } = usePersona();
+  const { writeContractAsync } = useWriteContract();
+  const publicClient = usePublicClient();
+  const { showInfo, showError } = useToast();
   const [format, setFormat] = useState<DeliverableFormat>('FILE');
 
   // Format 1: URL
@@ -104,36 +110,64 @@ export const SubmitDeliverableModal: React.FC<SubmitDeliverableModalProps> = ({
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (format === 'FILE' && fileValidationError) return;
 
     setIsSubmitting(true);
-    setTimeout(() => {
-      // Generate a mock SHA-256 payload hash to prove cryptographic commitment on-chain
-      const randomHash = `0x${Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('')}`;
+    const sellerWallet = activePersona.walletAddress;
 
-      const deliverableData: DeliverableData = {
-        format,
-        url: format === 'URL' ? url : undefined,
-        previewUrl: previewUrl || 'https://demo.veraprotocol.io/sandbox-preview-v1',
-        imageUrl: uploadedImageUrl || (url && (url.includes('.png') || url.includes('.jpg') || url.includes('.svg')) ? url : undefined),
-        fileContent: uploadedFileContent,
-        fileKind: uploadedFileKind,
-        payloadHash: randomHash,
-        fileName: format === 'FILE' ? uploadedFile?.name || 'Deliverable_Bundle.zip' : undefined,
-        fileSize: format === 'FILE' ? uploadedFile?.size || '12.5 MB' : undefined,
-        fileType: format === 'FILE' ? uploadedFile?.type || 'application/zip' : undefined,
-        textCredentials: format === 'CREDENTIALS' ? textCredentials : undefined,
-        instructions,
-        submittedAt: Date.now(),
-        senderAddress: activePersona.walletAddress,
-      };
+    let submitTxHash: string | undefined = undefined;
 
-      onSubmitDeliverable(deal.id, deliverableData);
-      setIsSubmitting(false);
-      onClose();
-    }, 800);
+    // ── PRODUCTION MODE: Trigger Real Web3 Transaction Popup to record Seller Address on-chain ──
+    if (appMode === 'production' && deal?.escrowAddress && deal.escrowAddress.startsWith('0x')) {
+      try {
+        showInfo('Submitting Deliverable & Attestation on Monad Testnet... Please confirm in Web3 wallet.');
+        submitTxHash = await writeContractAsync({
+          address: deal.escrowAddress as `0x${string}`,
+          abi: ESCROW_ABI,
+          functionName: 'setFreelancer',
+          args: [sellerWallet as `0x${string}`],
+        });
+
+        showInfo(`Deliverable transaction submitted (${submitTxHash.slice(0, 10)}...). Waiting for block confirmation...`);
+        if (publicClient) {
+          try {
+            await publicClient.waitForTransactionReceipt({ hash: submitTxHash as `0x${string}` });
+          } catch (rcptErr) {
+            console.warn('[DELIVERABLE] Receipt check proceeding:', rcptErr);
+          }
+        }
+      } catch (err: any) {
+        setIsSubmitting(false);
+        showError('Deliverable Submission Failed: ' + (err?.shortMessage || err?.message || 'Transaction rejected in wallet.'));
+        return;
+      }
+    }
+
+    const randomHash = submitTxHash || `0x${Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('')}`;
+
+    const deliverableData: DeliverableData = {
+      format,
+      url: format === 'URL' ? url : undefined,
+      previewUrl: previewUrl || 'https://demo.veraprotocol.io/sandbox-preview-v1',
+      imageUrl: uploadedImageUrl || (url && (url.includes('.png') || url.includes('.jpg') || url.includes('.svg')) ? url : undefined),
+      fileContent: uploadedFileContent,
+      fileKind: uploadedFileKind,
+      payloadHash: randomHash,
+      fileName: format === 'FILE' ? uploadedFile?.name || 'Deliverable_Bundle.zip' : undefined,
+      fileSize: format === 'FILE' ? uploadedFile?.size || '12.5 MB' : undefined,
+      fileType: format === 'FILE' ? uploadedFile?.type || 'application/zip' : undefined,
+      textCredentials: format === 'CREDENTIALS' ? textCredentials : undefined,
+      instructions,
+      submittedAt: Date.now(),
+      senderAddress: sellerWallet,
+      signature: submitTxHash,
+    };
+
+    onSubmitDeliverable(deal.id, deliverableData);
+    setIsSubmitting(false);
+    onClose();
   };
 
   return (
